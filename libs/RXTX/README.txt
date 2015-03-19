@@ -1,0 +1,1 @@
+2013-11-21: modified RXTXCommDriver.java to scan also /dev/ttyACM* ports on Linux (needed for u-blox)

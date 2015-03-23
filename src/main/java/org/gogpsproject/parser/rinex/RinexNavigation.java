@@ -253,6 +253,9 @@ public class RinexNavigation implements NavigationProducer {
 					return null;
 				}
 
+	      ftp.enterLocalPassiveMode();
+	      ftp.setRemoteVerificationEnabled(false);
+
 				System.out.println("cwd to "+remotePath+" "+ftp.changeWorkingDirectory(remotePath));
 				System.out.println(ftp.getReplyString());
 				ftp.setFileType(FTP.BINARY_FILE_TYPE);

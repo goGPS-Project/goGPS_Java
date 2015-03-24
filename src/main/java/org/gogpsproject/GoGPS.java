@@ -19,20 +19,8 @@
  *
  */
 package org.gogpsproject;
-import java.io.*;
-import java.text.DecimalFormat;
-import java.util.*;
-import java.text.*;
 
-import org.gogpsproject.parser.nvs.NVSFileReader;
-import org.gogpsproject.parser.nvs.NVSFileReader2;
-import org.gogpsproject.parser.rinex.RinexNavigation;
-import org.gogpsproject.parser.rinex.RinexNavigationParser;
-import org.gogpsproject.parser.rinex.RinexObservationParser;
-import org.gogpsproject.parser.rtcm3.RTCM3Client;
-import org.gogpsproject.parser.sp3.SP3Navigation;
-import org.gogpsproject.parser.ublox.UBXSerialConnection;
-import org.gogpsproject.parser.ublox.UBXFileReader;
+import java.util.*;
 
 // TODO: Auto-generated Javadoc
 /**
@@ -90,7 +78,7 @@ public class GoGPS implements Runnable{
 	private int dynamicModel = DYN_MODEL_CONST_SPEED;
 
 	/** The st dev init. */
-	private double stDevInit = 3;
+	private double stDevInit = 1;
 
 	/** The st dev e. */
 	private double stDevE = 0.5;
@@ -102,13 +90,13 @@ public class GoGPS implements Runnable{
 	private double stDevU = 0.1;
 
 	/** The st dev code c. */
-	private double stDevCodeC = 3;
+	private double stDevCodeC = 0.3;
 
 	/** The st dev code p. */
 	private double[] stDevCodeP;
 
 	/** The st dev phase. */
-	private double stDevPhase = 0.03;
+	private double stDevPhase = 0.003;
 
 	/** The st dev ambiguity. */
 	private double stDevAmbiguity = 10;
@@ -117,7 +105,16 @@ public class GoGPS implements Runnable{
 	private int minNumSat = 2;
 
 	/** The cycle slip threshold. */
-	private double cycleSlipThreshold = 3;
+	private double cycleSlipThreshold = 1;
+	
+	/** The Constant APPROX_PSEUDORANGE. */
+	public final static int APPROX_PSEUDORANGE = 0;
+
+	/** The Constant DOPPLER_PREDICTED_PHASE_RANGE. */
+	public final static int DOPPLER_PREDICTED_PHASE_RANGE = 1;
+	
+	/** The cycle-slip detection strategy. */
+	private int cycleSlipDetectionStrategy = APPROX_PSEUDORANGE;
 
 	/** The Constant AMBIGUITY_OBSERV. */
 	public final static int AMBIGUITY_OBSERV = 0;
@@ -838,6 +835,24 @@ public class GoGPS implements Runnable{
 	 */
 	public void setDynamicModel(int dynamicModel) {
 		this.dynamicModel = dynamicModel;
+	}
+	
+	/**
+	 * Gets the cycle-slip detection strategy.
+	 *
+	 * @return the cycleSlipDetectionStrategy
+	 */
+	public int getCycleSlipDetectionStrategy() {
+		return cycleSlipDetectionStrategy;
+	}
+
+	/**
+	 * Sets the cycle-slip detection strategy.
+	 *
+	 * @param cycleSlipDetectionStrategy the cycleSlipDetectionStrategy to set
+	 */
+	public void setCycleSlipDetection(int cycleSlipDetectionStrategy) {
+		this.cycleSlipDetectionStrategy = cycleSlipDetectionStrategy;
 	}
 
 	/**

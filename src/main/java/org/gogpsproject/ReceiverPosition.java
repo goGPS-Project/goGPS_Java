@@ -1509,26 +1509,70 @@ public class ReceiverPosition extends Coordinates{
 		boolean lossOfLockCycleSlipMaster;
 		boolean dopplerCycleSlipRover;
 		boolean dopplerCycleSlipMaster;
+		boolean approxRangeCycleSlip;
 		boolean cycleSlip;
 		//boolean slippedPivot = false;
+		
+		// Pivot satellite ID
+		int pivotId = pos[pivot].getSatID();
+		
+		// Rover-pivot and master-pivot observed phase
+		double roverPivotPhaseObs = roverObs.getSatByIDType(pivotId, satType).getPhaserange(goGPS.getFreq());
+		double masterPivotPhaseObs = masterObs.getSatByIDType(pivotId, satType).getPhaserange(goGPS.getFreq());
+		
+		// Rover-pivot and master-pivot approximate pseudoranges
+		double roverPivotAppRange = roverSatAppRange[pivot];
+		double masterPivotAppRange = masterSatAppRange[pivot];
+		
 		for (int i = 0; i < satAvailPhase.size(); i++) {
 
 			int satID = satAvailPhase.get(i);
 			char satType = satTypeAvailPhase.get(i);					
 			
-			// cycle slip detected by loss of lock indicator (temporarily disabled)
+			// cycle slip detected by loss of lock indicator (disabled)
 			lossOfLockCycleSlipRover = roverObs.getSatByIDType(satID, satType).isPossibleCycleSlip(goGPS.getFreq());
 			lossOfLockCycleSlipMaster = masterObs.getSatByIDType(satID, satType).isPossibleCycleSlip(goGPS.getFreq());
 			lossOfLockCycleSlipRover = false;
 			lossOfLockCycleSlipMaster = false;
 
 			// cycle slip detected by Doppler predicted phase range
+			if (goGPS.getCycleSlipDetectionStrategy() == GoGPS.DOPPLER_PREDICTED_PHASE_RANGE) {
 			dopplerCycleSlipRover = this.getRoverDopplerPredictedPhase(satID) != 0.0 && (Math.abs(roverObs.getSatByIDType(satID, satType).getPhaseCycles(goGPS.getFreq())
 					- this.getRoverDopplerPredictedPhase(satID)) > goGPS.getCycleSlipThreshold());
 			dopplerCycleSlipMaster = this.getMasterDopplerPredictedPhase(satID) != 0.0 && (Math.abs(masterObs.getSatByIDType(satID, satType).getPhaseCycles(goGPS.getFreq())
 					- this.getMasterDopplerPredictedPhase(satID)) > goGPS.getCycleSlipThreshold());
+			} else {
+				dopplerCycleSlipRover = false;
+				dopplerCycleSlipMaster = false;
+			}
+			
+			// cycle slip detected by approximate pseudorange
+			if (goGPS.getCycleSlipDetectionStrategy() == GoGPS.APPROX_PSEUDORANGE && satID != pivotId) {
 
-			cycleSlip = (lossOfLockCycleSlipRover || lossOfLockCycleSlipMaster || dopplerCycleSlipRover || dopplerCycleSlipMaster);
+				// Rover-satellite and master-satellite approximate pseudorange
+				double roverSatCodeAppRange = roverSatAppRange[i];
+				double masterSatCodeAppRange = masterSatAppRange[i];
+
+				// Rover-satellite and master-satellite observed phase
+				double roverSatPhaseObs = roverObs.getSatByIDType(satID, satType).getPhaserange(goGPS.getFreq());
+				double masterSatPhaseObs = masterObs.getSatByIDType(satID, satType).getPhaserange(goGPS.getFreq());
+
+				// Estimated code pseudorange double differences
+				double codeDoubleDiffApprox = (roverSatCodeAppRange - masterSatCodeAppRange) - (roverPivotAppRange - masterPivotAppRange);
+
+				// Observed phase double differences
+				double phaseDoubleDiffObserv = (roverSatPhaseObs - masterSatPhaseObs) - (roverPivotPhaseObs - masterPivotPhaseObs);
+
+				// Store estimated ambiguity combinations and their covariance
+				double estimatedAmbiguityComb = (codeDoubleDiffApprox - phaseDoubleDiffObserv) / roverObs.getSatByIDType(satID, satType).getWavelength(goGPS.getFreq());
+
+				approxRangeCycleSlip = (KFprediction.get(i3+satID) - estimatedAmbiguityComb) > goGPS.getCycleSlipThreshold();
+
+			} else {
+				approxRangeCycleSlip = false;
+			}
+
+			cycleSlip = (lossOfLockCycleSlipRover || lossOfLockCycleSlipMaster || dopplerCycleSlipRover || dopplerCycleSlipMaster || approxRangeCycleSlip);
 
 			if (satID != pos[pivot].getSatID() && !newSatellites.contains(satID) && cycleSlip) {
 

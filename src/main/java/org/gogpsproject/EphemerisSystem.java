@@ -582,7 +582,8 @@ public abstract class EphemerisSystem {
 		double EkOld, dEk;
 
 		// Eccentric anomaly iterative computation
-		for (i = 0; i < 10; i++) {
+		int maxNumIter = 12;
+		for (i = 0; i < maxNumIter; i++) {
 			EkOld = Ek;
 			Ek = Mk + eph.getE() * Math.sin(Ek);
 			dEk = Math.IEEEremainder(Ek - EkOld, 2 * Math.PI);
@@ -591,8 +592,8 @@ public abstract class EphemerisSystem {
 		}
 
 		// TODO Display/log warning message
-		if (i == 10)
-			System.out.println("Eccentric anomaly does not converge");
+		if (i == maxNumIter)
+			System.out.println("Warning: Eccentric anomaly does not converge.");
 
 		return Ek;
 

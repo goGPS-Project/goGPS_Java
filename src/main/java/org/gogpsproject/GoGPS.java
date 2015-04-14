@@ -212,13 +212,11 @@ public class GoGPS implements Runnable{
 	 */
 	public RoverPosition runCodeStandalone(double stopAtDopThreshold) throws Exception {
 
-		
 //		GoGPS goGPS = new GoGPS(navigation, roverIn);
 //		roverPos = new ReceiverPosition(goGPS);
 
 		// Create a new object for the rover position
 		roverPos = new ReceiverPosition(this);
-
 
 		try {
 			Observations obsR = roverIn.getNextObservations();
@@ -230,11 +228,16 @@ public class GoGPS implements Runnable{
 					if (obsR.getNumSat() >= 4) { // gps.length
 						if(debug) System.out.println("OK "+obsR.getNumSat()+" satellites");
 
-						// Compute approximate positioning by Bancroft algorithm
-						roverPos.bancroft(obsR);
+						// Compute approximate positioning by iterative least-squares
+						for (int iter = 0; iter < 3; iter++) {
+							// Select all satellites
+							roverPos.selectSatellitesStandalone(obsR, 0);
+							roverPos.codeStandalone(obsR, false, true);
+							roverPos.computeGeodetic();
+						}
 
 						// If an approximate position was computed
-						if(debug) System.out.println("Valid Bancroft position? "+roverPos.isValidXYZ()+" x:"+roverPos.getX()+" y:"+roverPos.getY()+" z:"+roverPos.getZ());
+						if(debug) System.out.println("Valid approximate position? "+roverPos.isValidXYZ()+" x:"+roverPos.getX()+" y:"+roverPos.getY()+" z:"+roverPos.getZ());
 						
 						if (roverPos.isValidXYZ()) {
 							// Select available satellites
@@ -243,10 +246,10 @@ public class GoGPS implements Runnable{
 							if (roverPos.getSatAvailNumber() >= 4){
 								if(debug) System.out.println("# Num. of selected satllites: " + roverPos.getSatAvailNumber());
 								// Compute code stand-alone positioning (epoch-by-epoch solution)
-								roverPos.codeStandalone(obsR, false);
+								roverPos.codeStandalone(obsR, false, false);
 							}
 							else
-								// Discard Bancroft positioning
+								// Discard approximate positioning
 								roverPos.setXYZ(0, 0, 0);
 						}
 
@@ -317,8 +320,13 @@ public class GoGPS implements Runnable{
 				if (obsM!=null && obsR!=null){
 					if(obsR.getNumSat() >= 4) {
 
-						// Compute approximate positioning by Bancroft algorithm
-						roverPos.bancroft(obsR);
+						// Compute approximate positioning by iterative least-squares
+						for (int iter = 0; iter < 3; iter++) {
+							// Select all satellites
+							roverPos.selectSatellitesStandalone(obsR, 0);
+							roverPos.codeStandalone(obsR, false, true);
+							roverPos.computeGeodetic();
+						}
 
 						// If an approximate position was computed
 						if (roverPos.isValidXYZ()) {
@@ -333,7 +341,7 @@ public class GoGPS implements Runnable{
 								roverPos.codeDoubleDifferences(obsR,
 										obsM, masterIn.getDefinedPosition());
 							else
-								// Discard Bancroft positioning
+								// Discard approximate positioning
 								roverPos.setXYZ(0, 0, 0);
 						}
 
@@ -442,10 +450,13 @@ public class GoGPS implements Runnable{
 					boolean valid = true;
 					if (!kalmanInitialized && obsR.getNumSat() >= 4) {
 
-						if(debug)System.out.print("Try to init with bancroft ");
-
-						// Compute approximate positioning by Bancroft algorithm
-						roverPos.bancroft(obsR);
+						// Compute approximate positioning by iterative least-squares
+						for (int iter = 0; iter < 3; iter++) {
+							// Select all satellites
+							roverPos.selectSatellitesStandalone(obsR, 0);
+							roverPos.codeStandalone(obsR, false, true);
+							roverPos.computeGeodetic();
+						}
 
 						// If an approximate position was computed
 						if (roverPos.isValidXYZ()) {

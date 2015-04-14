@@ -30,14 +30,12 @@ import org.ejml.simple.SimpleMatrix;
  */
 public class TopocentricCoordinates {
 
-	private SimpleMatrix topocentric; /* Azimuth (az), elevation (el), distance (d) */
+	private SimpleMatrix topocentric = new SimpleMatrix(3, 1); /* Azimuth (az), elevation (el), distance (d) */
 
 	/**
 	 * @param origin
 	 */
 	public void computeTopocentric(Coordinates origin, Coordinates target) {
-
-		this.topocentric = new SimpleMatrix(3, 1);
 
 //		// Build rotation matrix from global to local reference systems
 //		SimpleMatrix R = globalToLocalMatrix(origin);

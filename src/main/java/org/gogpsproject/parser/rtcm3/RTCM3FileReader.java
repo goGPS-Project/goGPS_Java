@@ -92,7 +92,6 @@ public class RTCM3FileReader extends EphemerisSystem implements ObservationsProd
 		try {
 			moreObs = in.available()>0;
 		} catch (IOException e) {
-			e.printStackTrace();
 		}
 		return moreObs;
 	}

@@ -44,7 +44,7 @@ public class NVSToRinex {
 		boolean singleFreq = true;
 		boolean needApproxPos = false;
 
-		if(args.length<2){
+		if(args.length<3){
 			System.out.println("NVSToRinex <nvs file> <output directory> <marker name>");
 			return;
 		}

@@ -44,7 +44,7 @@ public class RTCM3ToRinex {
 		boolean singleFreq = false;
 		boolean needApproxPos = true;
 
-		if(args.length<2){
+		if(args.length<3){
 			System.out.println("RTCM3ToRinex <RTCM3 file> <marker name> <starting GPS week>");
 			return;
 		}

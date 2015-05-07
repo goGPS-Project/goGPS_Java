@@ -44,7 +44,7 @@ public class STQToRinex {
 		boolean singleFreq = true;
 		boolean needApproxPos = false;
 
-		if(args.length<2){
+		if(args.length<3){
 			System.out.println("STQToRinex <skytraq binary file> <output directory> <marker name>");
 			return;
 		}

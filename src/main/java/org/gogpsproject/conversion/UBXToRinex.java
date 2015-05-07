@@ -44,7 +44,7 @@ public class UBXToRinex {
 		boolean singleFreq = true;
 		boolean needApproxPos = false;
 
-		if(args.length<2){
+		if(args.length<3){
 			System.out.println("UBXToRinex <ubx file> <output directory> <marker name>");
 			return;
 		}

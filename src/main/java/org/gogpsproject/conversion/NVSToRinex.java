@@ -24,6 +24,7 @@ import java.util.Locale;
 
 import org.gogpsproject.parser.nvs.NVSFileReader;
 import org.gogpsproject.producer.rinex.RinexV2Producer;
+import org.gogpsproject.producer.rinex.RinexV3Producer;
 
 /**
  * @author Lorenzo Patocchi, cryms.com; Eugenio Realini, GReD srl
@@ -43,6 +44,14 @@ public class NVSToRinex {
 		
 		boolean singleFreq = true;
 		boolean needApproxPos = false;
+		
+		boolean gpsEnable = true;  // enable GPS data writing
+		boolean qzsEnable = true;  // enable QZSS data writing
+	    boolean gloEnable = true;  // enable GLONASS data writing	
+	    boolean galEnable = true;  // enable Galileo data writing
+	    boolean bdsEnable = false;  // enable BeiDou data writing
+
+		Boolean[] multiConstellation = {gpsEnable, qzsEnable, gloEnable, galEnable, bdsEnable};
 
 		if(args.length<3){
 			System.out.println("NVSToRinex <nvs file> <output directory> <marker name>");
@@ -58,6 +67,7 @@ public class NVSToRinex {
 		System.out.println("in :"+inFile);
 		
 		RinexV2Producer rp = new RinexV2Producer(needApproxPos, singleFreq, marker);
+//		RinexV3Producer rp = new RinexV3Producer(needApproxPos, singleFreq, marker, multiConstellation);
 		rp.setOutputDir(outDir);
 
 		NVSFileReader roverIn = new NVSFileReader(new File(inFile));

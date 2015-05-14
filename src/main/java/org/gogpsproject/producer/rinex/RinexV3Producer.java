@@ -19,6 +19,8 @@
  */
 package org.gogpsproject.producer.rinex;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -29,6 +31,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.TimeZone;
 import java.util.Vector;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import org.gogpsproject.Coordinates;
 import org.gogpsproject.EphGps;
@@ -36,6 +40,7 @@ import org.gogpsproject.IonoGps;
 import org.gogpsproject.ObservationSet;
 import org.gogpsproject.Observations;
 import org.gogpsproject.StreamEventListener;
+import org.gogpsproject.Time;
 /**
  * <p>
  * Produces Rinex 3 as StreamEventListener
@@ -56,6 +61,7 @@ public class RinexV3Producer implements StreamEventListener {
 
 	private boolean needApproxPos=false;
 	private boolean singleFreq=false;
+	private boolean standardFilename=true;
 
 	private FileOutputStream fos = null;
 	private PrintStream ps = null;
@@ -68,20 +74,30 @@ public class RinexV3Producer implements StreamEventListener {
 	private DecimalFormat dfX = new DecimalFormat("0");
 	private DecimalFormat dfXX = new DecimalFormat("00");
 	private DecimalFormat dfX4 = new DecimalFormat("0.0000");
+	private String marker;
+	private int DOYold = -1;
+	private String outputDir = "./test";
+	private boolean enableZip = false;
+	
+	boolean gpsEnable = true;  // enable GPS data writing
+	boolean qzsEnable = false;  // enable QZSS data writing
+    boolean gloEnable = false;  // enable GLONASS data writing	
+    boolean galEnable = false;  // enable Galileo data writing
+    boolean bdsEnable = false;  // enable BeiDou data writing
 
 	private final static TimeZone TZ = TimeZone.getTimeZone("GMT");
 
-	public RinexV3Producer(String outFilename, boolean needApproxPos, boolean singleFreq){
-		this.outFilename = outFilename;
+	public RinexV3Producer(boolean needApproxPos, boolean singleFreq, String marker, Boolean[] multiConstellation){
+
 		this.needApproxPos = needApproxPos;
 		this.singleFreq = singleFreq;
+		this.marker = marker;
 
-		try {
-			fos = new FileOutputStream(outFilename, false);
-			ps = new PrintStream(fos);
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
+		gpsEnable = multiConstellation[0];
+		qzsEnable = multiConstellation[1];
+		gloEnable = multiConstellation[2];
+		galEnable = multiConstellation[3];
+		bdsEnable = multiConstellation[4];
 
 		// set observation type config
 		typeConfig.add(new Type(Type.C,1));
@@ -97,7 +113,11 @@ public class RinexV3Producer implements StreamEventListener {
 			typeConfig.add(new Type(Type.D,2));
 			typeConfig.add(new Type(Type.S,2));
 		}
-
+	}
+	
+	public RinexV3Producer(boolean needApproxPos, boolean singleFreq){
+		this(needApproxPos, singleFreq, null, null);
+		this.standardFilename=false;
 	}
 
 	/* (non-Javadoc)
@@ -122,6 +142,72 @@ public class RinexV3Producer implements StreamEventListener {
 	@Override
 	public void addObservations(Observations o) {
 		synchronized (this) {
+			Time epoch = o.getRefTime();
+			int DOY = epoch.getDayOfYear();
+			if (this.standardFilename && (this.outFilename == null || this.DOYold != DOY)) {
+					streamClosed();
+					
+					if (this.enableZip && this.outFilename != null) {
+						byte[] buffer = new byte[1024];
+						 
+				    	try{
+				 
+				    		String zn = this.outFilename + ".zip";
+				    		FileOutputStream fos = new FileOutputStream(zn);
+				    		ZipOutputStream zos = new ZipOutputStream(fos);
+				    		String [] tokens = this.outFilename.split("/|\\\\");
+				    		String fn = "";
+				    		if (tokens.length > 0) {
+				    			fn = tokens[tokens.length-1].trim();
+				    		}
+				    		ZipEntry ze= new ZipEntry(fn);
+				    		zos.putNextEntry(ze);
+				    		FileInputStream in = new FileInputStream(this.outFilename);
+				 
+				    		int len;
+				    		while ((len = in.read(buffer)) > 0) {
+				    			zos.write(buffer, 0, len);
+				    		}
+				 
+				    		in.close();
+				    		zos.closeEntry();
+				    		zos.close();
+				    		
+				    		File file = new File(this.outFilename);
+				    		file.delete();
+				    		
+				    		System.out.println("--RINEX file compressed as "+zn);
+				 
+				    	}catch(IOException ex){
+				    	   ex.printStackTrace();
+				    	}
+					}
+					
+					File file = new File(outputDir);
+					if(!file.exists() || !file.isDirectory()){
+					    boolean wasDirectoryMade = file.mkdirs();
+					    if(wasDirectoryMade)System.out.println("Directory "+outputDir+" created");
+					    else System.out.println("Could not create directory "+outputDir);
+					}
+
+					char session = '0';
+					int year = epoch.getYear2c();
+					String outFile = outputDir + "/" + marker + String.format("%03d", DOY) + session + "." + year + "o";
+					File f = new File(outFile);
+					
+					while (f.exists()){
+		    			session++;
+		    			outFile = outputDir + "/" +  marker + String.format("%03d", DOY) + session + "." + year + "o";
+		    			f = new File(outFile);
+		    		}
+
+					System.out.println("Started writing RINEX file "+outFile);
+					setFilename(outFile);
+
+					DOYold = DOY;
+					
+					headerWritten = false;
+			}
 			if(!headerWritten){
 				observations.add(o);
 				if(needApproxPos && approxPosition==null){
@@ -235,16 +321,66 @@ public class RinexV3Producer implements StreamEventListener {
 		}
 		appendLine(sp(dfX.format(wf1),6,1)+sp(dfX.format(wf2),6,1)+sf("",6)+sf("",6)+sf("",6)+sf("",6)+sf("",6)+sf("",6)+sf("",12)+se("WAVELENGTH FACT L1/2",20));
 
-		String line = "G";
-		int cols=60;
-		line += sp(dfX.format(typeConfig.size()),5,3); cols -= 6;
-		for(Type t:typeConfig){
-			line += sp(t.toString(),3,1);cols -= 3;
+		if (gpsEnable) {
+			String line = "G";
+			int cols=56;
+			line += sp(dfX.format(typeConfig.size()),5,3); cols -= 6;
+			for(Type t:typeConfig){
+				line += sp(t.toString()+'C',4,1);cols -= 3;
+			}
+			line += se("",cols);
+			line += se("SYS / # / OBS TYPES ",20);
+			appendLine(line);
 		}
-		line += se("",cols);
-		line += se("SYS / # / OBS TYPES ",20);
-
-		appendLine(line);
+		
+		if (gloEnable) {
+			String line = "R";
+			int cols=56;
+			line += sp(dfX.format(typeConfig.size()),5,3); cols -= 6;
+			for(Type t:typeConfig){
+				line += sp(t.toString()+'C',4,1);cols -= 3;
+			}
+			line += se("",cols);
+			line += se("SYS / # / OBS TYPES ",20);
+			appendLine(line);
+		}
+		
+		if (galEnable) {
+			String line = "E";
+			int cols=56;
+			line += sp(dfX.format(typeConfig.size()),5,3); cols -= 6;
+			for(Type t:typeConfig){
+				line += sp(t.toString()+'X',4,1);cols -= 3;
+			}
+			line += se("",cols);
+			line += se("SYS / # / OBS TYPES ",20);
+			appendLine(line);
+		}
+		
+		if (bdsEnable) {
+			String line = "C";
+			int cols=56;
+			line += sp(dfX.format(typeConfig.size()),5,3); cols -= 6;
+			for(Type t:typeConfig){
+				line += sp(t.toString()+'I',4,1);cols -= 3;
+			}
+			line += se("",cols);
+			line += se("SYS / # / OBS TYPES ",20);
+			appendLine(line);
+		}
+		
+		if (qzsEnable) {
+			String line = "J";
+			int cols=56;
+			line += sp(dfX.format(typeConfig.size()),5,3); cols -= 6;
+			for(Type t:typeConfig){
+				line += sp(t.toString()+'C',4,1);cols -= 3;
+			}
+			line += se("",cols);
+			line += se("SYS / # / OBS TYPES ",20);
+			appendLine(line);
+		}
+		
 		//appendLine(sp(dfX.format(1),6,1)+sf("",60-1*6)+se("INTERVAL",20));
 
 		if(firstObservation!=null){
@@ -318,25 +454,25 @@ public class RinexV3Producer implements StreamEventListener {
 		line += sp(dfX.format(gpsSize),3,1);
 		writeLine(line, true);
 		
-		int cnt=0;
-		for(int i=0;i<o.getNumSat();i++){
-			if(o.getSatByIdx(i).getSatID()<=32){ // skip non GPS IDs
-				if(cnt==12){
-					writeLine(line, true);
-					line = "                                ";
-				}
-				line += "G"+dfXX.format(o.getSatID(i));
-				cnt++;
-			}
-		}
+//		int cnt=0;
+//		for(int i=0;i<o.getNumSat();i++){
+//			if(o.getSatByIdx(i).getSatID()<=32){ // skip non GPS IDs
+//				if(cnt==12){
+//					writeLine(line, true);
+//					line = "                                ";
+//				}
+//				line += "G"+dfXX.format(o.getSatID(i));
+//				cnt++;
+//			}
+//		}
 //		writeLine(line, true);
 
 		for(int i=0;i<o.getNumSat();i++){
 			if(o.getSatByIdx(i).getSatID()<=32){ // skip non GPS IDs
 				ObservationSet os = o.getSatByIdx(i);
 				line = "";
-				line += "G"+dfXX.format(o.getSatID(i));
-				cnt=0;
+				line += o.getGnssType(i)+dfXX.format(o.getSatID(i));
+				int cnt = 0;
 				for(Type t:typeConfig){
 					switch(t.getType()){
 					case Type.C:
@@ -346,6 +482,7 @@ public class RinexV3Producer implements StreamEventListener {
 						line += Double.isNaN(os.getCodeP(t.getFrequency()-1))?sf("",16):sp(dfX3.format(os.getCodeP(t.getFrequency()-1)),14,1)+"  ";
 						break;
 					case Type.L:
+						if (os.getPhaseCycles(t.getFrequency()-1) == 0 || Math.abs(os.getPhaseCycles(t.getFrequency()-1)) < 1e-15) os.setPhaseCycles(t.getFrequency()-1, Double.NaN);
 						line += Double.isNaN(os.getPhaseCycles(t.getFrequency()-1))?sf("",14):sp(dfX3.format(os.getPhaseCycles(t.getFrequency()-1)),14,1); // L
 						line += os.getLossLockInd(t.getFrequency()-1)<0?" ":dfX.format(os.getLossLockInd(t.getFrequency()-1)); // L1 Loss of Lock Indicator
 						line += Float.isNaN(os.getSignalStrength(t.getFrequency()-1))?" ":dfX.format(Math.floor(os.getSignalStrength(t.getFrequency()-1)/6)); // L1 Signal Strength Indicator
@@ -441,5 +578,23 @@ public class RinexV3Producer implements StreamEventListener {
 	public void pointToNextObservations() {
 		// TODO Auto-generated method stub
 		
+	}
+	
+	public void setFilename(String outFilename) {
+		this.outFilename = outFilename;
+		try {
+			fos = new FileOutputStream(outFilename, false);
+			ps = new PrintStream(fos);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void setOutputDir(String outDir) {
+		this.outputDir = outDir;
+	}
+	
+	public void enableCompression(boolean enableZip) {
+		this.enableZip = enableZip;
 	}
 }

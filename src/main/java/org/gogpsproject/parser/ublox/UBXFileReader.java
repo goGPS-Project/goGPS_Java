@@ -103,7 +103,6 @@ public class UBXFileReader extends EphemerisSystem implements ObservationsProduc
 		try {
 			moreObs = in.available()>0;
 		} catch (IOException e) {
-			e.printStackTrace();
 		}
 		return moreObs;
 	}

@@ -423,7 +423,7 @@ public class RinexV2Producer implements StreamEventListener {
 						line += Double.isNaN(os.getCodeP(t.getFrequency()-1))?sf("",16):sp(dfX3.format(os.getCodeP(t.getFrequency()-1)),14,1)+"  ";
 						break;
 					case Type.L:
-						if (os.getPhaseCycles(t.getFrequency()-1) == 0) os.setPhaseCycles(t.getFrequency()-1, Double.NaN);
+						if (os.getPhaseCycles(t.getFrequency()-1) == 0 || Math.abs(os.getPhaseCycles(t.getFrequency()-1)) < 1e-15) os.setPhaseCycles(t.getFrequency()-1, Double.NaN);
 						line += Double.isNaN(os.getPhaseCycles(t.getFrequency()-1))?sf("",14):sp(dfX3.format(os.getPhaseCycles(t.getFrequency()-1)),14,1); // L
 						line += os.getLossLockInd(t.getFrequency()-1)<0?" ":dfX.format(os.getLossLockInd(t.getFrequency()-1)); // L1 Loss of Lock Indicator
 						line += Float.isNaN(os.getSignalStrength(t.getFrequency()-1))?" ":dfX.format(Math.floor(os.getSignalStrength(t.getFrequency()-1)/6)); // L1 Signal Strength Indicator

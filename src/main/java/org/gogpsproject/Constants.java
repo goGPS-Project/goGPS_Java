@@ -32,7 +32,7 @@ public class Constants {
 	public static final double SPEED_OF_LIGHT = 299792458.0;
 
 	// Physical quantities as in IS-GPS
-	public static final double EARTH_GRAVITATIONAL_CONSTANT = 3.986004418e14;
+	public static final double EARTH_GRAVITATIONAL_CONSTANT = 3.986005e14;
 	public static final double EARTH_ANGULAR_VELOCITY = 7.2921151467e-5;
 	public static final double RELATIVISTIC_ERROR_CONSTANT = -4.442807633e-10;
 
@@ -41,7 +41,7 @@ public class Constants {
 
 	// WGS84 ellipsoid features
 	public static final double WGS84_SEMI_MAJOR_AXIS = 6378137;
-	public static final double WGS84_FLATTENING = 1 / 298.257223563;
+	public static final double WGS84_FLATTENING = 1 / 298.257222101;
 	public static final double WGS84_ECCENTRICITY = Math.sqrt(1 - Math.pow(
 			(1 - WGS84_FLATTENING), 2));
 

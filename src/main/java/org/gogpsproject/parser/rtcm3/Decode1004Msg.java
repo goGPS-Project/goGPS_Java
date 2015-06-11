@@ -45,6 +45,9 @@ public class Decode1004Msg implements Decode {
 	 * @see com.crysm.gogps.parser.tes#decode()
 	 */
 	public Observations decode(boolean[] bits, int week) {
+		
+		if (bits.length < 64)
+			return null;
 
 		int start = 12;
 		//header.setStationID(Bits.bitsToUInt(Bits.subset(bits, start, 12)));
@@ -67,6 +70,9 @@ public class Decode1004Msg implements Decode {
 		start += 3;
 		//System.out.println(header);
 
+		if (bits.length < 125*DF006)
+			return null;
+		
 		Observations o = new Observations(new Time(week,DF004/1000),0);
 
 		for (int i = 0; i < DF006 /*header.getNumberGPS()*/; i++) {

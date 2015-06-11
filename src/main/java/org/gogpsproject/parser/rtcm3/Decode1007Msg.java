@@ -30,6 +30,10 @@ public class Decode1007Msg implements Decode {
 	}
 
 	public Object decode(boolean[] bits, int referenceTS) {
+		
+		if (bits.length < 32)
+			return null;
+		
 		AntennaDescriptor antenna = new AntennaDescriptor();
 		int start = 12;
 		String desc = "";
@@ -37,6 +41,8 @@ public class Decode1007Msg implements Decode {
 		start += 12;
 		int cnt = (int)Bits.bitsToUInt(Bits.subset(bits, start, 8));
 		start += 8;
+		if (bits.length < 8+8*cnt)
+			return null;
 		for (int i = 0; i < cnt; i++) {
 			char value = (char) Bits.bitsToUInt(Bits.subset(bits, start, 8));
 			desc += Character.toString(value);

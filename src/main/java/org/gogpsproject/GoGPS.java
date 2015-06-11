@@ -231,9 +231,10 @@ public class GoGPS implements Runnable{
 						// Compute approximate positioning by iterative least-squares
 						for (int iter = 0; iter < 3; iter++) {
 							// Select all satellites
-							roverPos.selectSatellitesStandalone(obsR, 0);
-							roverPos.codeStandalone(obsR, false, true);
-							roverPos.computeGeodetic();
+							roverPos.selectSatellitesStandalone(obsR, -100);
+							if (roverPos.getSatAvailNumber() >= 4) {
+								roverPos.codeStandalone(obsR, false, true);
+							}
 						}
 
 						// If an approximate position was computed
@@ -323,9 +324,10 @@ public class GoGPS implements Runnable{
 						// Compute approximate positioning by iterative least-squares
 						for (int iter = 0; iter < 3; iter++) {
 							// Select all satellites
-							roverPos.selectSatellitesStandalone(obsR, 0);
-							roverPos.codeStandalone(obsR, false, true);
-							roverPos.computeGeodetic();
+							roverPos.selectSatellitesStandalone(obsR, -100);
+							if (roverPos.getSatAvailNumber() >= 4) {
+								roverPos.codeStandalone(obsR, false, true);
+							}
 						}
 
 						// If an approximate position was computed
@@ -445,17 +447,17 @@ public class GoGPS implements Runnable{
 //					System.out.println("Check!!");
 
 					
-					// If Kalman filter was not initialized and if there are at
-					// least four satellites
+					// If Kalman filter was not initialized and if there are at least four satellites
 					boolean valid = true;
 					if (!kalmanInitialized && obsR.getNumSat() >= 4) {
 
 						// Compute approximate positioning by iterative least-squares
 						for (int iter = 0; iter < 3; iter++) {
 							// Select all satellites
-							roverPos.selectSatellitesStandalone(obsR, 0);
-							roverPos.codeStandalone(obsR, false, true);
-							roverPos.computeGeodetic();
+							roverPos.selectSatellitesStandalone(obsR, -100);
+							if (roverPos.getSatAvailNumber() >= 4) {
+								roverPos.codeStandalone(obsR, false, true);
+							}
 						}
 
 						// If an approximate position was computed

@@ -949,7 +949,6 @@ public class GoGPS implements Runnable{
 		switch(runMode){
 			case RUN_MODE_STANDALONE:
 				this.runThread.setName("goGPS standalone");
-				runCodeStandalone();
 				break;
 			case RUN_MODE_DOUBLE_DIFF:
 				this.runThread.setName("goGPS double difference");

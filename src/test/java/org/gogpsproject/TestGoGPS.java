@@ -108,7 +108,7 @@ public class TestGoGPS {
 //			NavigationProducer navigationIn = new RinexNavigationParser(new File("./data/131021_1300_NVSANT_UBXREC_2NVSREC_BINR2_rover.13n"));
 			
 			/* Osaka, Japan (u-blox test) */
-			ObservationsProducer roverIn = new RinexObservationParser(new File("./data/yamatogawa_rover.obs")); /* TOPCON front */
+			ObservationsProducer roverIn = new RinexObservationParser(new File("./data/yamatogawa_rover.obs"));
 			ObservationsProducer masterIn = new RinexObservationParser(new File("./data/yamatogawa_master.obs"));
 			NavigationProducer navigationIn = new RinexNavigationParser(new File("./data/yamatogawa_rover.nav"));
 //			NavigationProducer navigationIn = new RinexNavigation(RinexNavigation.GARNER_NAVIGATION_AUTO);

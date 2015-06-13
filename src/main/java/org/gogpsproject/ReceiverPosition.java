@@ -309,8 +309,11 @@ public class ReceiverPosition extends Coordinates{
 		int nUnknowns = 4;
 		
 		// Add one unknown for each constellation in addition to the first (to estimate Inter-System Biases - ISBs)
-		String sys = getAvailGnssSystems().substring(1);
-		nUnknowns = nUnknowns + sys.length();
+		String sys = getAvailGnssSystems();
+		if (sys.length()>0) {
+			sys = sys.substring(1);
+			nUnknowns = nUnknowns + sys.length();
+		}
 
 		// Define least squares matrices
 		SimpleMatrix A;
@@ -459,7 +462,6 @@ public class ReceiverPosition extends Coordinates{
 
 		// Compute positioning in geodetic coordinates
 		this.computeGeodetic();
-
 	}
 
 	/**

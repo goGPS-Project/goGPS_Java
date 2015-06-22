@@ -69,6 +69,7 @@
 				<configuration>
 					<source>${javaVersion}</source>
 					<target>${javaVersion}</target>
+					<encoding>ISO-8859-1</encoding>
 				</configuration>
 			</plugin>
 			<plugin>

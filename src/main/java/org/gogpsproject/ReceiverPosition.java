@@ -446,7 +446,8 @@ public class ReceiverPosition extends Coordinates{
 		}
 
 		// Compute covariance matrix from A matrix [ECEF reference system]
-		covXYZ = A.extractMatrix(0, nObsAvail, 0, 3).transpose().mult(A.extractMatrix(0, nObsAvail, 0, 3)).invert();
+		covXYZ = A.transpose().mult(A).invert();
+		covXYZ = covXYZ.extractMatrix(0, 3, 0, 3);
 
 		// Allocate and build rotation matrix
 		SimpleMatrix R = new SimpleMatrix(3, 3);

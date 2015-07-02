@@ -395,7 +395,7 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 				ntripGAA = "$GPGGA," + hhmmss + "," + latn + ","
 						+ (lat < 0 ? "S" : "N") + "," + lonn + ","
 						+ (lon < 0 ? "W" : "E") + ",1,10,1.00," + (h < 0 ? 0 : h)
-						+ ",M,1,M,,,,";
+						+ ",M,1,M,,";
 				// String ntripGAA =
 				// "$GPGGA,"+hhmmss+".00,"+latn+","+(lat<0?"S":"N")+","+lonn+","+(lon<0?"W":"E")+",1,10,1.00,"+(h<0?0:h)+",M,37.3,M,,";
 				// ntripGAA =

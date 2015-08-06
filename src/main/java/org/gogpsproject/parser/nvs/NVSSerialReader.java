@@ -223,13 +223,14 @@ public class NVSSerialReader implements Runnable,StreamEventProducer {
 							Object o = reader.readMessage();
 							try {
 								if(o instanceof Observations){
+									
+									f5hMsgReceived = true;
+									
 									if(streamEventListeners!=null && o!=null){
 										for(StreamEventListener sel:streamEventListeners){
 											Observations co = sel.getCurrentObservations();
 										    sel.pointToNextObservations();
 
-										    f5hMsgReceived = true;
-										    
 										    if (this.sysTimeLogEnabled) {
 										    	dateGps = sdf1.format(new Date(co.getRefTime().getMsec()));
 										    	psSystime.println(dateGps +"       "+dateSys);

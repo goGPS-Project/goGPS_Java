@@ -240,12 +240,13 @@ public class UBXSerialReader implements Runnable,StreamEventProducer {
 							Object o = reader.readMessage();
 							try {
 								if(o instanceof Observations){
+									
+									rxmRawMsgReceived = true;
+									
 									if(streamEventListeners!=null && o!=null){
 										for(StreamEventListener sel:streamEventListeners){
 											Observations co = sel.getCurrentObservations();
 										    sel.pointToNextObservations();
-
-										    rxmRawMsgReceived = true;
 
 										    if (this.sysTimeLogEnabled) {
 										    	dateGps = sdf1.format(new Date(co.getRefTime().getMsec()));

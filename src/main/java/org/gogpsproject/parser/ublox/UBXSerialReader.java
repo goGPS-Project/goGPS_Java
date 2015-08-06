@@ -105,6 +105,14 @@ public class UBXSerialReader implements Runnable,StreamEventProducer {
 		SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 		String date1 = sdf1.format(date);
 		
+		//some u-blox receivers need their UART baudrate to be increased in order to manage measurement rates > 1 Hz
+		if (measRate > 1) {
+			System.out.println(date1+" - "+COMPort+" - Baud rate set at 115200 bits/sec");
+			UBXPortConfiguration portcfg = new UBXPortConfiguration();
+			out.write(portcfg.getByte());
+			out.flush();
+		}
+		
 		System.out.println(date1+" - "+COMPort+" - Measurement rate set at "+measRate+" Hz");
 		UBXRateConfiguration ratecfg = new UBXRateConfiguration(1000/measRate, 1, 1);
 		out.write(ratecfg.getByte());

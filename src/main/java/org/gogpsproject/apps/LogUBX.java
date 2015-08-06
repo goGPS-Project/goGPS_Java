@@ -79,9 +79,9 @@ public class LogUBX {
 		parser.addArgument("-c", "--compress")
                 .action(Arguments.storeTrue())
                 .help("if RINEX output is enabled, compress (zip) the RINEX files as they are completed.");
-		parser.addArgument("-m", "--marker")
-		        .setDefault("")
-		        .help("specify a marker name for the RINEX file [4 characters] (e.g. UBX0).");
+		parser.addArgument("-m", "--marker").nargs("+")
+		        .setDefault()
+		        .help("specify a marker name for the RINEX file [4 characters] (e.g. UBX0) of each COM port.");
 		parser.addArgument("-o", "--outdir")
                 .setDefault("./out")
                 .help("specify a directory for the output files.");
@@ -106,6 +106,9 @@ public class LogUBX {
 			} else if (ns.<String> getList("port").isEmpty()) {
 				parser.printHelp();
 				return;
+			} else if (!ns.<String> getList("marker").isEmpty() && ns.<String> getList("marker").get(0) != "" && ns.<String> getList("marker").size() != ns.<String> getList("port").size()) {
+				System.out.println("Error: if marker names are specified, their number must match that of the specified COM ports.");
+				return;
 			}
 			
 			Vector<String> availablePorts = UBXSerialConnection.getPortList(false);
@@ -117,13 +120,14 @@ public class LogUBX {
 				}
 			}
 			
-			int r = 1;
+			int r = 0;
+			
 			for (String portId : ns.<String> getList("port")) {
 				
 				UBXSerialConnection ubxSerialConn = new UBXSerialConnection(portId, 9600);
 				
 				ubxSerialConn.setMeasurementRate((Integer) ns.get("rate"));
-				if (r == 1) {
+				if (r == 0) {
 					ubxSerialConn.enableEphemeris((Integer) ns.get("ephemeris"));
 					ubxSerialConn.enableIonoParam((Integer) ns.get("ionosphere"));
 				} else {
@@ -140,11 +144,13 @@ public class LogUBX {
 					boolean singleFreq = true;
 					boolean needApproxPos = false;
 					RinexV2Producer rp = null;
-					String marker = ns.getString("marker");
-					if (marker.length() == 0) {
+					String marker = "";
+					if (ns.<String> getList("marker").isEmpty()) {
 						String portStrMarker = preparePortStringForMarker(portId);
-			    		String portStrId = portStrMarker.length() >= 2 ? portStrMarker.substring(portId.length() - 2) : "0" + portStrMarker;
+			    		String portStrId = portStrMarker.length() >= 2 ? portStrMarker.substring(portStrMarker.length() - 2) : "0" + portStrMarker;
 			    		marker = "UB" + portStrId;
+					} else {
+						marker = ns.<String> getList("marker").get(r);
 					}
 					rp = new RinexV2Producer(needApproxPos, singleFreq, marker);
 					rp.enableCompression(ns.getBoolean("compress"));

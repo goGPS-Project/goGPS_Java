@@ -124,7 +124,7 @@ public class LogUBX {
 			
 			for (String portId : ns.<String> getList("port")) {
 				
-				UBXSerialConnection ubxSerialConn = new UBXSerialConnection(portId, 9600);
+				UBXSerialConnection ubxSerialConn = new UBXSerialConnection(portId, 115200);
 				
 				ubxSerialConn.setMeasurementRate((Integer) ns.get("rate"));
 				if (r == 0) {

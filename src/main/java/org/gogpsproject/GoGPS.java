@@ -375,9 +375,118 @@ public class GoGPS implements Runnable{
 	}
 
 	/**
-	 * Run kalman filter.
+	 * Run kalman filter on code and phase standalone.
 	 */
-	public void runKalmanFilter() {
+	public void runKalmanFilterCodePhaseStandalone() {
+
+		long timeRead = System.currentTimeMillis();
+		long depRead = 0;
+
+		long timeProc = 0;
+		long depProc = 0;
+
+		// Create a new object for the rover position
+		roverPos = new ReceiverPosition(this);
+
+		// Flag to check if Kalman filter has been initialized
+		boolean kalmanInitialized = false;
+
+		try {
+
+			timeRead = System.currentTimeMillis() - timeRead;
+			depRead = depRead + timeRead;
+
+			Observations obsR = roverIn.getNextObservations();
+
+			while (obsR != null) {
+
+				if(debug)System.out.println("R:"+obsR.getRefTime().getMsec());
+
+				timeRead = System.currentTimeMillis();
+				depRead = depRead + timeRead;
+				timeProc = System.currentTimeMillis();
+
+				// If Kalman filter was not initialized and if there are at least four satellites
+				boolean valid = true;
+				if (!kalmanInitialized && obsR.getNumSat() >= 4) {
+
+					// Compute approximate positioning by iterative least-squares
+					for (int iter = 0; iter < 3; iter++) {
+						// Select all satellites
+						roverPos.selectSatellitesStandalone(obsR, -100);
+						if (roverPos.getSatAvailNumber() >= 4) {
+							roverPos.codeStandalone(obsR, false, true);
+						}
+					}
+
+					// If an approximate position was computed
+					if (roverPos.isValidXYZ()) {
+
+						// Initialize Kalman filter
+						roverPos.kalmanFilterInit(obsR, null, roverIn.getDefinedPosition());
+
+						if (roverPos.isValidXYZ())
+							kalmanInitialized = true;
+
+						if(debug)System.out.println("OK");
+					}else{
+						if(debug)System.out.println("....nope");
+					}
+				} else if (kalmanInitialized) {
+
+					// Do a Kalman filter loop
+					try{
+						roverPos.kalmanFilterLoop(obsR, null, roverIn.getDefinedPosition());
+					}catch(Exception e){
+						e.printStackTrace();
+						valid = false;
+					}
+				}
+
+				timeProc = System.currentTimeMillis() - timeProc;
+				depProc = depProc + timeProc;
+
+				if(kalmanInitialized && valid){
+					if(!validPosition){
+						notifyPositionConsumerEvent(PositionConsumer.EVENT_START_OF_TRACK);
+						validPosition = true;
+					}else
+						if(positionConsumers.size()>0){
+							RoverPosition coord = new RoverPosition(roverPos, RoverPosition.DOP_TYPE_KALMAN, roverPos.getKpDop(), roverPos.getKhDop(), roverPos.getKvDop());
+							coord.setRefTime(new Time(obsR.getRefTime().getMsec()));
+							notifyPositionConsumerAddCoordinate(coord);
+						}
+
+				}
+				//System.out.println("--------------------");
+
+				if(debug)System.out.println("-- Get next epoch ---------------------------------------------------");
+				// get next epoch
+				obsR = roverIn.getNextObservations();
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			notifyPositionConsumerEvent(PositionConsumer.EVENT_END_OF_TRACK);
+		}
+
+		int elapsedTimeSec = (int) Math.floor(depRead / 1000);
+		int elapsedTimeMillisec = (int) (depRead - elapsedTimeSec * 1000);
+		if(debug)System.out.println("\nElapsed time (read): " + elapsedTimeSec
+				+ " seconds " + elapsedTimeMillisec + " milliseconds.");
+
+		elapsedTimeSec = (int) Math.floor(depProc / 1000);
+		elapsedTimeMillisec = (int) (depProc - elapsedTimeSec * 1000);
+		if(debug)System.out.println("\nElapsed time (proc): " + elapsedTimeSec
+				+ " seconds " + elapsedTimeMillisec + " milliseconds.");
+
+	}
+
+	/**
+	 * Run kalman filter on code and phase double differences.
+	 */
+	public void runKalmanFilterCodePhaseDoubleDifferences() {
 
 		long timeRead = System.currentTimeMillis();
 		long depRead = 0;
@@ -977,7 +1086,7 @@ public class GoGPS implements Runnable{
 				runCodeDoubleDifferences();
 				break;
 			case RUN_MODE_KALMAN_FILTER:
-				runKalmanFilter();
+				runKalmanFilterCodePhaseDoubleDifferences();
 				break;
 		}
 

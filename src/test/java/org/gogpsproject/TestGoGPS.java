@@ -154,7 +154,8 @@ public class TestGoGPS {
 			goGPS.setDynamicModel(dynamicModel);
 //			goGPS.runCodeStandalone();
 //			goGPS.runCodeDoubleDifferences();
-			goGPS.runKalmanFilter();
+//			goGPS.runKalmanFilterCodePhaseStandalone();
+			goGPS.runKalmanFilterCodePhaseDoubleDifferences();
 
 			try{
 				roverIn.release(true,10000);

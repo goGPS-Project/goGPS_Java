@@ -87,7 +87,7 @@ public class TestReadObsLog {
 			goGPS.setDynamicModel(dynamicModel);
 			//goGPS.runCodeStandalone();
 			//goGPS.runCodeDoubleDifferences();
-			goGPS.runKalmanFilter();
+			goGPS.runKalmanFilterCodePhaseDoubleDifferences();
 
 			try{
 				roverIn.release(true,10000);

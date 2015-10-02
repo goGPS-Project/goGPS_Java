@@ -162,11 +162,11 @@ public class TestGoGPS {
 			}catch(InterruptedException ie){
 				ie.printStackTrace();
 			}
-//			try{
-//				masterIn.release(true,10000);
-//			}catch(InterruptedException ie){
-//				ie.printStackTrace();
-//			}
+			try{
+				masterIn.release(true,10000);
+			}catch(InterruptedException ie){
+				ie.printStackTrace();
+			}
 			try{
 				navigationIn.release(true,10000);
 			}catch(InterruptedException ie){

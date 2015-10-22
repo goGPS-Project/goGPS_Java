@@ -741,6 +741,7 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 			
 			if(out!=null && System.currentTimeMillis()-lastNtripGAAsent > ntripGAAsendDelay){
 				out.print(ntripGAA+"\r\n");
+				out.flush();
 				lastNtripGAAsent = System.currentTimeMillis();
 				if(debug) System.out.println("refresh ntripGGA:" + ntripGAA);
 			}

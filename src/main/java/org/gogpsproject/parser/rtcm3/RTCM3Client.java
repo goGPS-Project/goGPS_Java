@@ -403,7 +403,7 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 
 				ntripGAA = /* "Ntrip-GAA: "+ */ntripGAA + "*"
 						+ computeNMEACheckSum(ntripGAA);
-				if (debug)System.out.println(ntripGAA);
+				if (debug) System.out.println(ntripGAA);
 
 				// out.print(ntripGAA+"\r\n");
 			}
@@ -743,7 +743,34 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 				out.print(ntripGAA+"\r\n");
 				out.flush();
 				lastNtripGAAsent = System.currentTimeMillis();
-				if(debug) System.out.println("refresh ntripGGA:" + ntripGAA);
+				
+				int h = (int) virtualReferenceStationPosition.getGeodeticHeight();
+				double lon = virtualReferenceStationPosition.getGeodeticLongitude();
+				double lat = virtualReferenceStationPosition.getGeodeticLatitude();
+				String hhmmss = (new SimpleDateFormat("HHmmss"))
+						.format(new Date());
+				int lon_deg = (int) lon;
+				double lon_min = (lon - lon_deg) * 60;
+				double lon_nmea = lon_deg * 100 + lon_min;
+				String lonn = (new DecimalFormat("00000.000")).format(lon_nmea);
+				int lat_deg = (int) lat;
+				double lat_min = (lat - lat_deg) * 60;
+				double lat_nmea = lat_deg * 100 + lat_min;
+				String latn = (new DecimalFormat("0000.000")).format(lat_nmea);
+				
+				ntripGAA = "$GPGGA," + hhmmss + "," + latn + ","
+						+ (lat < 0 ? "S" : "N") + "," + lonn + ","
+						+ (lon < 0 ? "W" : "E") + ",1,10,1.00," + (h < 0 ? 0 : h)
+						+ ",M,1,M,,";
+				// String ntripGAA =
+				// "$GPGGA,"+hhmmss+".00,"+latn+","+(lat<0?"S":"N")+","+lonn+","+(lon<0?"W":"E")+",1,10,1.00,"+(h<0?0:h)+",M,37.3,M,,";
+				// ntripGAA =
+				// "$GPGGA,214833.00,3500.40000000,N,13900.10000000,E,1,10,1,-17.3,M,,M,,";
+
+				ntripGAA = /* "Ntrip-GAA: "+ */ntripGAA + "*"
+						+ computeNMEACheckSum(ntripGAA);
+				
+				System.out.println("refresh ntripGGA:" + ntripGAA);
 			}
 		}
 	}

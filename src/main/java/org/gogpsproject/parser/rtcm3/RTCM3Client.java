@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 Eugenio Realini, Mirko Reguzzoni, Cryms sagl - Switzerland. All Rights Reserved.
+ * Copyright (c) 2010 Eugenio Realini, Mirko Reguzzoni, Cryms sagl, Daisuke Yoshida. All Rights Reserved.
  *
  * This file is part of goGPS Project (goGPS).
  *
@@ -90,9 +90,9 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 
 	private String streamFileLogger = null;
 
-	private String ntripGAA = null;
-	private long lastNtripGAAsent = 0;
-	private long ntripGAAsendDelay = 10*1000; // 10 sec
+	private String NtripGGA = null;
+	private long lastNtripGGAsent = 0;
+	private long NtripGGAsendDelay = 10*1000; // 10 sec
 
 	public final static int CONNECTION_POLICY_LEAVE = 0;
 	public final static int CONNECTION_POLICY_RECONNECT = 1;
@@ -392,20 +392,20 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 				double lat_min = (lat - lat_deg) * 60;
 				double lat_nmea = lat_deg * 100 + lat_min;
 				String latn = (new DecimalFormat("0000.000")).format(lat_nmea);
-				ntripGAA = "$GPGGA," + hhmmss + "," + latn + ","
+				NtripGGA = "$GPGGA," + hhmmss + "," + latn + ","
 						+ (lat < 0 ? "S" : "N") + "," + lonn + ","
 						+ (lon < 0 ? "W" : "E") + ",1,10,1.00," + (h < 0 ? 0 : h)
 						+ ",M,1,M,,";
-				// String ntripGAA =
+				// String NtripGGA =
 				// "$GPGGA,"+hhmmss+".00,"+latn+","+(lat<0?"S":"N")+","+lonn+","+(lon<0?"W":"E")+",1,10,1.00,"+(h<0?0:h)+",M,37.3,M,,";
-				// ntripGAA =
+				// NtripGGA =
 				// "$GPGGA,214833.00,3500.40000000,N,13900.10000000,E,1,10,1,-17.3,M,,M,,";
 
-				ntripGAA = /* "Ntrip-GAA: "+ */ntripGAA + "*"
-						+ computeNMEACheckSum(ntripGAA);
-				if (debug) System.out.println(ntripGAA);
+				NtripGGA = /* "Ntrip-GAA: "+ */NtripGGA + "*"
+						+ computeNMEACheckSum(NtripGGA);
+				if (debug) System.out.println(NtripGGA);
 
-				// out.print(ntripGAA+"\r\n");
+				// out.print(NtripGGA+"\r\n");
 			}
 			out.print("Connection: close\r\n");
 			out.print("Authorization: Basic " + settings.getAuthbase64()
@@ -416,9 +416,9 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 			// out.println("User-Agent: NTRIP GoGps");
 			// out.println("Accept: */*\r\nConnection: close");
 			out.print("\r\n");
-			if (ntripGAA != null) {
-				out.print(ntripGAA + "\r\n");
-				lastNtripGAAsent = System.currentTimeMillis();
+			if (NtripGGA != null) {
+				out.print(NtripGGA + "\r\n");
+				lastNtripGGAsent = System.currentTimeMillis();
 			}
 			out.flush();
 			// System.out.println(" \n %%%%%%%%%%%%%%%%%%%%% \n password >>> "
@@ -739,10 +739,10 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 //				}
 //			}
 			
-			if(out!=null && System.currentTimeMillis()-lastNtripGAAsent > ntripGAAsendDelay){
-				out.print(ntripGAA+"\r\n");
+			if(out!=null && System.currentTimeMillis()-lastNtripGGAsent > NtripGGAsendDelay){
+				out.print(NtripGGA+"\r\n");
 				out.flush();
-				lastNtripGAAsent = System.currentTimeMillis();
+				lastNtripGGAsent = System.currentTimeMillis();
 				
 				int h = (int) virtualReferenceStationPosition.getGeodeticHeight();
 				double lon = virtualReferenceStationPosition.getGeodeticLongitude();
@@ -758,19 +758,19 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 				double lat_nmea = lat_deg * 100 + lat_min;
 				String latn = (new DecimalFormat("0000.000")).format(lat_nmea);
 				
-				ntripGAA = "$GPGGA," + hhmmss + "," + latn + ","
+				NtripGGA = "$GPGGA," + hhmmss + "," + latn + ","
 						+ (lat < 0 ? "S" : "N") + "," + lonn + ","
 						+ (lon < 0 ? "W" : "E") + ",1,10,1.00," + (h < 0 ? 0 : h)
 						+ ",M,1,M,,";
-				// String ntripGAA =
+				// String NtripGGA =
 				// "$GPGGA,"+hhmmss+".00,"+latn+","+(lat<0?"S":"N")+","+lonn+","+(lon<0?"W":"E")+",1,10,1.00,"+(h<0?0:h)+",M,37.3,M,,";
-				// ntripGAA =
+				// NtripGGA =
 				// "$GPGGA,214833.00,3500.40000000,N,13900.10000000,E,1,10,1,-17.3,M,,M,,";
 
-				ntripGAA = /* "Ntrip-GAA: "+ */ntripGAA + "*"
-						+ computeNMEACheckSum(ntripGAA);
+				NtripGGA = /* "Ntrip-GAA: "+ */NtripGGA + "*"
+						+ computeNMEACheckSum(NtripGGA);
 				
-				System.out.println("refresh ntripGGA:" + ntripGAA);
+				System.out.println("refresh ntripGGA:" + NtripGGA);
 			}
 		}
 	}

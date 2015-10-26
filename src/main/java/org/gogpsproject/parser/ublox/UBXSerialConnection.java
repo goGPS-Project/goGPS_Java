@@ -27,7 +27,9 @@ public class UBXSerialConnection extends AbstractSerialConnection<UBXSerialReade
 
 	private int setEphemerisRate = 10;
 	private int setIonosphereRate = 60;
-	//private Boolean enableRnxObs = true;
+	private Boolean enableDebug = false;
+	private Boolean enableTimetag = false;
+	private String outputDir = "./out";
 	private List<String> enableNmeaList;
 
 	public UBXSerialConnection(String portName, int speed) {

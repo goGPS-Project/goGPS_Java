@@ -64,25 +64,24 @@ public class ProcessRealtimeUBX {
 			 */
 			UBXSerialConnection ubxSerialConn = new UBXSerialConnection(comPort, 115200);
 			ubxSerialConn.init();
-
-			ObservationsBuffer roverIn = new ObservationsBuffer(ubxSerialConn,"./out/roverOut.dat");
-			NavigationProducer navigationIn = roverIn;
-			roverIn.init();
-
-			// wait for some data to buffer
-			Thread.sleep(5000);
-
-			GoGPS goGPS = new GoGPS(navigationIn, roverIn, null);
-			goGPS.setDynamicModel(dynamicModel);
-			// retrieve initial position
-			Coordinates initialPosition = goGPS.runCodeStandalone(3);
-
+			ubxSerialConn.enableDebug(false);
+			
 			Date date = new Date();
 			SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd_HHmmss");
 			String date1 = sdf1.format(date);
 
+			ObservationsBuffer roverIn = new ObservationsBuffer(ubxSerialConn,"./out/" + date1 + ".dat");
+			NavigationProducer navigationIn = roverIn;
+			roverIn.init();
+
+			// wait for some data to buffer
+			Thread.sleep(2000);
+
+			GoGPS goGPS = new GoGPS(navigationIn, roverIn, null);
+			goGPS.setDynamicModel(dynamicModel);
+
 			// set Output
-			String outPath = "test/" + date1 + ".kml";
+			String outPath = "./out/" + date1 + ".kml";
 			KmlProducer kml = new KmlProducer(outPath, 2.5, 0);
 			goGPS.addPositionConsumerListener(kml);
 

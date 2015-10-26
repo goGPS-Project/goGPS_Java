@@ -226,7 +226,7 @@ public class GoGPS implements Runnable{
 				//try{
 					// If there are at least four satellites
 					if (obsR.getNumSat() >= 4) { // gps.length
-						if(debug) System.out.println("OK "+obsR.getNumSat()+" satellites");
+						if(debug) System.out.println("Total number of satellites: "+obsR.getNumSat());
 
 						// Compute approximate positioning by iterative least-squares
 						for (int iter = 0; iter < 3; iter++) {
@@ -238,14 +238,14 @@ public class GoGPS implements Runnable{
 						}
 
 						// If an approximate position was computed
-						if(debug) System.out.println("Valid approximate position? "+roverPos.isValidXYZ()+" x:"+roverPos.getX()+" y:"+roverPos.getY()+" z:"+roverPos.getZ());
+						if(debug) System.out.println("Valid approximate position? "+roverPos.isValidXYZ()+" X:"+roverPos.getX()+" Y:"+roverPos.getY()+" Z:"+roverPos.getZ());
 						
 						if (roverPos.isValidXYZ()) {
 							// Select available satellites
 							roverPos.selectSatellitesStandalone(obsR);
 							
 							if (roverPos.getSatAvailNumber() >= 4){
-								if(debug) System.out.println("# Num. of selected satllites: " + roverPos.getSatAvailNumber());
+								if(debug) System.out.println("Number of selected satellites: " + roverPos.getSatAvailNumber());
 								// Compute code stand-alone positioning (epoch-by-epoch solution)
 								roverPos.codeStandalone(obsR, false, false);
 							}
@@ -254,7 +254,7 @@ public class GoGPS implements Runnable{
 								roverPos.setXYZ(0, 0, 0);
 						}
 
-						if(debug)System.out.println("Valid LS position? "+roverPos.isValidXYZ()+" x:"+roverPos.getX()+" y:"+roverPos.getY()+" z:"+roverPos.getZ());
+						if(debug)System.out.println("Valid LS position? "+roverPos.isValidXYZ()+" X:"+roverPos.getX()+" Y:"+roverPos.getY()+" Z:"+roverPos.getZ());
 						if (roverPos.isValidXYZ()) {
 							if(!validPosition){
 								notifyPositionConsumerEvent(PositionConsumer.EVENT_START_OF_TRACK);
@@ -266,7 +266,8 @@ public class GoGPS implements Runnable{
 									coord.setRefTime(new Time(obsR.getRefTime().getMsec()));
 									notifyPositionConsumerAddCoordinate(coord);
 								}
-								if(debug)System.out.println("-------------------- "+roverPos.getpDop());
+								if(debug)System.out.println("PDOP: "+roverPos.getpDop());
+								if(debug)System.out.println("------------------------------------------------------------");
 								if(stopAtDopThreshold>0.0 && roverPos.getpDop()<stopAtDopThreshold){
 									return coord;
 								}

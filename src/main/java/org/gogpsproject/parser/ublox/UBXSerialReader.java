@@ -57,7 +57,7 @@ public class UBXSerialReader implements Runnable,StreamEventProducer {
 	private boolean sysTimeLogEnabled = false;
 	private List<String> requestedNmeaMsgs = null;
 	private String dateFile;
-	private String outputDir = "./test";
+	private String outputDir = "./out";
 	private int msgAidEphRate = 0; //seconds
 	private int msgAidHuiRate = 0; //seconds
 	private boolean debugModeEnabled = false;
@@ -128,7 +128,7 @@ public class UBXSerialReader implements Runnable,StreamEventProducer {
 
 		int nmeaRequested[];
 		try {
-			if (requestedNmeaMsgs.isEmpty()) {
+			if (requestedNmeaMsgs != null) {
 				System.out.println(date1+" - "+COMPort+" - NMEA messages disabled");
 			} else {
 				nmeaRequested = new int[requestedNmeaMsgs.size()];
@@ -203,7 +203,7 @@ public class UBXSerialReader implements Runnable,StreamEventProducer {
 			System.out.println(date1+" - "+COMPort+" - System time logging disabled");
 		}
 		
-		if (!requestedNmeaMsgs.isEmpty()) {
+		if (requestedNmeaMsgs != null) {
 			try {
 				System.out.println(date1+" - "+COMPort+" - Logging NMEA sentences in "+outputDir+"/"+COMPortStr+ "_" + dateFile + "_NMEA.txt");
 				fos_nmea = new FileOutputStream(outputDir+"/"+COMPortStr+ "_" + dateFile + "_NMEA.txt");
@@ -254,7 +254,7 @@ public class UBXSerialReader implements Runnable,StreamEventProducer {
 									if(streamEventListeners!=null && o!=null){
 										for(StreamEventListener sel:streamEventListeners){
 											Observations co = sel.getCurrentObservations();
-										    sel.pointToNextObservations();
+										    //sel.pointToNextObservations();
 
 										    if (this.sysTimeLogEnabled) {
 										    	dateGps = sdf1.format(new Date(co.getRefTime().getMsec()));
@@ -266,7 +266,7 @@ public class UBXSerialReader implements Runnable,StreamEventProducer {
 							} catch (NullPointerException e) {
 							}
 						}else if(data == 0x24){
-							if (!requestedNmeaMsgs.isEmpty()) {
+							if (requestedNmeaMsgs != null) {
 								String sentence = "" + (char) data;
 								data = in.read();
 								if(data == 0x47) {

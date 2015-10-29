@@ -35,9 +35,11 @@ import java.util.Date;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
+import java.util.TimeZone;
 import java.util.Vector;
 
 import org.gogpsproject.Coordinates;
@@ -109,7 +111,7 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 	private double previousTime = -1;
 	private String outputDir = "./test";
 	private String markerName = "MMMM";
-
+	
 	/**
 	 * @return the exitPolicy
 	 */
@@ -320,7 +322,11 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 		    else System.out.println("Could not create directory "+outputDir);
 		}
 		
-		Date date = new Date();
+		TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(new Date());
+		Date date = cal.getTime(); 
+		
 		SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 		String date1 = sdf1.format(date);
 		SimpleDateFormat sdfFile = new SimpleDateFormat("yyyy-MM-dd_HHmmss");

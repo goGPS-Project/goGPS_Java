@@ -1554,7 +1554,7 @@ public class ReceiverPosition extends Coordinates{
 		// Cycle-slip detection
 		boolean lossOfLockCycleSlipRover;
 		boolean dopplerCycleSlipRover;
-		boolean approxRangeCycleSlip;
+		boolean obsCodeCycleSlip;
 		boolean cycleSlip;
 		
 		for (int i = 0; i < satAvailPhase.size(); i++) {
@@ -1573,28 +1573,21 @@ public class ReceiverPosition extends Coordinates{
 			} else {
 				dopplerCycleSlipRover = false;
 			}
-			
-			// cycle slip detected by approximate pseudorange
-			if (goGPS.getCycleSlipDetectionStrategy() == GoGPS.APPROX_PSEUDORANGE) {
 
-				// Rover-satellite approximate pseudorange
-				double roverSatCodeAppRange = roverSatAppRange[i];
+			// Rover-satellite observed pseudorange
+			double roverSatCodeObs = roverObs.getSatByIDType(satID, satType).getCodeC(goGPS.getFreq());
 
-				// Rover-satellite observed phase
-				double roverSatPhaseObs = roverObs.getSatByIDType(satID, satType).getPhaserange(goGPS.getFreq());
+			// Rover-satellite observed phase
+			double roverSatPhaseObs = roverObs.getSatByIDType(satID, satType).getPhaserange(goGPS.getFreq());
 
-				// Store estimated ambiguity combinations and their covariance
-				double estimatedAmbiguity = (roverSatCodeAppRange - roverSatPhaseObs - 2*roverSatIonoCorr[i]) / roverObs.getSatByIDType(satID, satType).getWavelength(goGPS.getFreq());
+			// Store estimated ambiguity combinations and their covariance
+			double estimatedAmbiguity = (roverSatCodeObs - roverSatPhaseObs - 2*roverSatIonoCorr[i]) / roverObs.getSatByIDType(satID, satType).getWavelength(goGPS.getFreq());
 
-				approxRangeCycleSlip = (KFprediction.get(i3+satID) - estimatedAmbiguity) > goGPS.getCycleSlipThreshold();
+			obsCodeCycleSlip = Math.abs(KFprediction.get(i3+satID) - estimatedAmbiguity) > goGPS.getCycleSlipThreshold();
 
-			} else {
-				approxRangeCycleSlip = false;
-			}
+			cycleSlip = (lossOfLockCycleSlipRover || dopplerCycleSlipRover || obsCodeCycleSlip);
 
-			cycleSlip = (lossOfLockCycleSlipRover || dopplerCycleSlipRover || approxRangeCycleSlip);
-
-			if (satID != pos[pivot].getSatID() && !newSatellites.contains(satID) && cycleSlip) {
+			if (!newSatellites.contains(satID) && cycleSlip) {
 
 				slippedSatellites.add(satID);
 
@@ -1797,7 +1790,7 @@ public class ReceiverPosition extends Coordinates{
 				// Store estimated ambiguity combinations and their covariance
 				double estimatedAmbiguityComb = (codeDoubleDiffApprox - phaseDoubleDiffObserv) / roverObs.getSatByIDType(satID, satType).getWavelength(goGPS.getFreq());
 
-				approxRangeCycleSlip = (KFprediction.get(i3+satID) - estimatedAmbiguityComb) > goGPS.getCycleSlipThreshold();
+				approxRangeCycleSlip = (Math.abs(KFprediction.get(i3+satID) - estimatedAmbiguityComb)) > goGPS.getCycleSlipThreshold();
 
 			} else {
 				approxRangeCycleSlip = false;
@@ -1993,7 +1986,7 @@ public class ReceiverPosition extends Coordinates{
 					A.set(k, 3, 1); /* clock error */
 
 					// Add the approximate pseudorange value to b
-					b.set(k, 0, roverSatAppRange[i]);
+					b.set(k, 0, roverSatAppRange[i] - pos[i].getSatelliteClockError() * Constants.SPEED_OF_LIGHT);
 
 					// Add the observed pseudorange value to y0
 					y0.set(k, 0, roverObs.getSatByIDType(id, satType).getPseudorange(goGPS.getFreq()));
@@ -2003,8 +1996,7 @@ public class ReceiverPosition extends Coordinates{
 					ionoCorr.set(k, 0, roverSatIonoCorr[i]);
 
 					// Fill in the cofactor matrix
-					double roverSatWeight = computeWeight(roverTopo[i].getElevation(),
-							roverObs.getSatByIDType(id, satType).getSignalStrength(goGPS.getFreq()));
+					double roverSatWeight = computeWeight(roverTopo[i].getElevation(), roverObs.getSatByIDType(id, satType).getSignalStrength(goGPS.getFreq()));
 					Qcode.set(k, k, Qcode.get(k, k) + goGPS.getStDevCode(roverObs.getSatByID(id), goGPS.getFreq()) * roverSatWeight);
 
 					// Increment available satellites counter
@@ -2033,15 +2025,15 @@ public class ReceiverPosition extends Coordinates{
 					if (satAmb.contains(id)) {
 						A.set(k, 4 + satAmb.indexOf(id), -roverObs.getSatByIDType(id, satType).getWavelength(goGPS.getFreq())); /* N */
 
-						// Add the observed pseudorange value to y0
+						// Add the observed phase range value to y0
 						y0.set(k, 0, roverObs.getSatByIDType(id, satType).getPhaserange(goGPS.getFreq()));
 					} else {
-						// Add the observed pseudorange value + known N to y0
-						y0.set(k, 0, roverObs.getSatByIDType(id, satType).getPhaserange(goGPS.getFreq()) + KFprediction.get(i3 + id));
+						// Add the observed phase range value + known N to y0
+						y0.set(k, 0, roverObs.getSatByIDType(id, satType).getPhaserange(goGPS.getFreq()) + KFprediction.get(i3 + id) * roverObs.getSatByIDType(id, satType).getWavelength(goGPS.getFreq()));
 					}
 
 					// Add the approximate pseudorange value to b
-					b.set(k, 0, roverSatAppRange[i]);
+					b.set(k, 0, roverSatAppRange[i] - pos[i].getSatelliteClockError() * Constants.SPEED_OF_LIGHT);
 
 					// Fill in troposphere and ionosphere corrections
 					tropoCorr.set(k, 0, roverSatTropoCorr[i]);
@@ -2075,6 +2067,9 @@ public class ReceiverPosition extends Coordinates{
 
 			// Least squares solution x = ((A'*Q^-1*A)^-1)*A'*Q^-1*(y0-b);
 			x = A.transpose().mult(Q.invert()).mult(A).invert().mult(A.transpose()).mult(Q.invert()).mult(y0.minus(b));
+			
+			// Receiver clock error
+			this.receiverClockError = x.get(3) / Constants.SPEED_OF_LIGHT;
 
 			// Estimation of the variance of the observation error
 			vEstim = y0.minus(A.mult(x).plus(b));
@@ -2096,8 +2091,7 @@ public class ReceiverPosition extends Coordinates{
 				KFstate.set(i3 + satAmb.get(i), 0, estimatedAmbiguities[i]);
 
 				// Store the variance of the estimated ambiguity
-				Cee.set(i3 + satAmb.get(i), i3 + satAmb.get(i),
-						estimatedAmbiguitiesCovariance[i]);
+				Cee.set(i3 + satAmb.get(i), i3 + satAmb.get(i), estimatedAmbiguitiesCovariance[i]);
 			}
 		} else {
 			for (int i = 0; i < satAmb.size(); i++) {
@@ -2105,8 +2099,7 @@ public class ReceiverPosition extends Coordinates{
 				KFprediction.set(i3 + satAmb.get(i), 0, estimatedAmbiguities[i]);
 
 				// Store the variance of the estimated ambiguity
-				Cvv.set(i3 + satAmb.get(i), i3 + satAmb.get(i),
-						Math.pow(goGPS.getStDevAmbiguity(), 2));
+				Cvv.set(i3 + satAmb.get(i), i3 + satAmb.get(i), Math.pow(goGPS.getStDevAmbiguity(), 2));
 			}
 		}
 	}

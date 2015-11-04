@@ -126,7 +126,7 @@ public class GoGPS implements Runnable{
 	public final static int AMBIGUITY_LS = 2;
 
 	/** The ambiguity strategy. */
-	private int ambiguityStrategy = AMBIGUITY_LS;
+	private int ambiguityStrategy = AMBIGUITY_APPROX;
 
 	/** The Elevation cutoff. */
 	private double cutoff = 15; // Elevation cutoff

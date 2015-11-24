@@ -86,7 +86,8 @@ public class ProcessRealtimeUBX {
 			goGPS.addPositionConsumerListener(kml);
 
 			// run blocking (never exit in live-tracking)
-			goGPS.runCodeStandalone();
+//			goGPS.runCodeStandalone();
+			goGPS.runKalmanFilterCodePhaseStandalone();
 
 			// run in background
 			goGPS.runThreadMode(GoGPS.RUN_MODE_STANDALONE);

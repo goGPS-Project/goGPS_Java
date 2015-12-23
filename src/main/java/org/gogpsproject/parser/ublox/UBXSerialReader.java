@@ -128,7 +128,7 @@ public class UBXSerialReader implements Runnable,StreamEventProducer {
 
 		int nmeaRequested[];
 		try {
-			if (requestedNmeaMsgs != null) {
+			if (requestedNmeaMsgs == null) {
 				System.out.println(date1+" - "+COMPort+" - NMEA messages disabled");
 			} else {
 				nmeaRequested = new int[requestedNmeaMsgs.size()];

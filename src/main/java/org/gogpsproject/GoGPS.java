@@ -133,7 +133,8 @@ public class GoGPS implements Runnable{
 
 	public final static int RUN_MODE_STANDALONE = 0;
 	public final static int RUN_MODE_DOUBLE_DIFF = 1;
-	public final static int RUN_MODE_KALMAN_FILTER = 2;
+	public final static int RUN_MODE_KALMAN_FILTER_STANDALONE = 2;
+	public final static int RUN_MODE_KALMAN_FILTER_DOUBLE_DIFF = 3;
 
 	private int runMode = -1;
 	private Thread runThread=null;
@@ -1065,8 +1066,11 @@ public class GoGPS implements Runnable{
 			case RUN_MODE_DOUBLE_DIFF:
 				this.runThread.setName("goGPS double difference");
 				break;
-			case RUN_MODE_KALMAN_FILTER:
-				this.runThread.setName("goGPS Kalman filter");
+			case RUN_MODE_KALMAN_FILTER_STANDALONE:
+				this.runThread.setName("goGPS Kalman filter standalone");
+				break;
+			case RUN_MODE_KALMAN_FILTER_DOUBLE_DIFF:
+				this.runThread.setName("goGPS Kalman filter double difference");
 				break;
 		}
 		this.runThread.start();
@@ -1086,7 +1090,10 @@ public class GoGPS implements Runnable{
 			case RUN_MODE_DOUBLE_DIFF:
 				runCodeDoubleDifferences();
 				break;
-			case RUN_MODE_KALMAN_FILTER:
+			case RUN_MODE_KALMAN_FILTER_STANDALONE:
+				runKalmanFilterCodePhaseStandalone();
+				break;
+			case RUN_MODE_KALMAN_FILTER_DOUBLE_DIFF:
 				runKalmanFilterCodePhaseDoubleDifferences();
 				break;
 		}

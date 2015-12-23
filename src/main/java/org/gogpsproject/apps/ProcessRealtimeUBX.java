@@ -85,12 +85,12 @@ public class ProcessRealtimeUBX {
 			KmlProducer kml = new KmlProducer(outPath, 2.5, 0);
 			goGPS.addPositionConsumerListener(kml);
 
-			// run blocking (never exit in live-tracking)
+			// run (never exit in live-tracking)
 //			goGPS.runCodeStandalone();
-			goGPS.runKalmanFilterCodePhaseStandalone();
+//			goGPS.runKalmanFilterCodePhaseStandalone();
 
 			// run in background
-			goGPS.runThreadMode(GoGPS.RUN_MODE_STANDALONE);
+			goGPS.runThreadMode(GoGPS.RUN_MODE_KALMAN_FILTER_STANDALONE);
 
 			// wait for 1 minute
 			Thread.sleep(120*1000);

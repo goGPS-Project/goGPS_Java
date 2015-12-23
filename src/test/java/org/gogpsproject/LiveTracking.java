@@ -138,7 +138,7 @@ public class LiveTracking {
 			// goGPS.runKalmanFilter();
 
 			// run in background
-			goGPS.runThreadMode(GoGPS.RUN_MODE_KALMAN_FILTER);
+			goGPS.runThreadMode(GoGPS.RUN_MODE_KALMAN_FILTER_DOUBLE_DIFF);
 
 			ArrayList<String> kmlFiles = new ArrayList<String>();
 			kmlFiles.add(date1 + ".kml");

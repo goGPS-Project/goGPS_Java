@@ -427,12 +427,14 @@ public class GoGPS implements Runnable{
 						// Initialize Kalman filter
 						roverPos.kalmanFilterInit(obsR, null, roverIn.getDefinedPosition());
 
-						if (roverPos.isValidXYZ())
+						if (roverPos.isValidXYZ()) {
 							kalmanInitialized = true;
-
-						if(debug)System.out.println("OK");
+							if(debug)System.out.println("Kalman filter initialized.");
+						} else {
+							if(debug)System.out.println("Kalman filter not initialized.");
+						}
 					}else{
-						if(debug)System.out.println("....nope");
+						if(debug)System.out.println("A-priori position (from code observations) is not valid.");
 					}
 				} else if (kalmanInitialized) {
 
@@ -577,12 +579,14 @@ public class GoGPS implements Runnable{
 							// Initialize Kalman filter
 							roverPos.kalmanFilterInit(obsR, obsM, masterIn.getDefinedPosition());
 
-							if (roverPos.isValidXYZ())
+							if (roverPos.isValidXYZ()) {
 								kalmanInitialized = true;
-
-							if(debug)System.out.println("OK");
+								if(debug)System.out.println("Kalman filter initialized.");
+							} else {
+								if(debug)System.out.println("Kalman filter not initialized.");
+							}
 						}else{
-							if(debug)System.out.println("....nope");
+							if(debug)System.out.println("A-priori position (from code observations) is not valid.");
 						}
 					} else if (kalmanInitialized) {
 

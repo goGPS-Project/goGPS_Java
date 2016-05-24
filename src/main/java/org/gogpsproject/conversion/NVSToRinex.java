@@ -54,7 +54,7 @@ public class NVSToRinex {
 		Boolean[] multiConstellation = {gpsEnable, qzsEnable, gloEnable, galEnable, bdsEnable};
 
 		if(args.length<3){
-			System.out.println("NVSToRinex <nvs file> <output directory> <marker name>");
+			System.out.println("NVSToRinex <nvs file> <output directory> <marker name> [<min DOY>]");
 			return;
 		}
 
@@ -62,12 +62,15 @@ public class NVSToRinex {
 		String inFile = args[p++];
 		String outDir = args[p++];
 		String marker = args[p++];
+		int minDOY = 0;
+		if (args.length>3)
+			minDOY = Integer.parseInt(args[p++]);
 		//String outFile = inFile.indexOf(".bin")>0?inFile.substring(0, inFile.indexOf(".bin"))+".obs":inFile+".obs";
 
 		System.out.println("in :"+inFile);
 		
-		RinexV2Producer rp = new RinexV2Producer(needApproxPos, singleFreq, marker);
-//		RinexV3Producer rp = new RinexV3Producer(needApproxPos, singleFreq, marker, multiConstellation);
+		RinexV2Producer rp = new RinexV2Producer(needApproxPos, singleFreq, marker, minDOY);
+//		RinexV3Producer rp = new RinexV3Producer(needApproxPos, singleFreq, marker, multiConstellation, minDOY);
 		rp.setOutputDir(outDir);
 
 		NVSFileReader roverIn = new NVSFileReader(new File(inFile));

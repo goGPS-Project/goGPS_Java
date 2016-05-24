@@ -45,7 +45,7 @@ public class RTCM3ToRinex {
 		boolean needApproxPos = true;
 
 		if(args.length<3){
-			System.out.println("RTCM3ToRinex <RTCM3 file> <marker name> <starting GPS week>");
+			System.out.println("RTCM3ToRinex <RTCM3 file> <marker name> <starting GPS week> [<min DOY>]");
 			return;
 		}
 
@@ -53,10 +53,13 @@ public class RTCM3ToRinex {
 		String inFile = args[p++];
 		String marker = args[p++];
 		int week =Integer.parseInt(args[p++]);
+		int minDOY = 0;
+		if (args.length>3)
+			minDOY = Integer.parseInt(args[p++]);
 
 		System.out.println("in :"+inFile);
 		
-		RinexV2Producer rp = new RinexV2Producer(needApproxPos, singleFreq, marker);
+		RinexV2Producer rp = new RinexV2Producer(needApproxPos, singleFreq, marker, minDOY);
 
 		RTCM3FileReader masterIn = new RTCM3FileReader(new File(inFile), week);
 		try {

@@ -78,17 +78,19 @@ public class RinexV2Producer implements StreamEventListener {
 	private DecimalFormat dfXX = new DecimalFormat("00");
 	private DecimalFormat dfX4 = new DecimalFormat("0.0000");
 	private String marker;
+	private int minDOY = 0;
 	private int DOYold = -1;
 	private String outputDir = "./test";
 	private boolean enableZip = false;
 
 	private final static TimeZone TZ = TimeZone.getTimeZone("GMT");
 
-	public RinexV2Producer(boolean needApproxPos, boolean singleFreq, String marker){
+	public RinexV2Producer(boolean needApproxPos, boolean singleFreq, String marker, int minDOY){
 		
 		this.needApproxPos = needApproxPos;
 		this.singleFreq = singleFreq;
 		this.marker = marker;
+		this.minDOY = minDOY;
 
 		// set observation type config
 		typeConfig.add(new Type(Type.C,1));
@@ -107,8 +109,12 @@ public class RinexV2Producer implements StreamEventListener {
 
 	}
 	
+	public RinexV2Producer(boolean needApproxPos, boolean singleFreq, String marker){
+		this(needApproxPos, singleFreq, marker, 0);
+	}
+	
 	public RinexV2Producer(boolean needApproxPos, boolean singleFreq){
-		this(needApproxPos, singleFreq, null);
+		this(needApproxPos, singleFreq, null, 0);
 		this.standardFilename=false;
 	}
 
@@ -136,97 +142,99 @@ public class RinexV2Producer implements StreamEventListener {
 		synchronized (this) {
 			Time epoch = o.getRefTime();
 			int DOY = epoch.getDayOfYear();
-			if (this.standardFilename && (this.outFilename == null || this.DOYold != DOY)) {
+			if (DOY >= this.minDOY) {
+				if (this.standardFilename && (this.outFilename == null || this.DOYold != DOY)) {
 					streamClosed();
-					
+
 					if (this.enableZip && this.outFilename != null) {
 						byte[] buffer = new byte[1024];
-						 
-				    	try{
-				 
-				    		String zn = this.outFilename + ".zip";
-				    		FileOutputStream fos = new FileOutputStream(zn);
-				    		ZipOutputStream zos = new ZipOutputStream(fos);
-				    		String [] tokens = this.outFilename.split("/|\\\\");
-				    		String fn = "";
-				    		if (tokens.length > 0) {
-				    			fn = tokens[tokens.length-1].trim();
-				    		}
-				    		ZipEntry ze= new ZipEntry(fn);
-				    		zos.putNextEntry(ze);
-				    		FileInputStream in = new FileInputStream(this.outFilename);
-				 
-				    		int len;
-				    		while ((len = in.read(buffer)) > 0) {
-				    			zos.write(buffer, 0, len);
-				    		}
-				 
-				    		in.close();
-				    		zos.closeEntry();
-				    		zos.close();
-				    		
-				    		File file = new File(this.outFilename);
-				    		file.delete();
-				    		
-				    		System.out.println("--RINEX file compressed as "+zn);
-				 
-				    	}catch(IOException ex){
-				    	   ex.printStackTrace();
-				    	}
+
+						try{
+
+							String zn = this.outFilename + ".zip";
+							FileOutputStream fos = new FileOutputStream(zn);
+							ZipOutputStream zos = new ZipOutputStream(fos);
+							String [] tokens = this.outFilename.split("/|\\\\");
+							String fn = "";
+							if (tokens.length > 0) {
+								fn = tokens[tokens.length-1].trim();
+							}
+							ZipEntry ze= new ZipEntry(fn);
+							zos.putNextEntry(ze);
+							FileInputStream in = new FileInputStream(this.outFilename);
+
+							int len;
+							while ((len = in.read(buffer)) > 0) {
+								zos.write(buffer, 0, len);
+							}
+
+							in.close();
+							zos.closeEntry();
+							zos.close();
+
+							File file = new File(this.outFilename);
+							file.delete();
+
+							System.out.println("--RINEX file compressed as "+zn);
+
+						}catch(IOException ex){
+							ex.printStackTrace();
+						}
 					}
-					
+
 					File file = new File(outputDir);
 					if(!file.exists() || !file.isDirectory()){
-					    boolean wasDirectoryMade = file.mkdirs();
-					    if(wasDirectoryMade)System.out.println("Directory "+outputDir+" created");
-					    else System.out.println("Could not create directory "+outputDir);
+						boolean wasDirectoryMade = file.mkdirs();
+						if(wasDirectoryMade)System.out.println("Directory "+outputDir+" created");
+						else System.out.println("Could not create directory "+outputDir);
 					}
 
 					char session = '0';
 					int year = epoch.getYear2c();
 					String outFile = outputDir + "/" + marker + String.format("%03d", DOY) + session + "." + year + "o";
 					File f = new File(outFile);
-					
+
 					while (f.exists()){
-		    			session++;
-		    			outFile = outputDir + "/" +  marker + String.format("%03d", DOY) + session + "." + year + "o";
-		    			f = new File(outFile);
-		    		}
+						session++;
+						outFile = outputDir + "/" +  marker + String.format("%03d", DOY) + session + "." + year + "o";
+						f = new File(outFile);
+					}
 
 					System.out.println("Started writing RINEX file "+outFile);
 					setFilename(outFile);
 
 					DOYold = DOY;
-					
+
 					headerWritten = false;
-			}
-			if(!headerWritten){
-				observations.add(o);
-				if(needApproxPos && approxPosition==null){
-					return;
 				}
+				if(!headerWritten){
+					observations.add(o);
+					if(needApproxPos && approxPosition==null){
+						return;
+					}
 
-				try {
-					writeHeader(approxPosition, observations.firstElement());
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-
-				for(Observations obs:observations){
 					try {
-						writeObservation(obs);
+						writeHeader(approxPosition, observations.firstElement());
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
-				}
 
-				observations.removeAllElements();
-				headerWritten = true;
-			}else{
-				try {
-					writeObservation(o);
-				} catch (IOException e) {
-					e.printStackTrace();
+					for(Observations obs:observations){
+						try {
+							writeObservation(obs);
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
+
+					observations.removeAllElements();
+					headerWritten = true;
+				}else{
+					try {
+						writeObservation(o);
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 				}
 			}
 		}

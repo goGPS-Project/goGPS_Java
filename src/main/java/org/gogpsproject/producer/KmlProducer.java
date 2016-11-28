@@ -173,7 +173,7 @@ public class KmlProducer implements PositionConsumer, Runnable {
 				"  <Style id=\"LineStyle_worst\"><LineStyle><color>"+worstOpacity+worstColorLine+"</color><width>"+worstLinePixelWidth+"</width></LineStyle><PolyStyle><color>"+worstOpacity+worstColorLine+"</color></PolyStyle></Style>\n"+
 				"  <Style id=\"LineStyle_good\"><LineStyle><color>"+goodOpacity+goodColorLine+"</color><width>"+goodLinePixelWidth+"</width></LineStyle><PolyStyle><color>"+goodOpacity+goodColorLine+"</color></PolyStyle></Style>\n"+
 				"  <Style id=\"CircleStyle\"><LineStyle><color>"+circleOpacity+circleColorLine+"</color><width>"+circlePixelWidth+"</width></LineStyle><PolyStyle><color>"+circleOpacity+circleColorLine+"</color></PolyStyle></Style>\n"+
-				"  <Style id=\"dot-icon\"><IconStyle><Icon><href>http://www.eriadne.org/icons/MapPointer.png</href></Icon></IconStyle></Style>\n"+
+				"  <Style id=\"dot-icon\"><IconStyle><Icon><href>http://maps.google.com/mapfiles/kml/shapes/donut.png</href></Icon></IconStyle></Style>\n"+
 				"  <Folder><Placemark>\n"+
 				"    <name></name>\n"+
 				"    <description></description>\n"+

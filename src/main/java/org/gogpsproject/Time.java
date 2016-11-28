@@ -39,57 +39,59 @@ import java.util.TimeZone;
 public class Time {
 	private long msec; /* time in milliseconds since January 1, 1970 (UNIX standard) */
 	private double fraction; /* fraction of millisecond */
-	
+
 	private Date[] leapDates;
-  private Calendar gc =  GregorianCalendar.getInstance();
-  TimeZone zone = TimeZone.getTimeZone("GMT Time");
-  DateFormat df = new SimpleDateFormat("yyyy MM dd HH mm ss.SSS");
-	
+	private Calendar gc =  GregorianCalendar.getInstance();
+	TimeZone zone = TimeZone.getTimeZone("GMT Time");
+	DateFormat df = new SimpleDateFormat("yyyy MM dd HH mm ss.SSS");
+
 	void initleapDates() throws ParseException{
-	  leapDates = new Date[17];
-    leapDates[0]  = df.parse("1980 01 06 00 00 00.0");
-    leapDates[1]  = df.parse("1981 07 01 00 00 00.0");
-    leapDates[2]  = df.parse("1982 07 01 00 00 00.0");
-    leapDates[3]  = df.parse("1983 07 01 00 00 00.0");
-    leapDates[4]  = df.parse("1985 07 01 00 00 00.0");
-    leapDates[5]  = df.parse("1988 01 01 00 00 00.0");
-    leapDates[6]  = df.parse("1990 01 01 00 00 00.0");
-    leapDates[7]  = df.parse("1991 01 01 00 00 00.0");
-    leapDates[8]  = df.parse("1992 07 01 00 00 00.0");
-    leapDates[9]  = df.parse("1993 07 01 00 00 00.0");
-    leapDates[10] = df.parse("1994 07 01 00 00 00.0");
-    leapDates[11] = df.parse("1996 01 01 00 00 00.0");
-    leapDates[12] = df.parse("1997 07 01 00 00 00.0");
-    leapDates[13] = df.parse("1999 01 01 00 00 00.0");
-    leapDates[14] = df.parse("2006 01 01 00 00 00.0");
-    leapDates[15] = df.parse("2009 01 01 00 00 00.0");
-    leapDates[16] = df.parse("2012 07 01 00 00 00.0");
+		leapDates = new Date[19];
+		leapDates[0]  = df.parse("1980 01 06 00 00 00.0");
+		leapDates[1]  = df.parse("1981 07 01 00 00 00.0");
+		leapDates[2]  = df.parse("1982 07 01 00 00 00.0");
+		leapDates[3]  = df.parse("1983 07 01 00 00 00.0");
+		leapDates[4]  = df.parse("1985 07 01 00 00 00.0");
+		leapDates[5]  = df.parse("1988 01 01 00 00 00.0");
+		leapDates[6]  = df.parse("1990 01 01 00 00 00.0");
+		leapDates[7]  = df.parse("1991 01 01 00 00 00.0");
+		leapDates[8]  = df.parse("1992 07 01 00 00 00.0");
+		leapDates[9]  = df.parse("1993 07 01 00 00 00.0");
+		leapDates[10] = df.parse("1994 07 01 00 00 00.0");
+		leapDates[11] = df.parse("1996 01 01 00 00 00.0");
+		leapDates[12] = df.parse("1997 07 01 00 00 00.0");
+		leapDates[13] = df.parse("1999 01 01 00 00 00.0");
+		leapDates[14] = df.parse("2006 01 01 00 00 00.0");
+		leapDates[15] = df.parse("2009 01 01 00 00 00.0");
+		leapDates[16] = df.parse("2012 07 01 00 00 00.0");
+		leapDates[17] = df.parse("2015 07 01 00 00 00.0");
+		leapDates[18] = df.parse("2017 01 01 00 00 00.0");
 	}
 
 	public Time(long msec){
-    df.setTimeZone(zone);
-    gc.setTimeZone(zone);
+		df.setTimeZone(zone);
+		gc.setTimeZone(zone);
 		this.gc.setTimeInMillis(msec);
 		this.msec = msec;
 		this.fraction = 0;
 	}
 	public Time(long msec, double fraction){
-    df.setTimeZone(zone);
-    gc.setTimeZone(zone);
+		df.setTimeZone(zone);
+		gc.setTimeZone(zone);
 		this.msec = msec;
 		this.gc.setTimeInMillis(msec);
 		this.fraction = fraction;
 	}
 	public Time(String dateStr) throws ParseException{
-    df.setTimeZone(zone);
-    gc.setTimeZone(zone);
+		df.setTimeZone(zone);
+		gc.setTimeZone(zone);
 		this.msec = dateStringToTime(dateStr);
 		this.gc.setTimeInMillis(this.msec);
 		this.fraction = 0;
 	}
 	public Time(int gpsWeek, double weekSec){
-    df.setTimeZone(zone);
-    gc.setTimeZone(zone);
+		df.setTimeZone(zone);
+		gc.setTimeZone(zone);
 		double fullTime = (Constants.UNIX_GPS_DAYS_DIFF * Constants.SEC_IN_DAY + gpsWeek*Constants.DAYS_IN_WEEK*Constants.SEC_IN_DAY + weekSec) * 1000L;
 		this.msec = (long) (fullTime);
 		this.fraction = fullTime - this.msec;
@@ -207,21 +209,21 @@ public class Time {
 	public double getGpsTime(){
 		return unixToGpsTime(msec);
 	}
-	
+
 	public double getRoundedGpsTime(){
 		double tow = unixToGpsTime((msec+499)/1000*1000);
 		return tow;
 	}
-	
+
 	public int getLeapSeconds(){
-	  if( leapDates == null )
-      try {
-        initleapDates();
-      } catch (Exception e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      }
-	  
+		if( leapDates == null )
+			try {
+				initleapDates();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
 		int leapSeconds = leapDates.length - 1;
 		double delta;
 		for (int d = 0; d < leapDates.length; d++) {
@@ -234,21 +236,21 @@ public class Time {
 		return leapSeconds;
 	}
 
-//
-//	private static double unixToGpsTime(double time) {
-//		// Shift from UNIX time (January 1, 1970 - msec)
-//		// to GPS time (January 6, 1980 - sec)
-//		time = (long)(time / Constants.MILLISEC_IN_SEC) - Constants.UNIX_GPS_DAYS_DIFF * Constants.SEC_IN_DAY;
-//
-//		// Remove integer weeks, to get Time Of Week
-//		double dividend  = time;
-//		double divisor = Constants.DAYS_IN_WEEK * Constants.SEC_IN_DAY;
-//		time = dividend  - (divisor * round(dividend / divisor));
-//
-//		//time = Math.IEEEremainder(time, Constants.DAYS_IN_WEEK * Constants.SEC_IN_DAY);
-//
-//		return time;
-//	}
+	//
+	//	private static double unixToGpsTime(double time) {
+	//		// Shift from UNIX time (January 1, 1970 - msec)
+	//		// to GPS time (January 6, 1980 - sec)
+	//		time = (long)(time / Constants.MILLISEC_IN_SEC) - Constants.UNIX_GPS_DAYS_DIFF * Constants.SEC_IN_DAY;
+	//
+	//		// Remove integer weeks, to get Time Of Week
+	//		double dividend  = time;
+	//		double divisor = Constants.DAYS_IN_WEEK * Constants.SEC_IN_DAY;
+	//		time = dividend  - (divisor * round(dividend / divisor));
+	//
+	//		//time = Math.IEEEremainder(time, Constants.DAYS_IN_WEEK * Constants.SEC_IN_DAY);
+	//
+	//		return time;
+	//	}
 
 
 

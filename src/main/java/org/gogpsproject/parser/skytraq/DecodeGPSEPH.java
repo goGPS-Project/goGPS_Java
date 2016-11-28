@@ -233,9 +233,9 @@ public class DecodeGPSEPH {
 		eph.setI0(Bits.bitsTwoComplement( Bits.concat(Bits.subset(bits, 2*32+24, 8), Bits.subset(bits, 3*32+8, 24)) ) * PI * TWO_P_M31);
 		eph.setCrc(Bits.bitsTwoComplement(Bits.subset(bits, 4*32+8, 16)) * TWO_P_M5);
 		eph.setOmega(Bits.bitsTwoComplement( Bits.concat(Bits.subset(bits, 4*32+24, 8), Bits.subset(bits, 5*32+8, 24)) ) * PI * TWO_P_M31);
-		eph.setOmegaDot(Bits.bitsTwoComplement(Bits.subset(bits, 6*32+8, 24)) * TWO_P_M43);
+		eph.setOmegaDot(Bits.bitsTwoComplement(Bits.subset(bits, 6*32+8, 24)) * PI * TWO_P_M43);
 		int IODE3 = (int)Bits.bitsToUInt(Bits.subset(bits, 7*32+8, 8));
-		eph.setiDot(Bits.bitsTwoComplement(Bits.subset(bits, 7*32+16, 14)) * TWO_P_M43);
+		eph.setiDot(Bits.bitsTwoComplement(Bits.subset(bits, 7*32+16, 14)) * PI * TWO_P_M43);
 
 //		System.out.println();
 //		System.out.println("Cic "+Bits.bitsTwoComplement(Bits.subset(bits, 8, 16)));//2^-29
@@ -244,9 +244,9 @@ public class DecodeGPSEPH {
 //		System.out.println("i0 "+Bits.bitsTwoComplement( Bits.concat(Bits.subset(bits, 2*32+24, 8), Bits.subset(bits, 3*32+8, 24)) ));//pi * 2^-31
 //		System.out.println("Crc "+Bits.bitsTwoComplement(Bits.subset(bits, 4*32+8, 16)));//2^-5
 //		System.out.println("omega "+Bits.bitsTwoComplement( Bits.concat(Bits.subset(bits, 4*32+24, 8), Bits.subset(bits, 5*32+8, 24)) ));//pi * 2^-31
-//		System.out.println("omegadot "+Bits.bitsTwoComplement(Bits.subset(bits, 6*32+8, 24)));//2^-43
+//		System.out.println("omegadot "+Bits.bitsTwoComplement(Bits.subset(bits, 6*32+8, 24)));//pi * 2^-43
 //		System.out.println("IODE3 "+Bits.bitsToUInt(Bits.subset(bits, 7*32+8, 8))); //
-//		System.out.println("IDOT "+Bits.bitsTwoComplement(Bits.subset(bits, 7*32+16, 14)));//2^-43
+//		System.out.println("IDOT "+Bits.bitsTwoComplement(Bits.subset(bits, 7*32+16, 14)));//pi * 2^-43
 
 
 		byte data[] = baos.toByteArray();

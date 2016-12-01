@@ -73,6 +73,20 @@ public class ObservationSet implements Streamable {
 
 	private int freqNum;
 
+	/* Sets whether this obs is in use or not:
+		 could be below the elevation threshold for example
+     or unhealthy
+  */
+	boolean inUse = false;
+
+  /* residual error */
+  public double eRes;
+
+  /**
+   * topocentric elevation
+   */
+  public double el;
+
 	public ObservationSet(){
 	}
 
@@ -363,4 +377,11 @@ public class ObservationSet implements Streamable {
 		return freqNum;
 	}
 
+  public boolean inUse() {
+    return inUse;
+  }
+  
+  public void inUse(boolean inUse) {
+    this.inUse = inUse;
+  }
 }

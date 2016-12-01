@@ -73,7 +73,7 @@ public class ObservationsBuffer
 
     private long timeoutNextObsWait = -1;
     
-    private int bufferSizeLimit = 20;
+    private int bufferSizeLimit = 100;
 
     /**
     *

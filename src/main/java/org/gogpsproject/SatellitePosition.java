@@ -20,6 +20,8 @@
  */
 package org.gogpsproject;
 
+import org.ejml.simple.SimpleMatrix;
+
 /**
  * <p>
  * Satellite position class
@@ -35,6 +37,7 @@ public class SatellitePosition extends Coordinates{
 	private long unixTime;
 	private boolean predicted;
 	private boolean maneuver;
+  private SimpleMatrix speed; 
 
 	public SatellitePosition(long unixTime, int satID, char satType, double x, double y, double z) {
 		super();
@@ -44,6 +47,7 @@ public class SatellitePosition extends Coordinates{
 		this.satType = satType;
 
 		this.setXYZ(x, y, z);
+    this.speed = new SimpleMatrix(3, 1);
 	}
 
 	/**
@@ -123,6 +127,16 @@ public class SatellitePosition extends Coordinates{
 		return maneuver;
 	}
 
+  public SimpleMatrix getSpeed() {
+    return speed;
+  }
+
+  public void setSpeed( double xdot, double ydot, double zdot) {
+    this.speed.set( 0, xdot );
+    this.speed.set( 1, ydot );
+    this.speed.set( 2, zdot );
+  }
+	
 	public String toString(){
 		return "X:"+this.getX()+" Y:"+this.getY()+" Z:"+getZ()+" clkCorr:"+getSatelliteClockError();
 	}
@@ -132,6 +146,7 @@ public class SatellitePosition extends Coordinates{
 		sp.maneuver = this.maneuver;
 		sp.predicted = this.predicted;
 		sp.satelliteClockError = this.satelliteClockError;
+    sp.setSpeed( speed.get(0), speed.get(1), speed.get(2));
 		return sp;
 	}
 }

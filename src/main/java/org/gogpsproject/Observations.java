@@ -28,6 +28,7 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.TimeZone;
 
 /**
  * <p>
@@ -38,7 +39,7 @@ import java.util.Date;
  */
 public class Observations implements Streamable {
 
-	SimpleDateFormat sdfHeader = new SimpleDateFormat("dd-MMM-yy HH:mm:ss");
+	SimpleDateFormat sdfHeader = getGMTdf();
 	DecimalFormat dfX4 = new DecimalFormat("0.0000");
 
 
@@ -49,6 +50,17 @@ public class Observations implements Streamable {
 
 	private ArrayList<ObservationSet> obsSet; /* sets of observations */
 	private int issueOfData = -1;
+
+	/**
+	 * The Rinex filename
+	 */
+	public String rinexFileName;
+	
+	public static SimpleDateFormat getGMTdf(){
+	  SimpleDateFormat sdfHeader = new SimpleDateFormat("dd-MMM-yy HH:mm:ss");
+    sdfHeader.setTimeZone( TimeZone.getTimeZone("GMT"));
+    return sdfHeader;
+	}
 
 	public Object clone(){
 		try{

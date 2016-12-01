@@ -23,12 +23,17 @@ import java.util.ArrayList;
 
 import org.ejml.simple.SimpleMatrix;
 
+//import com.google.maps.ElevationApi;
+//import com.google.maps.GeoApiContext;
+//import com.google.maps.model.ElevationResult;
+//import com.google.maps.model.LatLng;
+
 /**
  * <p>
  * Receiver position class
  * </p>
  *
- * @author Eugenio Realini, Cryms.com, Daisuke Yoshida
+ * @author Eugenio Realini, Cryms.com, Daisuke Yoshida, Emanuele Ziglioli (Sirtrack Ltd)
  */
 public class ReceiverPosition extends Coordinates{
 
@@ -47,6 +52,7 @@ public class ReceiverPosition extends Coordinates{
 	// Fields related to the receiver position
 	private SimpleMatrix positionCovariance; /* Covariance matrix of the position estimation error */
 	private double receiverClockError; /* Clock error */
+	private double receiverClockErrorRate; /* Clock error rate */
 	private double pDop; /* Position dilution of precision (PDOP) */
 	private double hDop; /* Horizontal dilution of precision (HDOP) */
 	private double vDop; /* Vertical dilution of precision (VDOP) */
@@ -72,6 +78,8 @@ public class ReceiverPosition extends Coordinates{
 	private double[] roverDopplerPredPhase; /* rover L Carrier Phase predicted from previous epoch (based on Doppler) [cycle] */
 	private double[] masterDopplerPredPhase; /* master L Carrier Phase predicted from previous epoch (based on Doppler) [cycle] */
 
+  public Status status = Status.None;
+
 	// Fields for Kalman filter
 	int o1, o2, o3;
 	int i1, i2, i3;
@@ -96,6 +104,9 @@ public class ReceiverPosition extends Coordinates{
 	char satType;
 	
 	private GoGPS goGPS;
+
+  public long satsInUse = 0;
+  public double eRes;
 
 	public ReceiverPosition(GoGPS goGPS){
 		super();
@@ -1040,6 +1051,312 @@ public class ReceiverPosition extends Coordinates{
 			
 		}
 	}
+
+	/**
+   * Estimate full pseudorange and satellite position from a priori rover position
+   * @param roverObs
+   * @param cutoff
+   */
+  public void selectSatellitesStandaloneFractional( Observations roverObs, double cutoff, final double MODULO ) {
+    
+    NavigationProducer navigation = goGPS.getNavigation();
+
+    // Number of GPS observations
+    int nObs = roverObs.getNumSat();
+
+    // Allocate an array to store GPS satellite positions
+    pos = new SatellitePosition[nObs];
+
+    // Allocate an array to store receiver-satellite vectors
+    diffRoverSat = new SimpleMatrix[nObs];
+
+    // Allocate an array to store receiver-satellite approximate range
+    roverSatAppRange = new double[nObs];
+
+    // Allocate arrays to store receiver-satellite atmospheric corrections
+    roverSatTropoCorr = new double[nObs];
+    roverSatIonoCorr = new double[nObs];
+
+    // Create a list for available satellites after cutoff
+    satAvail = new ArrayList<Integer>(0);
+    satTypeAvail = new ArrayList<Character>(0);
+    gnssAvail = new ArrayList<String>(0);
+
+    // Create a list for available satellites with phase
+    satAvailPhase = new ArrayList<Integer>(0);
+    satTypeAvailPhase = new ArrayList<Character>(0);
+    gnssAvailPhase = new ArrayList<String>(0);
+    
+    // Allocate array of topocentric coordinates
+    roverTopo = new TopocentricCoordinates[nObs];
+
+    satsInUse = 0;
+    // Satellite ID
+    int id = 0;
+
+    // Compute topocentric coordinates and
+    // select satellites above the cutoff level
+    for (int i = 0; i < nObs; i++) {
+      id = roverObs.getSatID(i);
+      ObservationSet os = roverObs.getSatByID(id);
+      satType = roverObs.getGnssType(i);
+
+      pos[i] = goGPS.getNavigation()
+          .getGpsSatPosition( roverObs, id, 'G', this.getReceiverClockError() );
+      
+      if(  pos[i] == SatellitePosition.UnhealthySat ) {
+        pos[i] = null;
+        continue;
+      }
+      
+      if( pos[i] == null  || Double.isNaN(pos[i].getX() )) {
+//        if(debug) System.out.println("Not useful sat "+roverObs.getSatID(i));
+        if( i == 0 || satAvail.size()> 0 )
+          continue;
+        else {
+          status = Status.EphNotFound;
+          return;
+        }
+      }
+
+      // remember cph and restore it later
+      double code = os.getCodeC(0);
+
+      // Compute rover-satellite approximate pseudorange
+      diffRoverSat[i] = this.minusXYZ(pos[i]); // negative, for LOS vectors
+
+      roverSatAppRange[i] = Math.sqrt(Math.pow(diffRoverSat[i].get(0), 2)
+                                    + Math.pow(diffRoverSat[i].get(1), 2)
+                                    + Math.pow(diffRoverSat[i].get(2), 2));
+
+      // recompute satpos now with estimatedPR
+      if( Double.isNaN(roverSatAppRange[i])){
+        if( debug ) System.out.println("Error NaN");
+      }
+      else {
+        os.setCodeC(0, roverSatAppRange[i]);
+  
+        // Compute GPS satellite positions getGpsByIdx(idx).getSatType()
+        pos[i] = goGPS.getNavigation().getGpsSatPosition(roverObs, id, 'G', this.getReceiverClockError());
+        
+        // restore code observation
+        os.setCodeC(0, code);
+  
+        if( pos[i] == null  ) {
+  //        if(debug) System.out.println("Not useful sat "+roverObs.getSatID(i));
+          if( (i== 0) || satAvail.size()> 0 )
+            continue;
+          else {
+            status = Status.EphNotFound;
+            continue;
+          }
+        }
+      }
+      // Compute rover-satellite approximate pseudorange
+      diffRoverSat[i] = this.minusXYZ(pos[i]);
+      roverSatAppRange[i] = Math.sqrt(Math.pow(diffRoverSat[i].get(0), 2)
+                          + Math.pow(diffRoverSat[i].get(1), 2)
+                          + Math.pow(diffRoverSat[i].get(2), 2));
+
+      double R = roverSatAppRange[i]/Constants.SPEED_OF_LIGHT*1000;
+      double C = roverObs.getSatByID(id).getCodeC(0)/Constants.SPEED_OF_LIGHT*1000;
+      if( debug ) System.out.print( String.format( "%2d) SR:%8.5f C:%8.5f D:%9.5f ", 
+          id, 
+          R%(MODULO*1000/Constants.SPEED_OF_LIGHT), 
+          C,
+          C-(MODULO*1000/Constants.SPEED_OF_LIGHT)));
+
+      // Compute azimuth, elevation and distance for each satellite
+      roverTopo[i] = new TopocentricCoordinates();
+      roverTopo[i].computeTopocentric(this, pos[i]);
+
+      // Correct approximate pseudorange for troposphere
+      roverSatTropoCorr[i] = computeTroposphereCorrection(roverTopo[i].getElevation(), this.getGeodeticHeight());
+
+      // Correct approximate pseudorange for ionosphere
+      roverSatIonoCorr[i] = computeIonosphereCorrection(navigation, this, roverTopo[i].getAzimuth(), roverTopo[i].getElevation(), roverObs.getRefTime());
+
+      if( debug) System.out.print( String.format( " El:%4.1f ", roverTopo[i].getElevation() ));
+
+//        System.out.println("getElevation: " + id + "::" + roverTopo[i].getElevation() ); 
+      // Check if satellite elevation is higher than cutoff
+      if( roverTopo[i].getElevation() >= cutoff ) {
+          
+        satAvail.add(id);
+        satTypeAvail.add(satType);
+        gnssAvail.add(String.valueOf(satType) + String.valueOf(id));
+  
+        // Check if also phase is available
+        if (!Double.isNaN(roverObs.getSatByIDType(id, 'G').getPhaseCycles(goGPS.getFreq()))) {
+          satAvailPhase.add(id);
+          satTypeAvailPhase.add('G');
+          gnssAvailPhase.add(String.valueOf('G') + String.valueOf(id));       
+         }
+      }
+      else{
+        os.el = roverTopo[i].getElevation();
+        if(debug) System.out.print( String.format( " Not useful sat %2d  for too low elevation %3.1f < %3.1f", roverObs.getSatID(i), roverTopo[i].getElevation(), cutoff ));
+      }
+      if( debug) System.out.println();
+    }
+  }
+
+  /**
+   * Update roverPos to that observed satellites become visible
+   * @param roverObs
+   * @return 
+   */
+  public double selectSatellitesStandalonePositionUpdate(Observations roverObs) {
+    
+    NavigationProducer navigation = goGPS.getNavigation();
+
+    // Number of GPS observations
+    int nObs = roverObs.getNumSat();
+
+    // Allocate an array to store GPS satellite positions
+    pos = new SatellitePosition[nObs];
+
+    // Allocate an array to store receiver-satellite vectors
+    diffRoverSat = new SimpleMatrix[nObs];
+
+    // Allocate an array to store receiver-satellite approximate range
+    roverSatAppRange = new double[nObs];
+
+    // Allocate arrays to store receiver-satellite atmospheric corrections
+    roverSatTropoCorr = new double[nObs];
+    roverSatIonoCorr = new double[nObs];
+
+    // Create a list for available satellites after cutoff
+    satAvail = new ArrayList<Integer>(0);
+    satTypeAvail = new ArrayList<Character>(0);
+    gnssAvail = new ArrayList<String>(0);
+
+    // Create a list for available satellites with phase
+    satAvailPhase = new ArrayList<Integer>(0);
+    satTypeAvailPhase = new ArrayList<Character>(0);
+    gnssAvailPhase = new ArrayList<String>(0);
+    
+    // Allocate array of topocentric coordinates
+    roverTopo = new TopocentricCoordinates[nObs];
+
+    satsInUse = 0;
+    // Satellite ID
+    int id = 0;
+
+    // Least squares design matrix
+    SimpleMatrix A = new SimpleMatrix( nObs+1, 3 );
+    SimpleMatrix y0 = new SimpleMatrix( nObs+1, 1 );
+    SimpleMatrix x = new SimpleMatrix(3, 1);
+
+    // Compute topocentric coordinates and
+    // select satellites above the cutoff level
+    System.out.println("Satellite Elevation");
+    System.out.println( roverObs.getRefTime() );
+    for (int i = 0; i < nObs; i++) {
+      id = roverObs.getSatID(i);
+      ObservationSet os = roverObs.getSatByID(id);
+      satType = roverObs.getGnssType(i);
+
+      pos[i] = goGPS.getNavigation().getGpsSatPosition( roverObs, id, 'G', 0 );
+
+      if( pos[i] == null  || Double.isNaN(pos[i].getX() )) {
+        status = Status.EphNotFound;
+        continue;
+      }
+
+      // Compute rover-satellite approximate pseudorange
+      diffRoverSat[i]     = this.minusXYZ(pos[i]); // negative, for LOS vectors
+
+      roverSatAppRange[i] = Math.sqrt(Math.pow(diffRoverSat[i].get(0), 2)
+                                    + Math.pow(diffRoverSat[i].get(1), 2)
+                                    + Math.pow(diffRoverSat[i].get(2), 2));
+
+      // Compute azimuth, elevation and distance for each satellite
+      roverTopo[i] = new TopocentricCoordinates();
+      roverTopo[i].computeTopocentric(this, pos[i]);
+
+      double el = roverTopo[i].getElevation();
+      
+      // Correct approximate pseudorange for troposphere
+      roverSatTropoCorr[i] = computeTroposphereCorrection(roverTopo[i].getElevation(), this.getGeodeticHeight());
+
+      // Correct approximate pseudorange for ionosphere
+      roverSatIonoCorr[i] = computeIonosphereCorrection(navigation, this, roverTopo[i].getAzimuth(), roverTopo[i].getElevation(), roverObs.getRefTime());
+
+      satAvail.add(id);
+      satTypeAvail.add(satType);
+      gnssAvail.add(String.valueOf(satType) + String.valueOf(id));
+
+      SimpleMatrix R = rotationMatrix(this);
+      SimpleMatrix enu = R.mult(pos[i].minusXYZ(this));
+      
+      double U = enu.get(2);
+      System.out.println( String.format( "%2d) C:%12.3f %5.1f(dg) %9.0f(up)", 
+          id, 
+          roverObs.getSatByID(id).getCodeC(0),
+          el, 
+          U));
+/*
+      System.out.println( String.format( "%2d) SR:%8.5f C:%8.5f D:%9.5f", 
+          id, 
+          R, 
+          C,
+          C-R));
+ */
+      
+      A.set(i, 0, diffRoverSat[i].get(0) / roverSatAppRange[i]); /* X */
+      A.set(i, 1, diffRoverSat[i].get(1) / roverSatAppRange[i]); /* Y */
+      A.set(i, 2, diffRoverSat[i].get(2) / roverSatAppRange[i]); /* Z */
+
+      if( U>0){
+        y0.set(i, 0, 0);
+      }
+      else {
+        y0.set(i, 0, U);
+//        y0.set(i, 0, Constants.EARTH_RADIUS);
+      }
+    }
+    System.out.println("");
+
+  // Add height soft constraint
+    double lam = Math.toRadians(this.getGeodeticLongitude());
+    double phi = Math.toRadians(this.getGeodeticLatitude());
+    double hR_app = this.getGeodeticHeight();
+      
+    double h_dtm = hR_app>0? hR_app : 30; // initialize to something above sea level
+    if( h_dtm > 3000 )
+      h_dtm = 3000;
+      
+    double cosLam = Math.cos(lam);
+    double cosPhi = Math.cos(phi);
+    double sinLam = Math.sin(lam);
+    double sinPhi = Math.sin(phi);
+
+    // it's like row[2], UP, of rotationMatrix(this)
+    A.set(nObs, 0, cosPhi * cosLam );
+    A.set(nObs, 1, cosPhi * sinLam ); 
+    A.set(nObs, 2, sinPhi ); 
+
+//    %Y0 vector computation for DTM constraint
+    double y0_dtm = h_dtm  - hR_app;
+    y0.set(nObs, 0, y0_dtm );
+    
+    x = A.transpose().mult(A).invert().mult(A.transpose()).mult(y0);
+
+   double correction_mag = Math.sqrt( Math.pow( x.get(0), 2 ) + 
+                                      Math.pow( x.get(1), 2 ) +
+                                      Math.pow( x.get(2), 2 ) );
+
+   System.out.println( String.format( "pos update:  %5.1f, %5.1f, %5.1f; Mag: %5d(m)", x.get(0), x.get(1), x.get(2), (long)correction_mag ));
+
+   // apply correction to Rx position estimate
+   this.setPlusXYZ(x.extractMatrix(0, 3, 0, 1));
+   this.computeGeodetic();
+
+   System.out.println( "recpos: " + this );
+   
+   return correction_mag; // return correction_mag
+  }
 
 	/**
 	 * @param roverObs
@@ -2720,6 +3037,17 @@ public class ReceiverPosition extends Coordinates{
 	}
 
 	/**
+   * @return the receiver clock error rate
+   */
+  public double getReceiverClockErrorRate() {
+    return receiverClockErrorRate;
+  }
+
+  public void setReceiverClockErrorRate(double receiverClockErrorRate) {
+    this.receiverClockErrorRate = receiverClockErrorRate;
+  }
+
+	/**
 	 * @return the rover Doppler predicted phase
 	 */
 	public double getRoverDopplerPredictedPhase(int satID) {
@@ -2844,4 +3172,604 @@ public class ReceiverPosition extends Coordinates{
 	public boolean isDebug() {
 		return debug;
 	}
+	
+  /**
+   * @param roverObs
+   * @param MODULO module in meters (
+   * @return
+   */
+  public double codeStandaloneCoarseTime( Observations roverObs, final double MODULO ) {
+    long unixTime = roverObs.getRefTime().getMsec();
+
+    status = Status.None;
+
+    // Number of GNSS observations without cutoff
+    int nObs = roverObs.getNumSat();
+
+    // Number of unknown parameters
+    int nUnknowns = 5;
+
+    // Define least squares matrices
+    SimpleMatrix A = null;  // aka H or G, // Least squares design matrix
+    SimpleMatrix b;  // Vector for approximate (estimated, predicted) pseudoranges
+    SimpleMatrix y0; // Observed pseudoranges
+    SimpleMatrix Q = null;  // Cofactor (Weighted) Matrix
+    SimpleMatrix x;  // Solution (Update) Vector
+    SimpleMatrix vEstim; // Observation Errors
+    SimpleMatrix tropoCorr; 
+    SimpleMatrix ionoCorr;
+
+    // Covariance matrix obtained from matrix A (satellite geometry) [ECEF coordinates]
+    SimpleMatrix covXYZ;
+    covXYZ = new SimpleMatrix(3, 3);
+
+    // Covariance matrix obtained from matrix A (satellite geometry) [local coordinates]
+    SimpleMatrix covENU;
+    covENU = new SimpleMatrix(3, 3);
+
+    // Number of available satellites (i.e. observations)
+    int nObsAvail = satAvail.size();
+    
+    nObsAvail++; // add DTM / height soft constraint
+
+    // Least squares design matrix
+    A = new SimpleMatrix( nObsAvail, nUnknowns );
+
+    // Vector for approximate pseudoranges
+    b = new SimpleMatrix(nObsAvail, 1);
+
+    // Vector for observed pseudoranges
+    y0 = new SimpleMatrix(nObsAvail, 1);
+
+    // Cofactor matrix
+    Q = new SimpleMatrix(nObsAvail, nObsAvail);
+
+    // Solution vector
+    x = new SimpleMatrix(nUnknowns, 1);
+
+    // Vectors for troposphere and ionosphere corrections
+    tropoCorr = new SimpleMatrix(nObsAvail, 1);
+    ionoCorr = new SimpleMatrix(nObsAvail, 1);
+
+    // Counter for available satellites
+    int k = 0;
+
+    // Satellite ID
+    int id = 0;
+      
+    // Set up the least squares matrices
+    for (int i = 0; i < nObs; i++) {
+      id = roverObs.getSatID(i);
+
+      if( pos[i] == null  || !satAvail.contains(id) ) {//|| recpos.ecef==null || pos[i].ecef==null ){
+//              l.warning( "ERROR, pos[i]==null?" );
+//              this.setXYZ(0, 0, 0);
+//              return null;
+        int satId = roverObs.getSatID(k);
+        ObservationSet os = roverObs.getSatByID(satId);
+        os.inUse(false);
+
+        continue;
+      }
+
+      // Line Of Sight vector units (ECEF)
+      SimpleMatrix e = new SimpleMatrix(1,3);
+
+      // Line Of Sight vector units (ECEF)
+      e.set( 0,0, diffRoverSat[i].get(0) / roverSatAppRange[i] );
+      e.set( 0,1, diffRoverSat[i].get(1) / roverSatAppRange[i] );
+      e.set( 0,2, diffRoverSat[i].get(2) / roverSatAppRange[i] );
+
+      // scalar product of speed vector X unit vector
+      float doppler = roverObs.getSatByID(id).getDoppler(ObservationSet.L1);
+      double rodot;
+      if( Float.isNaN( doppler ))
+        rodot = -e.mult( pos[i].getSpeed() ).get(0);
+      else
+        // scalar product of speed vector X unit vector
+        rodot = -doppler * Constants.SPEED_OF_LIGHT/Constants.FL1;
+
+      // Fill in one row in the design matrix
+      A.set(k, 0, e.get(0) ); /* X */
+      A.set(k, 1, e.get(1) ); /* Y */
+      A.set(k, 2, e.get(2) ); /* Z */
+
+      A.set(k, 3, 1); /* clock error */
+      A.set(k, 4, rodot );
+
+      // Add the approximate pseudorange value to b
+//      b.set(k, 0, (roverSatAppRange[i] - pos[i].getSatelliteClockError() * Constants.SPEED_OF_LIGHT) % MODULO );
+      b.set(k, 0, (roverSatAppRange[i] - pos[i].getSatelliteClockError() * Constants.SPEED_OF_LIGHT) );
+
+      ObservationSet os = roverObs.getSatByID(id);
+      
+      // Add the clock-corrected observed pseudorange value to y0
+//      y0.set(k, 0, roverObs.getSatByIDType(id, satType).getPseudorange(goGPS.getFreq()));
+//      y0.set(k, 0, os.getCodeC(0) % MODULO );
+      y0.set(k, 0, os.getCodeC(0) );
+
+//      if (!ignoreTopocentricParameters) {
+      // cap tropo correction
+      if( Double.isNaN( roverSatTropoCorr[i] ))
+        roverSatTropoCorr[i] = 0;
+      
+      if(  roverSatTropoCorr[i]>30 )
+        roverSatTropoCorr[i] = 30;
+      if(  roverSatTropoCorr[i]<-30 )
+        roverSatTropoCorr[i] = -30;
+      
+      tropoCorr.set(k, 0, roverSatTropoCorr[i]);
+      ionoCorr.set(k, 0, roverSatIonoCorr[i]);
+   
+      // Fill in the cofactor matrix
+      double weight;
+      
+      if( roverTopo[i].getElevation()<15 )
+        weight = 1;
+      else
+        weight = Q.get(k, k)
+          + computeWeight(roverTopo[i].getElevation(),
+              roverObs.getSatByIDType(id, satType).getSignalStrength(goGPS.getFreq()));
+      if( weight>5 )
+        weight = 5;
+      
+//      Q.set(k, k, weight);
+      Q.set(k, k, 1);
+//          if( weight > maxWeight )
+//            maxWeight = weight;
+
+      // Increment available satellites counter
+      k++;
+          
+     } // i loop
+
+    {
+      // Add height soft constraint
+      double lam = Math.toRadians(this.getGeodeticLongitude());
+      double phi = Math.toRadians(this.getGeodeticLatitude());
+      double hR_app = this.getGeodeticHeight();
+      //double hR_app = 0;
+      //double h_dtm = recpos.getGeodeticHeight();
+      
+//    %extraction from the dtm of the height correspondent to the approximated position
+//    [h_dtm] = grid_bilin_interp(E_app, N_app, tile_buffer, tile_header.ncols*3, tile_header.nrows*3, tile_header.cellsize, Ell, Nll, tile_header.nodata);
+      double h_dtm = hR_app>0? hR_app : 30; // initialize to something above sea level
+      if( h_dtm > goGPS.getMaxHeight() )
+        h_dtm = goGPS.getMaxHeight();
+      
+//      if( goGPS.useDTM() ){
+//        try {
+//          ElevationResult eres = ElevationApi.getByPoint( getContext(), new LatLng(this.getGeodeticLatitude(), this.getGeodeticLongitude())).await();
+//          if( eres.elevation > 0 )
+//            h_dtm = eres.elevation;
+//        } catch (Exception e1) {
+//          // TODO Auto-generated catch block
+//  //        e.printStackTrace();
+//        }
+//      }
+
+      double cosLam = Math.cos(lam);
+      double cosPhi = Math.cos(phi);
+      double sinLam = Math.sin(lam);
+      double sinPhi = Math.sin(phi);
+      double[][] data = new double[1][3];
+      data[0][0] = cosPhi * cosLam;
+      data[0][1] = cosPhi * sinLam;
+      data[0][2] = sinPhi;
+      
+      k = nObsAvail-1;
+      A.set(k, 0, data[0][0] );
+      A.set(k, 1, data[0][1] ); 
+      A.set(k, 2, data[0][2] ); 
+      A.set(k, 3, 0 ); 
+      A.set(k, 4, 0 );
+
+//    %Y0 vector computation for DTM constraint
+//    y0_dtm = h_dtm  - hR_app + cos(phiR_app)*cos(lamR_app)*X_app + cos(phiR_app)*sin(lamR_app)*Y_app + sin(phiR_app)*Z_app;
+      double y0_dtm = h_dtm  - hR_app;
+      y0.set(k, 0, y0_dtm );
+//      double max = Q.elementMaxAbs();
+//      Q.set(k, k, max);
+      Q.set(k, k, 1);
+    }
+    
+//  if (!ignoreTopocentricParameters) {
+    b = b.plus(tropoCorr);
+    b = b.plus(ionoCorr);
+
+    this.satsInUse = 0;
+    SimpleMatrix resid = y0.minus(b);
+
+    
+// use smallest resid
+  double pivot = 0;
+  double pivot_test;
+  int pivot_map = 0;
+  int goodSat;
+  int badSat;
+  int maxGoodSat = 0;
+  
+  // Find pivot satellite whose group has more 'valid' one at the end. The loop test is done at most half of 'satAvail.size' in idea case
+  do {
+    pivot_test = Double.MAX_VALUE;
+    int pivot_pos = 0;
+    for( k=0; k<satAvail.size(); k++){
+      if ((pivot_map & (1 << k)) == 0) {
+        double d = resid.get(k);
+        if( Math.abs(d)<Math.abs(pivot_test)) {
+          pivot_test = d;
+          pivot_pos = k;
+        }
+      }
+    }
+    
+    pivot_map |= (1 << pivot_pos);
+      
+// use highest sat    
+//    double pivot = 0;
+//    double pivotEl = 0;
+//    for( k=0; k<satAvail.size(); k++){
+//      int satId = roverObs.getSatID(k);
+//      ObservationSet os = roverObs.getSatByID(satId);
+//      if( roverTopo[k].getElevation() > pivotEl ){
+//        pivotEl = roverTopo[k].getElevation();
+//        pivot = resid.get(k);
+//      }
+//    }
+    
+    goodSat = 0;
+    badSat = 0;   
+    k = 0;
+    for (int i = 0; i < nObs; i++) {
+      int satId = roverObs.getSatID(i);
+
+      if( pos[i] == null  || !satAvail.contains(satId) ) {//|| recpos.ecef==null || pos[i].ecef==null ){
+        continue;
+      }
+
+      double d = resid.get(k);
+
+      if( d-pivot_test>MODULO/2 ){
+        d-=MODULO;
+      }
+      if( d-pivot_test<-MODULO/2){
+        d+=MODULO;
+      }
+
+      // check again, if fails, exclude this satellite
+      double dms = Math.abs(d-pivot_test)/Constants.SPEED_OF_LIGHT*1000;
+      if( Math.abs(dms) > goGPS.getResidThreshold() ){      
+        badSat++;
+      }
+      else {      
+        goodSat++;
+      } 
+      
+      k++;
+    }
+    
+    if (maxGoodSat < goodSat) {
+      maxGoodSat = goodSat;
+      pivot = pivot_test;
+    }
+    
+  } while ((badSat > goodSat) && ((1 << satAvail.size()) > (pivot_map + 1)));
+    
+    System.out.println( String.format( "* Residuals -> Adjusted Residuals (ms) - Pivot = %7.4f (ms)",  pivot/Constants.SPEED_OF_LIGHT*1000));
+    
+    // Officially check again
+    k = 0;
+    for (int i = 0; i < nObs; i++) {
+      int satId = roverObs.getSatID(i);
+
+      if( pos[i] == null  || !satAvail.contains(satId) ) {//|| recpos.ecef==null || pos[i].ecef==null ){
+        continue;
+      }
+
+      ObservationSet os = roverObs.getSatByID(satId);
+      
+      double d = resid.get(k);
+      System.out.print( String.format( "%2d) C:%8.3f (%8.5f); %9.5f -> ", 
+          satId, 
+          roverObs.getSatByID(satId).getCodeC(0), 
+          roverObs.getSatByID(satId).getCodeC(0)/Constants.SPEED_OF_LIGHT*1000, 
+          d/Constants.SPEED_OF_LIGHT*1000));
+      
+      if( d-pivot>MODULO/2 ){
+        d-=MODULO;
+      }
+      if( d-pivot<-MODULO/2){
+        d+=MODULO;
+      }
+      System.out.print( String.format( "%9.5f", d/Constants.SPEED_OF_LIGHT*1000));
+      System.out.print( String.format( "  Q:%3.1f", Q.get(k,k)));
+      
+      // check again, if fails, exclude this satellite
+      double dms = Math.abs(d-pivot)/Constants.SPEED_OF_LIGHT*1000;
+      if( Math.abs(dms) > goGPS.getResidThreshold() )
+      {
+        if( debug ) System.out.println( String.format( " Excluding d:%8.3f", dms));
+        resid.set(k, 0);
+        A.set(k, 0, 0);
+        A.set(k, 1, 0);
+        A.set(k, 2, 0);
+        A.set(k, 3, 0);
+        A.set(k, 4, 0);
+        os.inUse(false);
+      }
+      else 
+      {
+        resid.set(k,d);
+        this.satsInUse++;
+        os.inUse(true);
+        os.el = roverTopo[i].getElevation();
+        System.out.println();
+      }
+      k++;
+    }
+    
+    if( satsInUse < nUnknowns-1 ){
+      System.out.println("Not enough satellites for " + roverObs.getRefTime() );
+      this.setXYZ(0, 0, 0);
+      if( status == Status.None ){
+          status = Status.NotEnoughSats;
+      }
+      return 0;
+    }
+      
+//       Weighted Least squares solution x = ((A'*Q^-1*A)^-1)*A'*Q^-1*(y0-b);
+      x = A.transpose().mult(Q.invert()).mult(A).invert().mult(A.transpose()).mult(Q.invert()).mult(resid);
+
+     double correction_mag = Math.sqrt( Math.pow( x.get(0), 2 ) + 
+                                        Math.pow( x.get(1), 2 ) +
+                                        Math.pow( x.get(2), 2 ) );
+
+     // Common bias in meters and ms
+     double cbias   = x.get(3);
+     double cbiasms = cbias * 1000d / Constants.SPEED_OF_LIGHT;
+     // x.get(4) = time update in seconds
+     double tg = x.get(4); 
+
+     // compute eRes 
+     eRes = 0;
+     for( k=0; k<satAvail.size(); k++){
+       int satId = roverObs.getSatID(k);
+       ObservationSet os = roverObs.getSatByID(satId);
+       if( !os.inUse )
+         continue;
+       
+       double d = resid.get(k);
+       os.eRes = Math.abs(d-cbias);
+       eRes += Math.pow( os.eRes, 2); 
+     }
+     eRes = Math.sqrt(eRes/satsInUse);
+     System.out.println(String.format("eRes = %5.3f\r\n", eRes));
+     
+     // expected
+     System.out.println( String.format( "pos update:  %5.1f, %5.1f, %5.1f; Mag: %5d(m)", x.get(0), x.get(1), x.get(2), (long)correction_mag ));
+     System.out.println( String.format( "common bias: %2.4f (ms)", cbiasms ));
+     System.out.println( String.format( "time update: %3.3f (s)", tg ));
+
+     // Receiver clock error
+     this.receiverClockError = x.get(3) / Constants.SPEED_OF_LIGHT;
+
+     // apply correction to Rx position estimate
+     this.setPlusXYZ(x.extractMatrix(0, 3, 0, 1));
+     this.computeGeodetic();
+
+     // update refTime
+     if( correction_mag < 10 ){
+       unixTime += tg * 1000;
+       Time newTime = new Time( unixTime);
+       roverObs.setRefTime( newTime );
+       this.setRefTime( newTime );
+     }
+     
+     System.out.println( String.format( "recpos: %5.4f, %5.4f, %5.4f, %s", this.getGeodeticLatitude(), this.getGeodeticLongitude(), this.getGeodeticHeight(), new Time(unixTime).toString() ));
+     
+     // Estimation of the variance of the observation error
+     vEstim = y0.minus(A.mult(x).plus(b));
+     double varianceEstim = (vEstim.transpose().mult(Q.invert())
+         .mult(vEstim)).get(0)
+         / (nObsAvail - nUnknowns);
+
+     // Covariance matrix of the estimation error
+     if (nObsAvail > nUnknowns) {
+       SimpleMatrix covariance = A.transpose().mult(Q.invert()).mult(A).invert()
+       .scale(varianceEstim);
+       this.positionCovariance = covariance.extractMatrix(0, 3, 0, 3);
+     }else{
+       this.positionCovariance = null;
+     }
+     
+     // Compute covariance matrix from A matrix [ECEF reference system]
+     covXYZ = A.transpose().mult(A).invert().extractMatrix(0, 3, 0, 3);
+
+     // Allocate and build rotation matrix
+     SimpleMatrix R = new SimpleMatrix(3, 3);
+     R = Coordinates.rotationMatrix(this);
+
+     // Propagate covariance from global system to local system
+     covENU = R.mult(covXYZ).mult(R.transpose());
+
+     //Compute DOP values
+     this.pDop = Math.sqrt(covXYZ.get(0, 0) + covXYZ.get(1, 1) + covXYZ.get(2, 2));
+     this.hDop = Math.sqrt(covENU.get(0, 0) + covENU.get(1, 1));
+     this.vDop = Math.sqrt(covENU.get(2, 2));
+     
+     return correction_mag; // return correction_mag
+  }
+	
+	/**
+   * @param obs
+   */
+  public void dopplerPos( Observations obs ) {
+
+    ReceiverPosition recpos = new ReceiverPosition(this.goGPS);
+//    this.cloneInto(recpos);
+    recpos.setXYZ(0, 0, 0);
+    recpos.setReceiverClockErrorRate(0);
+    final int MINSV = 5;
+
+    // Number of unknown parameters
+    int nUnknowns = 4;
+    final double DOPP_POS_TOL = 1.0;    
+
+    // Number of available satellites (i.e. observations)
+    int nObsAvail = satAvail.size();
+    if( nObsAvail < MINSV ){
+      if( debug ) System.out.println("dopplerPos, not enough satellites for " + obs.getRefTime() );
+      if( status == Status.None ){
+        status = Status.NotEnoughSats;
+      }
+      this.setXYZ(0, 0, 0);
+      return;
+    }
+    
+    double[] rodot = new double[nObsAvail];
+
+    this.setRefTime( obs.getRefTime() );
+//    RinexNavigation navigation = (RinexNavigation) goGPS.getNavigation();
+//    long unixTime = obs.getRefTime().getMsec();
+    
+    double max_iterations = 20; 
+
+    // Least squares design matrix
+    SimpleMatrix A = new SimpleMatrix( nObsAvail, nUnknowns );
+
+    // Set up the least squares matrices
+    for (int i = 0; i < nObsAvail; i++) {
+
+      int satId = obs.getSatID(i);
+
+      if( pos[i] == null  || !satAvail.contains(satId) ) {//|| recpos.ecef==null || pos[i].ecef==null ){
+//              l.warning( "ERROR, pos[i]==null?" );
+//              this.setXYZ(0, 0, 0);
+//              return null;
+        continue;
+      }
+
+      ObservationSet os = obs.getSatByID(satId);
+
+//      EphGps eph = navigation.findEph( unixTime, satId, 'G' );
+//      if( eph == null ){
+//        l.warning( "SvID " + satId + " eph is null at " + unixTime );
+//        continue;
+//      }
+//      if( eph.getSvHealth() != 0 ){
+//        l.warning( "SvID " + satId + " health: " + eph.getSvHealth() + " at " + unixTime );
+//        continue;
+//      }
+
+      float doppler = os.getDoppler(ObservationSet.L1);
+      rodot[i] = doppler * Constants.SPEED_OF_LIGHT/Constants.FL1;
+
+      // build A matrix
+      A.set(i, 0, pos[i].getSpeed().get(0) ); /* X */
+      A.set(i, 1, pos[i].getSpeed().get(1) ); /* Y */
+      A.set(i, 2, pos[i].getSpeed().get(2) ); /* Z */
+      
+      double satpos_norm = Math.sqrt(Math.pow(pos[i].getX(), 2)
+                                   + Math.pow(pos[i].getY(), 2)
+                                   + Math.pow(pos[i].getZ(), 2));
+      A.set(i, 3, satpos_norm ); 
+    }
+    
+    for (int itr = 0; itr < max_iterations; itr++) {
+
+      SimpleMatrix b = new SimpleMatrix( nObsAvail, 1 );
+
+      double pivot = Double.MAX_VALUE;
+
+      for (int i = 0; i<nObsAvail; i++) {
+        int satId = obs.getSatID(i);
+        if( pos[i] == null  || !satAvail.contains(satId) ) {//|| recpos.ecef==null || pos[i].ecef==null ){
+        //        l.warning( "ERROR, pos[i]==null?" );
+        //        this.setXYZ(0, 0, 0);
+        //        return null;
+          continue;
+      }
+        
+        SimpleMatrix tempv = recpos.minusXYZ(pos[i]);
+
+        double Ym = Math.sqrt(Math.pow(tempv.get(0), 2)
+            + Math.pow(tempv.get(1), 2)
+            + Math.pow(tempv.get(2), 2));
+
+        SimpleMatrix satposxyz = new SimpleMatrix(1,3);
+        satposxyz.set(0, 0, pos[i].getX());
+        satposxyz.set(0, 1, pos[i].getY());
+        satposxyz.set(0, 2, pos[i].getZ());
+
+        SimpleMatrix satvelxyz = new SimpleMatrix(1,3);
+        satvelxyz.set(0, 0, pos[i].getSpeed().get(0));
+        satvelxyz.set(0, 1, pos[i].getSpeed().get(1));
+        satvelxyz.set(0, 2, pos[i].getSpeed().get(2));
+
+        double tempd = satposxyz.mult(satvelxyz.transpose()).get(0,0);
+
+        // B[j] = tempd+W[j]*Ym + Xc[3]*(A[j][3]-Ym);
+        double val = tempd + rodot[i]*Ym + recpos.getReceiverClockErrorRate()*( A.get(i, 3) - Ym);
+        b.set(i, 0, val);
+        if( Math.abs(val)<pivot)
+          pivot = Math.abs(val);
+     }
+///////////////
+//     b.normF()
+     System.out.println( String.format( "Residuals -> Adjusted Residuals (ms) - Pivot = %7.4f (ms)",  pivot/Constants.SPEED_OF_LIGHT*1000));
+     for( int k=0; k<satAvail.size(); k++){
+//       int satId = obs.getSatID(k);
+//       ObservationSet os = obs.getSatByID(satId);
+       double d = Math.abs(b.get(k))-pivot;
+//       System.out.print( String.format( "%7.4f\r\n", d/Constants.SPEED_OF_LIGHT*1000));
+       System.out.print( String.format( "%7.4f\r\n", d/Constants.SPEED_OF_LIGHT*1000));
+     }
+///////////////     
+      
+     SimpleMatrix x = A.transpose().mult(A).invert().mult(A.transpose()).mult(b);
+
+     System.out.println( String.format( "Update %d: x: %3.3f, y: %3.3f, z: %3.3f, br: %3.3f", itr, 
+         x.get(0), x.get(1), x.get(2), x.get(3) ));
+
+     double correction_mag = Math.sqrt( Math.pow( x.get(0) - recpos.getX(), 2 ) + 
+                                        Math.pow( x.get(1) - recpos.getY(), 2 ) +
+                                        Math.pow( x.get(2) - recpos.getZ(), 2 ) );
+
+     // expected
+     System.out.println( String.format( "pos diff mag %f (m)", correction_mag ));
+
+     // Update Rx position estimate
+     recpos.setXYZ( x.get(0), 
+                    x.get(1), 
+                    x.get(2));
+
+     recpos.computeGeodetic();
+
+     // Update receiver clock error rate
+     recpos.receiverClockErrorRate = x.get(3);
+     
+     System.out.println( "recpos (" + itr +")");
+     System.out.println( String.format( "%10.6f,%10.6f", recpos.getGeodeticLatitude(), recpos.getGeodeticLongitude() ));
+     System.out.println();
+     
+     // if correction is small enough, we're done, exit loop
+     if( correction_mag< DOPP_POS_TOL )
+       break;
+    }
+    
+    // ok, update recpos
+    recpos.cloneInto( this );
+
+    // Compute positioning in geodetic coordinates
+    this.computeGeodetic();
+    
+    // clamp it to the ground, not very elegant
+    if( this.getGeodeticHeight()<30 || this.getGeodeticHeight() > 100 ){
+      this.setGeod( getGeodeticLatitude(), getGeodeticLongitude(), 30 );
+      this.computeECEF();
+    }
+      
+    return;
+  }
+	
 }

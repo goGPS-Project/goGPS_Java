@@ -1135,7 +1135,7 @@ public class RinexNavigationParser extends EphemerisSystem implements Navigation
 		//check satellite health
 		//temporary comment out by Yoshida, since NVS does not include health value
 		if (refEph != null && refEph.getSvHealth() != 0) {
-			refEph = null;
+		  return EphGps.UnhealthyEph;
 		}
 
 		//maximum allowed interval from ephemeris reference time
@@ -1260,4 +1260,10 @@ public class RinexNavigationParser extends EphemerisSystem implements Navigation
 		return null;
 	}
 
+  public String getFileName() {
+    if( fileNav == null )
+      return null;
+    else
+      return fileNav.getName();
+  }
 }

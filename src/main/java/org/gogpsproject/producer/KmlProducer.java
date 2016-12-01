@@ -83,7 +83,7 @@ public class KmlProducer implements PositionConsumer, Runnable {
 
 			endOfTrack(out);
 		}
-		t = new Thread(this);
+		t = new Thread(this, "KmlProducer");
 		t.start();
 	}
 

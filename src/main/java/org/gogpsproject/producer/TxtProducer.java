@@ -63,7 +63,7 @@ public class TxtProducer implements PositionConsumer, Runnable {
 		dateTXT.setTimeZone(TZ);
 		timeTXT.setTimeZone(TZ);
 
-		t = new Thread(this);
+		t = new Thread(this, "TxtProducer");
 		t.start();
 	}
 

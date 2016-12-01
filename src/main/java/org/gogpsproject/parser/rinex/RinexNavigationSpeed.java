@@ -37,7 +37,7 @@ public class RinexNavigationSpeed extends RinexNavigation  {
              put( obs.getRefTime().getMsec(), rnp);
 
     //        char satType = eph.getSatType();
-            SatellitePosition sp = ((RinexNavigationSpeedParser)rnp).computePositionSpeedGps(obs, satID, satType, eph, receiverClockError);
+            SatellitePosition sp = rnp.computePositionSpeedGps(obs, satID, satType, eph, receiverClockError);
     //        SatellitePosition sp = computePositionGps(unixTime, satType, satID, eph, range, receiverClockError);
             //if(receiverPosition!=null) earthRotationCorrection(receiverPosition, sp);
             return sp;// new SatellitePosition(eph, unixTime, satID, range);

@@ -373,11 +373,123 @@ public abstract class EphemerisSystem {
 		
 			
 		}
-		
-		
-		
 	}
 
+  public SatellitePosition computePositionSpeedGps(Observations obs, int satID, char satType, EphGps eph, double receiverClockError) {
+
+    long unixTime = obs.getRefTime().getMsec();
+    double obsPseudorange = obs.getSatByIDType(satID, satType).getPseudorange(0);
+
+    // Compute satellite clock error
+    double satelliteClockError = computeSatelliteClockError(unixTime, eph, obsPseudorange);
+  
+    // Compute clock corrected transmission time
+    double tGPS = computeClockCorrectedTransmissionTime(unixTime, satelliteClockError, obsPseudorange);
+  
+    // Compute eccentric anomaly
+    double Ek = computeEccentricAnomaly(tGPS, eph);
+  
+    // Semi-major axis
+    double A = eph.getRootA() * eph.getRootA();
+  
+    // Time from the ephemerides reference epoch
+    double tk = checkGpsTime(tGPS - eph.getToe());
+  
+    // Position computation
+    double fk = Math.atan2(Math.sqrt(1 - Math.pow(eph.getE(), 2))
+        * Math.sin(Ek), Math.cos(Ek) - eph.getE());
+    double phi = fk + eph.getOmega();
+    phi = Math.IEEEremainder(phi, 2 * Math.PI);
+    double u = phi + eph.getCuc() * Math.cos(2 * phi) + eph.getCus()
+        * Math.sin(2 * phi);
+    double r = A * (1 - eph.getE() * Math.cos(Ek)) + eph.getCrc()
+        * Math.cos(2 * phi) + eph.getCrs() * Math.sin(2 * phi);
+    double ik = eph.getI0() + eph.getiDot() * tk + eph.getCic() * Math.cos(2 * phi)
+        + eph.getCis() * Math.sin(2 * phi);
+    double Omega = eph.getOmega0()
+        + (eph.getOmegaDot() - Constants.EARTH_ANGULAR_VELOCITY) * tk
+        - Constants.EARTH_ANGULAR_VELOCITY * eph.getToe();
+    Omega = Math.IEEEremainder(Omega + 2 * Math.PI, 2 * Math.PI);
+    double x1 = Math.cos(u) * r;
+    double y1 = Math.sin(u) * r;
+  
+    // Coordinates
+  //      double[][] data = new double[3][1];
+  //      data[0][0] = x1 * Math.cos(Omega) - y1 * Math.cos(ik) * Math.sin(Omega);
+  //      data[1][0] = x1 * Math.sin(Omega) + y1 * Math.cos(ik) * Math.cos(Omega);
+  //      data[2][0] = y1 * Math.sin(ik);
+  
+    // Fill in the satellite position matrix
+    //this.coord.ecef = new SimpleMatrix(data);
+    //this.coord = Coordinates.globalXYZInstance(new SimpleMatrix(data));
+    SatellitePosition sp = new SatellitePosition(unixTime,satID, satType, x1 * Math.cos(Omega) - y1 * Math.cos(ik) * Math.sin(Omega),
+        x1 * Math.sin(Omega) + y1 * Math.cos(ik) * Math.cos(Omega),
+        y1 * Math.sin(ik));
+    sp.setSatelliteClockError(satelliteClockError);
+  
+    // Apply the correction due to the Earth rotation during signal travel time
+    SimpleMatrix R = computeEarthRotationCorrection(unixTime, receiverClockError, tGPS);
+    sp.setSMMultXYZ(R);
+  
+    ///////////////////////////
+    // compute satellite speeds
+    // The technical paper which describes the bc_velo.c program is published in
+    // GPS Solutions, Volume 8, Number 2, 2004 (in press). "Computing Satellite Velocity using the Broadcast Ephemeris", by Benjamin W. Remondi
+    double cus = eph.getCus();
+    double cuc = eph.getCuc();
+    double cis = eph.getCis();
+    double crs = eph.getCrs();
+    double crc = eph.getCrc();
+    double cic = eph.getCic();
+    double idot                     =  eph.getiDot(); // 0.342514267094e-09; 
+    double e = eph.getE();
+  
+    double ek = Ek;
+    double tak = fk;
+  
+    // Computed mean motion [rad/sec]
+    double n0 = Math.sqrt(Constants.EARTH_GRAVITATIONAL_CONSTANT / Math.pow(A, 3));
+  
+    // Corrected mean motion [rad/sec]
+    double n = n0 + eph.getDeltaN();
+  
+    // Mean anomaly
+    double Mk = eph.getM0() + n * tk;
+  
+    double mkdot = n;
+    double ekdot = mkdot/(1.0 - e*Math.cos(ek));
+    double takdot = Math.sin(ek)*ekdot*(1.0+e*Math.cos(tak))/(Math.sin(tak)*(1.0-e*Math.cos(ek)));
+    double omegakdot = ( eph.getOmegaDot() - Constants.EARTH_ANGULAR_VELOCITY);
+  
+    double phik = phi;
+    double corr_u = cus*Math.sin(2.0*phik) + cuc*Math.cos(2.0*phik);
+    double corr_r = crs*Math.sin(2.0*phik) + crc*Math.cos(2.0*phik);
+  
+    double uk = phik + corr_u;
+    double rk = A*(1.0-e*Math.cos(ek)) + corr_r;
+  
+    double ukdot = takdot +2.0*(cus*Math.cos(2.0*uk)-cuc*Math.sin(2.0*uk))*takdot;
+    double rkdot = A*e*Math.sin(ek)*n/(1.0-e*Math.cos(ek)) + 2.0*(crs*Math.cos(2.0*uk)-crc*Math.sin(2.0*uk))*takdot;
+    double ikdot = idot + (cis*Math.cos(2.0*uk)-cic*Math.sin(2.0*uk))*2.0*takdot;
+  
+    double xpk = rk*Math.cos(uk);
+    double ypk = rk*Math.sin(uk);
+  
+    double xpkdot = rkdot*Math.cos(uk) - ypk*ukdot;
+    double ypkdot = rkdot*Math.sin(uk) + xpk*ukdot;
+  
+    double xkdot = ( xpkdot-ypk*Math.cos(ik)*omegakdot )*Math.cos(Omega)
+        - ( xpk*omegakdot+ypkdot*Math.cos(ik)-ypk*Math.sin(ik)*ikdot )*Math.sin(Omega);
+    double ykdot = ( xpkdot-ypk*Math.cos(ik)*omegakdot )*Math.sin(Omega)
+        + ( xpk*omegakdot+ypkdot*Math.cos(ik)-ypk*Math.sin(ik)*ikdot )*Math.cos(Omega);
+    double zkdot = ypkdot*Math.sin(ik) + ypk*Math.cos(ik)*ikdot;
+  
+    sp.setSpeed( xkdot, ykdot, zkdot );
+     
+    return sp;
+  }
+  
+	
 	private SimpleMatrix satellite_motion_diff_eq(SimpleMatrix pos1Array,
 			SimpleMatrix vel1Array, SimpleMatrix accArray, long ellAGlo,
 			double gmGlo, double j2Glo, double omegaeDotGlo) {

@@ -37,6 +37,12 @@ import org.ejml.simple.SimpleMatrix;
  */
 public class ReceiverPosition extends Coordinates{
 
+//  static GeoApiContext context;
+//  static GeoApiContext getContext(){
+//    if( context == null )
+//      context = new GeoApiContext().setApiKey("...Add your key here");
+//    return context;
+//  }
 	/* Satellites */
 	private int pivot; /* Index of the satellite with highest elevation in satAvail list */
 	private ArrayList<Integer> satAvail; /* List of satellites available for processing */

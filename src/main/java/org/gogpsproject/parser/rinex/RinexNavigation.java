@@ -161,7 +161,16 @@ public class RinexNavigation implements NavigationProducer {
 
 		return eph;
 	}
-	private RinexNavigationParser getRNPByTimestamp(long unixTime) {
+	
+	/* Convenience method for adding an rnp to memory cache*/
+  public void put(long reqTime, RinexNavigationParser rnp) {
+    Time t = new Time(reqTime);
+     String url = t.formatTemplate(urltemplate);
+     if(!pool.containsKey(url))
+       pool.put(url, rnp);
+   }
+   
+	protected RinexNavigationParser getRNPByTimestamp(long unixTime) {
 
 		RinexNavigationParser rnp = null;
 		long reqTime = unixTime;
@@ -177,28 +186,19 @@ public class RinexNavigation implements NavigationProducer {
 			if(url.startsWith("ftp://")){
 				try {
 					if(pool.containsKey(url)){
-						//System.out.println(url+" from memory cache.");
 						rnp = pool.get(url);
-					}else{
+					}
+					else{
 						rnp = getFromFTP(url);
+						if(rnp != null){
+							pool.put(url, rnp);
+	        	}
 					}
-					if(rnp != null){
-						pool.put(url, rnp);
-						return rnp;
-					}
-					System.out.println("Try in 10s");
-					try {
-						Thread.sleep(1000*10);
-					} catch (InterruptedException ee) {}
+					return rnp;
 				} catch (FileNotFoundException e) {
-					//System.out.println("Try with previous time by 1h");
-					reqTime = reqTime - (1L*3600L*1000L);
+				  return null;
 				}  catch (IOException e) {
-					e.printStackTrace();
-					System.out.println("Try in 10s");
-					try {
-						Thread.sleep(1000*10);
-					} catch (InterruptedException ee) {}
+          return null;
 				}
 
 			}else{
@@ -225,7 +225,12 @@ public class RinexNavigation implements NavigationProducer {
 		if(filename.endsWith(".Z")) filename = filename.substring(0, filename.length()-2);
 		File rnf = new File(RNP_CACHE,filename);
 
-		if(!rnf.exists()){
+		if(rnf.exists()){
+      System.out.println(url+" from cache file "+rnf);
+      rnp = new RinexNavigationParser(rnf);
+      rnp.init();
+		}
+		else {
 			System.out.println(url+" from the net.");
 			FTPClient ftp = new FTPClient();
 
@@ -265,12 +270,12 @@ public class RinexNavigation implements NavigationProducer {
 
 				System.out.println("open "+remoteFile);
 				InputStream is = ftp.retrieveFileStream(remoteFile);
-				InputStream uis = is;
 				System.out.println(ftp.getReplyString());
 				if(ftp.getReplyString().startsWith("550")){
 					negativeChache.put(origurl, new Date());
 					throw new FileNotFoundException();
 				}
+        InputStream uis = is;
 
 				if(remoteFile.endsWith(".Z")){
 					uis = new UncompressInputStream(is);
@@ -284,7 +289,8 @@ public class RinexNavigation implements NavigationProducer {
 				ftp.completePendingCommand();
 
 				ftp.logout();
-			} finally {
+			} 
+			finally {
 				if (ftp.isConnected()) {
 					try {
 						ftp.disconnect();
@@ -293,10 +299,6 @@ public class RinexNavigation implements NavigationProducer {
 					}
 				}
 			}
-		}else{
-			System.out.println(url+" from cache file "+rnf);
-			rnp = new RinexNavigationParser(rnf);
-			rnp.init();
 		}
 		return rnp;
 	}

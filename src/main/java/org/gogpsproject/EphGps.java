@@ -101,6 +101,8 @@ public class EphGps implements Streamable {
 	private double Za;
 	private double En;
 
+  public static final EphGps UnhealthyEph = new EphGps();
+
 
 	public EphGps(){
 

@@ -30,6 +30,8 @@ import org.ejml.simple.SimpleMatrix;
  * @author Eugenio Realini, Cryms.com
  */
 public class SatellitePosition extends Coordinates{
+  public static final SatellitePosition UnhealthySat = new SatellitePosition(0, 0, '0', 0, 0, 0); 
+
 	private int satID; /* Satellite ID number */
 	private char satType;
 	private double satelliteClockError; /* Correction due to satellite clock error in seconds*/

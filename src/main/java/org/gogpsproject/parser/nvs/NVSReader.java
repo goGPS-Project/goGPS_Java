@@ -46,7 +46,7 @@ public class NVSReader implements StreamEventProducer {
 	private Boolean debugModeEnabled = false;
 	
 	boolean gpsEnable = true;  // enable GPS data reading
-	boolean qzsEnable = false;  // enable QZSS data reading
+	boolean qzsEnable = true;  // enable QZSS data reading
     boolean gloEnable = true;  // enable GLONASS data reading	
     boolean galEnable = true;  // enable Galileo data reading
     boolean bdsEnable = false;  // enable BeiDou data reading

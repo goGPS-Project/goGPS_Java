@@ -24,6 +24,7 @@ import java.util.Vector;
 
 import org.gogpsproject.parser.nvs.NVSSerialConnection;
 import org.gogpsproject.producer.rinex.RinexV2Producer;
+import org.gogpsproject.producer.rinex.RinexV3Producer;
 
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
@@ -105,6 +106,16 @@ public class LogNVS {
 				}
 			}
 			
+			boolean gpsEnable = true;  // enable GPS data writing
+			boolean qzsEnable = true;  // enable QZSS data writing
+		    boolean gloEnable = true;  // enable GLONASS data writing	
+		    boolean galEnable = true;  // enable Galileo data writing
+		    boolean bdsEnable = false;  // enable BeiDou data writing
+
+			Boolean[] multiConstellation = {gpsEnable, qzsEnable, gloEnable, galEnable, bdsEnable};
+			
+			int minDOY = 0;
+			
 			int r = 0;
 			
 			for (String portId : ns.<String> getList("port")) {
@@ -120,7 +131,8 @@ public class LogNVS {
 				if (ns.getBoolean("rinexobs")) {
 					boolean singleFreq = true;
 					boolean needApproxPos = false;
-					RinexV2Producer rp = null;
+//					RinexV2Producer rp = null;
+					RinexV3Producer rp = null;
 					String marker = "";
 					if (ns.<String> getList("marker").isEmpty()) {
 						String portStrMarker = preparePortStringForMarker(portId);
@@ -129,7 +141,8 @@ public class LogNVS {
 					} else {
 						marker = ns.<String> getList("marker").get(r);
 					}
-					rp = new RinexV2Producer(needApproxPos, singleFreq, marker);
+//					rp = new RinexV2Producer(needApproxPos, singleFreq, marker);
+					rp = new RinexV3Producer(needApproxPos, singleFreq, marker, multiConstellation, minDOY);
 					rp.enableCompression(ns.getBoolean("compress"));
 					rp.setOutputDir(ns.getString("outdir"));
 					nvsSerialConn.addStreamEventListener(rp);

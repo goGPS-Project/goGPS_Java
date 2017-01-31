@@ -69,8 +69,8 @@ public class NVSToRinex {
 
 		System.out.println("in :"+inFile);
 		
-		RinexV2Producer rp = new RinexV2Producer(needApproxPos, singleFreq, marker, minDOY);
-//		RinexV3Producer rp = new RinexV3Producer(needApproxPos, singleFreq, marker, multiConstellation, minDOY);
+//		RinexV2Producer rp = new RinexV2Producer(needApproxPos, singleFreq, marker, minDOY);
+		RinexV3Producer rp = new RinexV3Producer(needApproxPos, singleFreq, marker, multiConstellation, minDOY);
 		rp.setOutputDir(outDir);
 
 		NVSFileReader roverIn = new NVSFileReader(new File(inFile));

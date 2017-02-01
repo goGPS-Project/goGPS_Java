@@ -74,8 +74,8 @@ public class DecodeRXMRAWX {
 		boolean gpsEnable = multiConstellation[0];
 		boolean qzsEnable = multiConstellation[1];
 		boolean gloEnable = multiConstellation[2];
-//		boolean galEnable = multiConstellation[3];
-//		boolean bdsEnable = multiConstellation[4];
+		boolean galEnable = multiConstellation[3];
+		boolean bdsEnable = multiConstellation[4];
 		
 		
 		if (len == 0) {
@@ -393,17 +393,31 @@ public class DecodeRXMRAWX {
 //				os.setSatType('S'); 
 //				os.setSatID(satId);
 			
-//			} else if (satType == 2) { // Galileo
-//				os.setSatType('E');
-//				os.setSatID(satId);
-				
-//			} else if (satType == 3) { // BeiDou
-//				os.setSatType('C');
-//				os.setSatID(satId);
-			
 //			} else if (satType == 4) { // IMES
 //				os.setSatType('I');
 //				os.setSatID(satId);
+			
+			} else if (satType == 2 && galEnable == true && !anomalousValues) { 
+				/* Galileo */
+				os.setSatType('E');
+				os.setSatID(satID);
+				os.setCodeC(ObservationSet.L1, pseudoRange);
+				os.setPhaseCycles(ObservationSet.L1, carrierPhase);
+				os.setDoppler(ObservationSet.L1, d1);
+				os.setSignalStrength(ObservationSet.L1, snr);
+				o.setGps(gpsCounter, os);
+				gpsCounter++;
+				
+			} else if (satType == 3 && bdsEnable == true && !anomalousValues) { 
+				/* BeiDou */
+				os.setSatType('C');
+				os.setSatID(satID);
+				os.setCodeC(ObservationSet.L1, pseudoRange);
+				os.setPhaseCycles(ObservationSet.L1, carrierPhase);
+				os.setDoppler(ObservationSet.L1, d1);
+				os.setSignalStrength(ObservationSet.L1, snr);
+				o.setGps(gpsCounter, os);
+				gpsCounter++;
 				
 			} else if (satType == 5 && qzsEnable == true && !anomalousValues) { 
 				/* QZSS*/

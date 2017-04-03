@@ -7,6 +7,7 @@ import org.gogpsproject.GoGPS;
 import org.gogpsproject.NavigationProducer;
 import org.gogpsproject.Observations;
 import org.gogpsproject.ObservationsProducer;
+import org.gogpsproject.parser.rinex.RinexNavigation;
 import org.gogpsproject.parser.rinex.RinexNavigationParser;
 import org.gogpsproject.parser.rinex.RinexObservationParser;
 import org.gogpsproject.parser.ublox.DecodeRXMRAWX;
@@ -26,7 +27,8 @@ public class Issues {
   public void i27(){
     ObservationsProducer roverIn = new UBXFileReader(new File("./src/test/resources/ublox.ubx"));
     ObservationsProducer masterIn = new RinexObservationParser(new File("./src/test/resources/vrs.17o"));
-    NavigationProducer navigationIn = new RinexNavigationParser(new File("./src/test/resources/vrs.17n"));
+//    NavigationProducer navigationIn = new RinexNavigationParser(new File("./src/test/resources/vrs.17n"));
+    NavigationProducer navigationIn = new RinexNavigation( RinexNavigation.NASA_NAVIGATION_DAILY ); 
 
     double goodDopThreshold = 3.0; // Threshold - próg graniczny
     int TimeSampleDelaySec = 30;
@@ -44,12 +46,20 @@ public class Issues {
         GoGPS goGPS = new GoGPS(navigationIn, roverIn, masterIn);
         goGPS.addPositionConsumerListener(kml);
         goGPS.setDynamicModel(dynamicModel);
-        goGPS.runKalmanFilterCodePhaseDoubleDifferences();
 
+        goGPS.setCutoff(0);
+//        goGPS.runCodeStandalone();
+//        goGPS.runKalmanFilterCodePhaseStandalone();
+        goGPS.runKalmanFilterCodePhaseDoubleDifferences(); // -> Missing M or R obs
+        
         roverIn.release(true, 10000);
         masterIn.release(true, 10000);
         navigationIn.release(true, 10000);
         int a = 1;
+        
+        while( Thread.activeCount()>2 ){
+          Thread.sleep(1000);
+        }
     } catch (Exception e) {
         e.printStackTrace();
     }

@@ -507,15 +507,15 @@ public class RinexV3Producer implements StreamEventListener {
 						break;
 					}
 					cnt++;
-					if(cnt==typeConfig.size() || cnt==5){
+					if(cnt==typeConfig.size()){
 						writeLine(line, true);
 						line = "";
 						cnt = 0;
 					}
 				}
-				if (typeConfig.size() > 5) {
-					writeLine(line, true);
-				}
+//				if (typeConfig.size() > 5) {
+//					writeLine(line, true);
+//				}
 			}
 		}
 

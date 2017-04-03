@@ -1132,21 +1132,25 @@ public class RinexNavigationParser extends EphemerisSystem implements Navigation
 			}
 		}
 
+    if( refEph == null )
+      return null;
+
 		//check satellite health
 		//temporary comment out by Yoshida, since NVS does not include health value
-		if (refEph != null && refEph.getSvHealth() != 0) {
+		if( refEph.getSvHealth() != 0) {
 		  return EphGps.UnhealthyEph;
 		}
 
 		//maximum allowed interval from ephemeris reference time
 		long fitInterval = refEph.getFitInt();
+		
 		if (fitInterval != 0) {
 			dtMax = fitInterval*3600/2;
 		} else {
 			switch (refEph.getSatType()) {
-			case 'R': dtMax = 950;
-			case 'J': dtMax = 3600;
-			default: dtMax = 7200;
+  			case 'R': dtMax = 950;
+  			case 'J': dtMax = 3600;
+  			default: dtMax = 7200;
 			}
 		}
 		if(dtMin/1000 > dtMax) {

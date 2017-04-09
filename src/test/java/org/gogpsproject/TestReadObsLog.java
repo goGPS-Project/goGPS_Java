@@ -82,12 +82,12 @@ public class TestReadObsLog {
 			String outPath = "P:\\Multimedia\\Dropbox\\GoGPS project\\misurazioni Cryms\\Misurazioni CAB1\\20111006-010011.kml";
 			KmlProducer kml = new KmlProducer(outPath, goodDopThreshold, timeSapleDelaySec);
 
-			GoGPS goGPS = new GoGPS(navigationIn, roverIn, masterIn);
-			goGPS.addPositionConsumerListener(kml);
-			goGPS.setDynamicModel(dynamicModel);
-			//goGPS.runCodeStandalone();
-			//goGPS.runCodeDoubleDifferences();
-			goGPS.runKalmanFilterCodePhaseDoubleDifferences();
+			GoGPS goGPS = new GoGPS(navigationIn, roverIn, masterIn)
+                  			.addPositionConsumerListener(kml)
+                  			.setDynamicModel(dynamicModel)
+                  			//.runCodeStandalone();
+                  			//.runCodeDoubleDifferences();
+                  			.runKalmanFilterCodePhaseDoubleDifferences();
 
 			try{
 				roverIn.release(true,10000);

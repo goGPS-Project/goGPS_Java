@@ -77,24 +77,24 @@ public class ProcessRealtimeUBX {
 			// wait for some data to buffer
 			Thread.sleep(2000);
 
-			GoGPS goGPS = new GoGPS(navigationIn, roverIn, null);
-			goGPS.setDynamicModel(dynamicModel);
+	     // set Output
+      String outPath = "./out/" + date1 + ".kml";
+      KmlProducer kml = new KmlProducer(outPath, 2.5, 0);
 
-			// set Output
-			String outPath = "./out/" + date1 + ".kml";
-			KmlProducer kml = new KmlProducer(outPath, 2.5, 0);
-			goGPS.addPositionConsumerListener(kml);
+			GoGPS goGPS = new GoGPS(navigationIn, roverIn, null)
+			                 .setDynamicModel(dynamicModel)
+			                 .addPositionConsumerListener(kml)
 
-			// run (never exit in live-tracking)
-//			goGPS.runCodeStandalone();
-//			goGPS.runKalmanFilterCodePhaseStandalone();
+                        // run (never exit in live-tracking)
+                        // .runCodeStandalone();
+                        // .runKalmanFilterCodePhaseStandalone();
 
-			// run in background
-			goGPS.runThreadMode(GoGPS.RUN_MODE_KALMAN_FILTER_STANDALONE);
+			                  // run in background
+			                 .runThreadMode(GoGPS.RUN_MODE_KALMAN_FILTER_STANDALONE)
 
-			// wait for 1 minute
-			Thread.sleep(120*1000);
-
+			                  // wait for 2 minutes
+			                 .runFor(120);
+			
 			System.out.println();
 			System.out.println();
 

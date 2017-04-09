@@ -22,7 +22,6 @@ package org.gogpsproject;
 
 import java.util.*;
 
-// TODO: Auto-generated Javadoc
 /**
  * The Class GoGPS.
  *
@@ -528,7 +527,7 @@ public class GoGPS implements Runnable{
 	/**
 	 * Run kalman filter on code and phase double differences.
 	 */
-	public void runKalmanFilterCodePhaseDoubleDifferences() {
+	public GoGPS runKalmanFilterCodePhaseDoubleDifferences() {
 
 		long timeRead = System.currentTimeMillis();
 		long depRead = 0;
@@ -679,7 +678,8 @@ public class GoGPS implements Runnable{
 		elapsedTimeMillisec = (int) (depProc - elapsedTimeSec * 1000);
 		if(debug)System.out.println("\nElapsed time (proc): " + elapsedTimeSec
 				+ " seconds " + elapsedTimeMillisec + " milliseconds.");
-
+		
+		return this;
 	}
 
 	public void runCodeStandaloneSnapshot() {
@@ -945,8 +945,8 @@ public class GoGPS implements Runnable{
           roverObs.obs = obsR;
           roverObs.satsInView = obsR.getNumSat();
           roverObs.satsInUse = roverPos.satsInUse;
-          roverObs.eRes = roverPos.eRes;
           roverObs.status = Status.Valid;
+          roverObs.eRes = roverPos.eRes;
           roverObs.cErr  = (obsR.getRefTime().getMsec() - roverObs.sampleTime.getMsec())/1000.0;
         }
         if(positionConsumers.size()>0){
@@ -1059,9 +1059,11 @@ public class GoGPS implements Runnable{
 	 * Sets the freq.
 	 *
 	 * @param freq the freq to set
+	 * @return 
 	 */
-	public void setFreq(int freq) {
+	public GoGPS setFreq(int freq) {
 		this.freq = freq;
+		return this;
 	}
 
 	/**
@@ -1077,9 +1079,11 @@ public class GoGPS implements Runnable{
 	 * Sets the dual freq.
 	 *
 	 * @param dualFreq the dualFreq to set
+	 * @return 
 	 */
-	public void setDualFreq(boolean dualFreq) {
+	public GoGPS setDualFreq(boolean dualFreq) {
 		this.dualFreq = dualFreq;
+    return this;
 	}
 
 	/**
@@ -1096,8 +1100,9 @@ public class GoGPS implements Runnable{
 	 *
 	 * @param cutoff the cutoff to set
 	 */
-	public void setCutoff(double cutoff) {
+	public GoGPS setCutoff(double cutoff) {
 		this.cutoff = cutoff;
+		return this;
 	}
 
 	/**
@@ -1113,9 +1118,11 @@ public class GoGPS implements Runnable{
 	 * Sets the order.
 	 *
 	 * @param order the order to set
+	 * @return 
 	 */
-	public void setOrder(int order) {
+	public GoGPS setOrder(int order) {
 		this.dynamicModel = order;
+    return this;
 	}
 
 	/**
@@ -1131,9 +1138,11 @@ public class GoGPS implements Runnable{
 	 * Sets the st dev init.
 	 *
 	 * @param stDevInit the stDevInit to set
+	 * @return 
 	 */
-	public void setStDevInit(double stDevInit) {
+	public GoGPS setStDevInit(double stDevInit) {
 		this.stDevInit = stDevInit;
+    return this;
 	}
 
 	/**
@@ -1149,9 +1158,11 @@ public class GoGPS implements Runnable{
 	 * Sets the st dev e.
 	 *
 	 * @param stDevE the stDevE to set
+	 * @return 
 	 */
-	public void setStDevE(double stDevE) {
+	public GoGPS setStDevE(double stDevE) {
 		this.stDevE = stDevE;
+    return this;
 	}
 
 	/**
@@ -1167,9 +1178,11 @@ public class GoGPS implements Runnable{
 	 * Sets the st dev n.
 	 *
 	 * @param stDevN the stDevN to set
+	 * @return 
 	 */
-	public void setStDevN(double stDevN) {
+	public GoGPS setStDevN(double stDevN) {
 		this.stDevN = stDevN;
+    return this;
 	}
 
 	/**
@@ -1185,9 +1198,11 @@ public class GoGPS implements Runnable{
 	 * Sets the st dev u.
 	 *
 	 * @param stDevU the stDevU to set
+	 * @return 
 	 */
-	public void setStDevU(double stDevU) {
+	public GoGPS setStDevU(double stDevU) {
 		this.stDevU = stDevU;
+    return this;
 	}
 
 	/**
@@ -1215,9 +1230,11 @@ public class GoGPS implements Runnable{
 	 * Sets the st dev code c.
 	 *
 	 * @param stDevCodeC the stDevCodeC to set
+	 * @return 
 	 */
-	public void setStDevCodeC(double stDevCodeC) {
+	public GoGPS setStDevCodeC(double stDevCodeC) {
 		this.stDevCodeC = stDevCodeC;
+    return this;
 	}
 
 	/**
@@ -1235,9 +1252,11 @@ public class GoGPS implements Runnable{
 	 *
 	 * @param stDevCodeP the stDevCodeP to set
 	 * @param i the selected GPS frequency
+	 * @return 
 	 */
-	public void setStDevCodeP(double stDevCodeP, int i) {
+	public GoGPS setStDevCodeP(double stDevCodeP, int i) {
 		this.stDevCodeP[i] = stDevCodeP;
+    return this;
 	}
 
 	/**
@@ -1253,9 +1272,11 @@ public class GoGPS implements Runnable{
 	 * Sets the st dev phase.
 	 *
 	 * @param stDevPhase the stDevPhase to set
+	 * @return 
 	 */
-	public void setStDevPhase(double stDevPhase) {
+	public GoGPS setStDevPhase(double stDevPhase) {
 		this.stDevPhase = stDevPhase;
+    return this;
 	}
 
 	/**
@@ -1271,9 +1292,11 @@ public class GoGPS implements Runnable{
 	 * Sets the st dev ambiguity.
 	 *
 	 * @param stDevAmbiguity the stDevAmbiguity to set
+	 * @return 
 	 */
-	public void setStDevAmbiguity(double stDevAmbiguity) {
+	public GoGPS setStDevAmbiguity(double stDevAmbiguity) {
 		this.stDevAmbiguity = stDevAmbiguity;
+    return this;
 	}
 
 	/**
@@ -1289,9 +1312,11 @@ public class GoGPS implements Runnable{
 	 * Sets the min num sat.
 	 *
 	 * @param minNumSat the minNumSat to set
+	 * @return 
 	 */
-	public void setMinNumSat(int minNumSat) {
+	public GoGPS setMinNumSat(int minNumSat) {
 		this.minNumSat = minNumSat;
+    return this;
 	}
 
 	/**
@@ -1307,9 +1332,11 @@ public class GoGPS implements Runnable{
 	 * Sets the cycle slip threshold.
 	 *
 	 * @param csThreshold the cycle slip threshold to set
+	 * @return 
 	 */
-	public void setCycleSlipThreshold(double csThreshold) {
+	public GoGPS setCycleSlipThreshold(double csThreshold) {
 		this.cycleSlipThreshold = csThreshold;
+    return this;
 	}
 
 	/**
@@ -1325,9 +1352,11 @@ public class GoGPS implements Runnable{
 	 * Sets the navigation.
 	 *
 	 * @param navigation the navigation to set
+	 * @return 
 	 */
-	public void setNavigation(NavigationProducer navigation) {
+	public GoGPS setNavigation(NavigationProducer navigation) {
 		this.navigation = navigation;
+    return this;
 	}
 
 	/**
@@ -1343,9 +1372,11 @@ public class GoGPS implements Runnable{
 	 * Sets the weights.
 	 *
 	 * @param weights the weights to set
+	 * @return 
 	 */
-	public void setWeights(int weights) {
+	public GoGPS setWeights(int weights) {
 		this.weights = weights;
+    return this;
 	}
 
 	/**
@@ -1362,8 +1393,9 @@ public class GoGPS implements Runnable{
 	 *
 	 * @param dynamicModel the dynamicModel to set
 	 */
-	public void setDynamicModel(int dynamicModel) {
+	public GoGPS setDynamicModel(int dynamicModel) {
 		this.dynamicModel = dynamicModel;
+		return this;
 	}
 	
 	/**
@@ -1379,9 +1411,11 @@ public class GoGPS implements Runnable{
 	 * Sets the cycle-slip detection strategy.
 	 *
 	 * @param cycleSlipDetectionStrategy the cycleSlipDetectionStrategy to set
+	 * @return 
 	 */
-	public void setCycleSlipDetection(int cycleSlipDetectionStrategy) {
+	public GoGPS setCycleSlipDetection(int cycleSlipDetectionStrategy) {
 		this.cycleSlipDetectionStrategy = cycleSlipDetectionStrategy;
+    return this;
 	}
 
 	/**
@@ -1397,9 +1431,11 @@ public class GoGPS implements Runnable{
 	 * Sets the ambiguity strategy.
 	 *
 	 * @param ambiguityStrategy the ambiguityStrategy to set
+	 * @return 
 	 */
-	public void setAmbiguityStrategy(int ambiguityStrategy) {
+	public GoGPS setAmbiguityStrategy(int ambiguityStrategy) {
 		this.ambiguityStrategy = ambiguityStrategy;
+    return this;
 	}
 
 	/**
@@ -1428,8 +1464,9 @@ public class GoGPS implements Runnable{
 	/**
 	 * @param positionConsumer the positionConsumer to add
 	 */
-	public void addPositionConsumerListener(PositionConsumer positionConsumer) {
+	public GoGPS addPositionConsumerListener(PositionConsumer positionConsumer) {
 		this.positionConsumers.add(positionConsumer);
+		return this;
 	}
 
 	private void notifyPositionConsumerEvent(int event){
@@ -1461,7 +1498,7 @@ public class GoGPS implements Runnable{
 	/**
 	 * @param runMode the run mode to use
 	 */
-	public void runThreadMode(int runMode) {
+	public GoGPS runThreadMode(int runMode) {
 		this.runMode = runMode;
 		this.runThread = new Thread(this);
 		switch(runMode){
@@ -1486,6 +1523,7 @@ public class GoGPS implements Runnable{
 		}
 		this.running = true;
 		this.runThread.start();
+		return this;
 	}
 
   public boolean isRunning() {
@@ -1555,9 +1593,11 @@ public class GoGPS implements Runnable{
 
   /**
 	 * @param debug the debug to set
+   * @return 
 	 */
-	public void setDebug(boolean debug) {
+	public GoGPS setDebug(boolean debug) {
 		this.debug = debug;
+    return this;
 	}
 
 	/**
@@ -1567,35 +1607,62 @@ public class GoGPS implements Runnable{
 		return debug;
 	}
 	
-	public void useDTM( boolean useDTM ){
+	public GoGPS useDTM( boolean useDTM ){
 	  this.useDTM = useDTM;
+    return this;
 	}
 	
 	public boolean useDTM(){
 	  return useDTM;
 	}
 
-  public void setMaxHeight(long maxHeight) {
+  public GoGPS setMaxHeight(long maxHeight) {
     this.maxHeight = maxHeight;
+    return this;
   }
+  
   public long getMaxHeight() {
     return maxHeight;
   }
 
-  public void setResidThreshold(double residThreshold) {
+  public GoGPS setResidThreshold(double residThreshold) {
     this.residThreshold = residThreshold;
+    return this;
   }
   
   public double getResidThreshold(){
     return this.residThreshold;
   }
 
-  public void setHdopLimit(double hdopLimit) {
+  public GoGPS setHdopLimit(double hdopLimit) {
     this.hdopLimit  = hdopLimit;
+    return this;
   }
   
   public double getHdopLimit(){
     return hdopLimit;
+  }
+
+  public GoGPS runUntilFinished() {
+    while (Thread.activeCount() > 1){
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException e) {
+        // FIXME Auto-generated catch block
+        e.printStackTrace();
+      }
+    }
+    return this;
+  }
+
+  public GoGPS runFor(int seconds ) {
+    try {
+      Thread.sleep(seconds*1000);
+    } catch (InterruptedException e) {
+      // FIXME Auto-generated catch block
+      e.printStackTrace();
+    }
+    return this;
   }
 
 }

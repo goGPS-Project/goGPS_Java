@@ -147,15 +147,15 @@ public class TestGoGPS {
 			TxtProducer txt = new TxtProducer(outPathTxt);
 			KmlProducer kml = new KmlProducer(outPathKml, goodDopThreshold, timeSampleDelaySec);
 
-			GoGPS goGPS = new GoGPS(navigationIn, roverIn, masterIn);
+			GoGPS goGPS = new GoGPS(navigationIn, roverIn, masterIn)
 //			GoGPS goGPS = new GoGPS(navigationIn, roverIn);
-			goGPS.addPositionConsumerListener(txt);
-			goGPS.addPositionConsumerListener(kml);
-			goGPS.setDynamicModel(dynamicModel);
-//			goGPS.runCodeStandalone();
-//			goGPS.runCodeDoubleDifferences();
-//			goGPS.runKalmanFilterCodePhaseStandalone();
-			goGPS.runKalmanFilterCodePhaseDoubleDifferences();
+  			.addPositionConsumerListener(txt)
+  			.addPositionConsumerListener(kml)
+  			.setDynamicModel(dynamicModel)
+//			.runCodeStandalone();
+//			.runCodeDoubleDifferences();
+//			.runKalmanFilterCodePhaseStandalone();
+  			.runKalmanFilterCodePhaseDoubleDifferences();
 
 			try{
 				roverIn.release(true,10000);
@@ -175,10 +175,8 @@ public class TestGoGPS {
 
 			/* To wait for other Thread to be finished */
 			System.out.println("waiting for finishing all the processes");
-			while (Thread.activeCount() > 1){
-			}			
+			goGPS.runUntilFinished();
 			System.out.println("Finished!");
-
 			
 			// Get and display elapsed time
 			int elapsedTimeSec = (int) Math.floor((System.currentTimeMillis() - start) / 1000);

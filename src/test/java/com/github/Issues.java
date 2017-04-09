@@ -43,23 +43,20 @@ public class Issues {
         masterIn.init();
 
         int dynamicModel = GoGPS.DYN_MODEL_STATIC; //may be also set to constant acceleration or static
-        GoGPS goGPS = new GoGPS(navigationIn, roverIn, masterIn);
-        goGPS.addPositionConsumerListener(kml);
-        goGPS.setDynamicModel(dynamicModel);
-
-        goGPS.setCutoff(0);
-//        goGPS.runCodeStandalone();
-//        goGPS.runKalmanFilterCodePhaseStandalone();
-        goGPS.runKalmanFilterCodePhaseDoubleDifferences(); // -> Missing M or R obs
+        GoGPS goGPS = new GoGPS(navigationIn, roverIn, masterIn)
+                         .addPositionConsumerListener(kml)
+                         .setDynamicModel(dynamicModel)
+                         .setCutoff(0)
+        
+//        .runCodeStandalone();
+//        .runKalmanFilterCodePhaseStandalone();
+                         .runKalmanFilterCodePhaseDoubleDifferences(); // -> Missing M or R obs
         
         roverIn.release(true, 10000);
         masterIn.release(true, 10000);
         navigationIn.release(true, 10000);
-        int a = 1;
         
-        while( Thread.activeCount()>2 ){
-          Thread.sleep(1000);
-        }
+        goGPS.runUntilFinished();
     } catch (Exception e) {
         e.printStackTrace();
     }

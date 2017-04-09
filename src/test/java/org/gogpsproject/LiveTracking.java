@@ -100,10 +100,10 @@ public class LiveTracking {
 			/******************************************
 			 * compute approx position in stand-alone mode
 			 */
-			GoGPS goGPSstandalone = new GoGPS(navigationIn, roverIn, null);
-			goGPSstandalone.setDynamicModel(dynamicModel);
-			// retrieve initial position, do not need to be precise
-			Coordinates initialPosition = goGPSstandalone.runCodeStandalone(10);
+      // retrieve initial position, do not need to be precise
+			Coordinates initialPosition = new GoGPS(navigationIn, roverIn, null)
+    			                              .setDynamicModel(dynamicModel)
+    			                              .runCodeStandalone(10);
 
 			/******************************************
 			 * MASTER RTCM/RINEX
@@ -125,29 +125,28 @@ public class LiveTracking {
 			/******************************************
 			 * compute precise position in Kalman filter mode
 			 */
-			GoGPS goGPS = new GoGPS(navigationIn, roverIn, masterIn);
-			goGPS.setDynamicModel(dynamicModel);
 
 			// set Output
 			String outPath = "test/" + date1 + ".kml";
 			KmlProducer kml = new KmlProducer(outPath, 2.5, 0);
-			goGPS.addPositionConsumerListener(kml);
-
-			// goGPS.runCodeDoubleDifferences();
-			// run blocking (never exit in live-tracking)
-			// goGPS.runKalmanFilter();
 
 			// run in background
-			goGPS.runThreadMode(GoGPS.RUN_MODE_KALMAN_FILTER_DOUBLE_DIFF);
+      GoGPS goGPS = new GoGPS(navigationIn, roverIn, masterIn)
+          .setDynamicModel(dynamicModel)
+          .addPositionConsumerListener(kml)
+			    .runThreadMode(GoGPS.RUN_MODE_KALMAN_FILTER_DOUBLE_DIFF);
+
+      // goGPS.runCodeDoubleDifferences();
+      // run blocking (never exit in live-tracking)
+      // goGPS.runKalmanFilter();
 
 			ArrayList<String> kmlFiles = new ArrayList<String>();
 			kmlFiles.add(date1 + ".kml");
 			initLiveKML(kmlFiles, initialPosition);
 
-
-			// wait for 1 minutes
-			Thread.sleep(120*1000);
-
+			// wait for 2 minutes
+			goGPS.runFor(120);
+			
 			System.out.println();
 			System.out.println();
 

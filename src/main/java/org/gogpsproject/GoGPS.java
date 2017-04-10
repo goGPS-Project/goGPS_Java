@@ -228,13 +228,13 @@ public class GoGPS implements Runnable{
 	/**
 	 * Run code standalone.
 	 */
-	public void runCodeStandalone() {
-
+	public RoverPosition runCodeStandalone() {
 		try {
 		  running = true;
-			runCodeStandalone(-1);
+			return runCodeStandalone(-1);
 		} catch (Exception e) {
 			e.printStackTrace();
+			return null;
 		}
 	}
 
@@ -330,7 +330,7 @@ public class GoGPS implements Runnable{
 	/**
 	 * Run code double differences.
 	 */
-	public void runCodeDoubleDifferences() {
+	public GoGPS runCodeDoubleDifferences() {
 
 		// Create a new object for the rover position
 		roverPos = new ReceiverPosition(this);
@@ -411,12 +411,13 @@ public class GoGPS implements Runnable{
 		} finally {
 			notifyPositionConsumerEvent(PositionConsumer.EVENT_END_OF_TRACK);
 		}
+		return this;
 	}
 
 	/**
 	 * Run kalman filter on code and phase standalone.
 	 */
-	public void runKalmanFilterCodePhaseStandalone() {
+	public GoGPS runKalmanFilterCodePhaseStandalone() {
 
 		long timeRead = System.currentTimeMillis();
 		long depRead = 0;
@@ -521,7 +522,8 @@ public class GoGPS implements Runnable{
 		elapsedTimeMillisec = (int) (depProc - elapsedTimeSec * 1000);
 		if(debug)System.out.println("\nElapsed time (proc): " + elapsedTimeSec
 				+ " seconds " + elapsedTimeMillisec + " milliseconds.");
-
+		
+		return this;
 	}
 
 	/**
@@ -682,12 +684,13 @@ public class GoGPS implements Runnable{
 		return this;
 	}
 
-	public void runCodeStandaloneSnapshot() {
+	public RoverPosition runCodeStandaloneSnapshot() {
     try {
-      runCodeStandaloneSnapshot(null, 0);
+      return runCodeStandaloneSnapshot(null, 0);
     } catch (Exception e) {
       e.printStackTrace();
     }
+    return null;
   }
   
 	public RoverPosition runCodeStandaloneSnapshot( Coordinates aPrioriPos, double stopAtDopThreshold) throws Exception {
@@ -695,12 +698,13 @@ public class GoGPS implements Runnable{
 	  return null;
   }
 
-  public void runCodeStandaloneCoarseTime() {
+  public RoverPosition runCodeStandaloneCoarseTime() {
     try {
-      runCodeStandaloneCoarseTime( MODULO20MS );
+      return runCodeStandaloneCoarseTime( MODULO20MS );
     } catch (Exception e) {
       e.printStackTrace();
     }
+    return null;
   }
 	
   void runElevationMethod(Observations obsR){
@@ -722,7 +726,7 @@ public class GoGPS implements Runnable{
     }
   }
 
-  void runCoarseTime(Observations obsR, final double MODULO ){
+  GoGPS runCoarseTime(Observations obsR, final double MODULO ){
     for (int iter = 0; iter < 2000; iter++) {
       if(debug) System.out.println("\r\n////// itr = " + iter );
       long   updatems = obsR.getRefTime().getMsec();
@@ -776,6 +780,7 @@ public class GoGPS implements Runnable{
         }
       }
     }
+    return this;
   }
   
   public RoverPosition runCodeStandaloneCoarseTime( final double MODULO ) throws Exception {
@@ -1446,6 +1451,58 @@ public class GoGPS implements Runnable{
 	}
 
 	/**
+   * @return the debug
+   */
+  public boolean isDebug() {
+  	return debug;
+  }
+
+  /**
+   * @param debug the debug to set
+   * @return 
+   */
+  public GoGPS setDebug(boolean debug) {
+  	this.debug = debug;
+    return this;
+  }
+
+  public boolean useDTM(){
+    return useDTM;
+  }
+
+  public GoGPS useDTM( boolean useDTM ){
+    this.useDTM = useDTM;
+    return this;
+  }
+
+  public long getMaxHeight() {
+    return maxHeight;
+  }
+
+  public GoGPS setMaxHeight(long maxHeight) {
+    this.maxHeight = maxHeight;
+    return this;
+  }
+
+  public double getResidThreshold(){
+    return this.residThreshold;
+  }
+
+  public GoGPS setResidThreshold(double residThreshold) {
+    this.residThreshold = residThreshold;
+    return this;
+  }
+
+  public double getHdopLimit(){
+    return hdopLimit;
+  }
+
+  public GoGPS setHdopLimit(double hdopLimit) {
+    this.hdopLimit  = hdopLimit;
+    return this;
+  }
+
+  /**
 	 * @return the roverPos
 	 */
 	public Coordinates getRoverPos() {
@@ -1590,58 +1647,6 @@ public class GoGPS implements Runnable{
     }
     running = false;
 	}
-
-  /**
-	 * @param debug the debug to set
-   * @return 
-	 */
-	public GoGPS setDebug(boolean debug) {
-		this.debug = debug;
-    return this;
-	}
-
-	/**
-	 * @return the debug
-	 */
-	public boolean isDebug() {
-		return debug;
-	}
-	
-	public GoGPS useDTM( boolean useDTM ){
-	  this.useDTM = useDTM;
-    return this;
-	}
-	
-	public boolean useDTM(){
-	  return useDTM;
-	}
-
-  public GoGPS setMaxHeight(long maxHeight) {
-    this.maxHeight = maxHeight;
-    return this;
-  }
-  
-  public long getMaxHeight() {
-    return maxHeight;
-  }
-
-  public GoGPS setResidThreshold(double residThreshold) {
-    this.residThreshold = residThreshold;
-    return this;
-  }
-  
-  public double getResidThreshold(){
-    return this.residThreshold;
-  }
-
-  public GoGPS setHdopLimit(double hdopLimit) {
-    this.hdopLimit  = hdopLimit;
-    return this;
-  }
-  
-  public double getHdopLimit(){
-    return hdopLimit;
-  }
 
   public GoGPS runUntilFinished() {
     while (Thread.activeCount() > 1){

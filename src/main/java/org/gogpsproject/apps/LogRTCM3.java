@@ -116,18 +116,19 @@ public class LogRTCM3 {
 		}
 
 		try {
-			RTCM3Client rtcm = RTCM3Client.getInstance(NTRIPurl.trim(), NTRIPport, NTRIPuser.trim(), NTRIPpass.trim(), NTRIPmountpoint.trim());
 
 			Coordinates coordinates = Coordinates.globalGeodInstance(ns.<Double> getList("latitude").get(0),ns.<Double> getList("longitude").get(0),ns.<Double> getList("height").get(0));
-			rtcm.setVirtualReferenceStationPosition(coordinates);
-			rtcm.setMarkerName(markerName);
-			rtcm.setOutputDir(ns.getString("outdir"));
+      RTCM3Client rtcm = RTCM3Client.getInstance(NTRIPurl.trim(), NTRIPport, NTRIPuser.trim(), NTRIPpass.trim(), NTRIPmountpoint.trim())
+          .setVirtualReferenceStationPosition(coordinates)
+          .setMarkerName(markerName)
+          .setOutputDir(ns.getString("outdir"))
 			
-			rtcm.setReconnectionPolicy(chosenReconnectionPolicy);
-			rtcm.setExitPolicy(RTCM3Client.EXIT_NEVER);
-			rtcm.setReconnectionWaitingTime((Integer) ns.get("waitingtime"));
-			rtcm.setDebug(ns.getBoolean("debug"));
-			rtcm.init();
+          .setReconnectionPolicy(chosenReconnectionPolicy)
+          .setExitPolicy(RTCM3Client.EXIT_NEVER)
+          .setReconnectionWaitingTime((Integer) ns.get("waitingtime"))
+          .setDebug(ns.getBoolean("debug"));
+      
+      rtcm.init();
 			
 			if (ns.getBoolean("rinexobs")) {
 				boolean singleFreq = false;

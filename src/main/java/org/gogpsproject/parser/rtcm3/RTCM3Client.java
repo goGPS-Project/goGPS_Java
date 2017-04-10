@@ -121,9 +121,11 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 
 	/**
 	 * @param exitPolicy the exitPolicy to set
+	 * @return 
 	 */
-	public void setExitPolicy(int exitPolicy) {
+	public RTCM3Client setExitPolicy(int exitPolicy) {
 		this.exitPolicy = exitPolicy;
+    return this;
 	}
 
 	public static RTCM3Client getInstance(String _host, int _port, String _username,
@@ -962,8 +964,9 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 
 	/**
 	 * @param initialPosition the initialPosition to set
+	 * @return 
 	 */
-	public void setMasterPosition(Coordinates masterPosition) {
+	public RTCM3Client setMasterPosition(Coordinates masterPosition) {
 		if(debug){
 			masterPosition.computeGeodetic();
 			System.out.println("Master Position : " + masterPosition);
@@ -972,6 +975,7 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 		for (StreamEventListener sel : streamEventListeners) {
 			sel.setDefinedPosition(masterPosition);
 		}
+    return this;
 	}
 
 	/**
@@ -983,9 +987,11 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 
 	/**
 	 * @param streamFileLogger the streamFileLogger to set
+	 * @return 
 	 */
-	public void setStreamFileLogger(String streamFileLogger) {
+	public RTCM3Client setStreamFileLogger(String streamFileLogger) {
 		this.streamFileLogger = streamFileLogger;
+    return this;
 	}
 
 	/**
@@ -997,16 +1003,20 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 
 	/**
 	 * @param debug the debug to set
+	 * @return 
 	 */
-	public void setDebug(boolean debug) {
+	public RTCM3Client setDebug(boolean debug) {
 		this.debug = debug;
+    return this;
 	}
 
 	/**
 	 * @param reconnectionPolicy the reconnectionPolicy to set
+	 * @return 
 	 */
-	public void setReconnectionPolicy(int reconnectionPolicy) {
+	public RTCM3Client setReconnectionPolicy(int reconnectionPolicy) {
 		this.reconnectionPolicy = reconnectionPolicy;
+    return this;
 	}
 
 	/**
@@ -1059,10 +1069,12 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 
 	/**
 	 * @param antennaDescriptor the antennaDescriptor to set
+	 * @return 
 	 */
-	public void setAntennaDescriptor(AntennaDescriptor antennaDescriptor) {
+	public RTCM3Client setAntennaDescriptor(AntennaDescriptor antennaDescriptor) {
 		if(debug) System.out.println("Antenna Descriptor : " + antennaDescriptor);
 		this.antennaDescriptor = antennaDescriptor;
+    return this;
 	}
 
 	/**
@@ -1074,10 +1086,12 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 
 	/**
 	 * @param virtualReferenceStationPosition the virtualReferenceStationPosition to set
+	 * @return 
 	 */
-	public void setVirtualReferenceStationPosition(
+	public RTCM3Client setVirtualReferenceStationPosition(
 			Coordinates virtualReferenceStationPosition) {
 		this.virtualReferenceStationPosition = virtualReferenceStationPosition;
+		return this;
 	}
 
 	/**
@@ -1087,15 +1101,18 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 		return virtualReferenceStationPosition;
 	}
 
-	public void setMarkerName(String markerName) {
+	public RTCM3Client setMarkerName(String markerName) {
 		this.markerName = markerName;
+    return this;
 	}
 	
-	public void setOutputDir(String outDir) {
+	public RTCM3Client setOutputDir(String outDir) {
 		this.outputDir = outDir;
+		return this;
 	}
 
-	public void setReconnectionWaitingTime(Integer waitingTime) {
+	public RTCM3Client setReconnectionWaitingTime(Integer waitingTime) {
 		this.reconnectionWaitingTime = waitingTime * 1000;
+    return this;
 	}
 }

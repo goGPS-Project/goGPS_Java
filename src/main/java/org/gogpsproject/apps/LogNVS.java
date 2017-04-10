@@ -120,12 +120,12 @@ public class LogNVS {
 			
 			for (String portId : ns.<String> getList("port")) {
 				
-				NVSSerialConnection nvsSerialConn = new NVSSerialConnection(portId, 115200);
+				NVSSerialConnection nvsSerialConn = new NVSSerialConnection(portId, 115200)
 
-				nvsSerialConn.setMeasurementRate((Integer) ns.get("rate"));
-				nvsSerialConn.enableTimetag(ns.getBoolean("timetag"));
-				nvsSerialConn.setOutputDir(ns.getString("outdir"));
-				nvsSerialConn.enableDebug(ns.getBoolean("debug"));
+				  .setMeasurementRate((Integer) ns.get("rate"))
+				  .enableTimetag(ns.getBoolean("timetag"))
+				  .setOutputDir(ns.getString("outdir"))
+				  .enableDebug(ns.getBoolean("debug"));
 				nvsSerialConn.init();
 				
 				if (ns.getBoolean("rinexobs")) {

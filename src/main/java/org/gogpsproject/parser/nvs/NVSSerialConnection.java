@@ -89,35 +89,39 @@ public class NVSSerialConnection  extends AbstractSerialConnection<NVSSerialRead
 		super.release();
 	}
 
-	public void setMeasurementRate(int measRate) {
+	public NVSSerialConnection setMeasurementRate(int measRate) {
 		if(prod!=null){
 			prod.setRate(measRate);
 		} else {
 			this.setMeasurementRate = measRate;
 		}
+		return this;
 	}
 
-	public void enableTimetag(Boolean enableTim) {
+	public NVSSerialConnection enableTimetag(Boolean enableTim) {
 		if(prod!=null){
 			prod.enableSysTimeLog(enableTim);
 		} else {
 			this.enableTimetag = enableTim;
 		}
+    return this;
 	}
 	
-	public void enableDebug(Boolean enableDebug) {
+	public NVSSerialConnection enableDebug(Boolean enableDebug) {
 		if(prod!=null){
 			prod.enableDebugMode(enableDebug);
 		} else {
 			this.enableDebug = enableDebug;
 		}
+    return this;
 	}
 	
-	public void setOutputDir(String outDir) {
+	public NVSSerialConnection setOutputDir(String outDir) {
 		if(prod!=null){
 			prod.setOutputDir(outDir);
 		} else {
 			this.outputDir = outDir;
 		}
+    return this;
 	}
 }

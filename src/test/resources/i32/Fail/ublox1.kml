@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns:kml="http://earth.google.com/kml/2.1">
+  <Style id="LineStyle_worst"><LineStyle><color>ff0000ff</color><width>3</width></LineStyle><PolyStyle><color>ff0000ff</color></PolyStyle></Style>
+  <Style id="LineStyle_good"><LineStyle><color>ff00ff00</color><width>3</width></LineStyle><PolyStyle><color>ff00ff00</color></PolyStyle></Style>
+  <Style id="CircleStyle"><LineStyle><color>88FFCC99</color><width>2</width></LineStyle><PolyStyle><color>88FFCC99</color></PolyStyle></Style>
+  <Style id="dot-icon"><IconStyle><Icon><href>http://maps.google.com/mapfiles/kml/shapes/donut.png</href></Icon></IconStyle></Style>
+  <Folder><Placemark>
+    <name></name>
+    <description></description>
+    <styleUrl>#LineStyle_worst</styleUrl>
+    <LineString>
+      <tessellate>1</tessellate>
+      <coordinates>
+</coordinates></LineString></Placemark></Folder><Folder><open>1</open><Style><ListStyle><listItemType>checkHideChildren</listItemType></ListStyle></Style></Folder></Document>

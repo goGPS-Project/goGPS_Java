@@ -3,8 +3,6 @@ package org.gogpsproject.parser.rinex;
 import java.io.File;
 import java.io.InputStream;
 
-import org.ejml.simple.SimpleMatrix;
-import org.gogpsproject.Constants;
 import org.gogpsproject.EphGps;
 import org.gogpsproject.Observations;
 import org.gogpsproject.SatellitePosition;

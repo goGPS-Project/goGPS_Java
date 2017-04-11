@@ -238,7 +238,11 @@ public class Coordinates implements Streamable{
 	}
 
 	public boolean isValidXYZ(){
-		return (this.ecef != null && this.ecef.elementSum() != 0 && !Double.isNaN(this.ecef.get(0)) && !Double.isNaN(this.ecef.get(1)) && !Double.isNaN(this.ecef.get(2)));
+		return (this.ecef != null && this.ecef.elementSum() != 0 
+        && !Double.isNaN(this.ecef.get(0)) && !Double.isNaN(this.ecef.get(1)) && !Double.isNaN(this.ecef.get(2))
+        && !Double.isInfinite(this.ecef.get(0)) && !Double.isInfinite(this.ecef.get(1)) && !Double.isInfinite(this.ecef.get(2))
+        && ( ecef.get(0) != 0 && ecef.get(1)!=0 && ecef.get(2)!= 0 )
+		    );
 	}
 
 	public Object clone(){
@@ -348,10 +352,10 @@ public class Coordinates implements Streamable{
 	public String toString(){
 		String lineBreak = System.getProperty("line.separator");
 
-		String out= "Coord ECEF: X:"+getX()+" Y:"+getY()+" Z:"+getZ()+lineBreak;
-		out +=      "       ENU: E:"+getE()+" N:"+getN()+" U:"+getU()+lineBreak;
-		out +=      "      GEOD: Lon:"+getGeodeticLongitude()+" Lat:"+getGeodeticLatitude()+" H:"+getGeodeticHeight()+lineBreak;
-
+		String out= String.format( "Coord ECEF: X:"+getX()+" Y:"+getY()+" Z:"+getZ()+lineBreak +
+		"       ENU: E:"+getE()+" N:"+getN()+" U:"+getU()+lineBreak +
+		"      GEOD: Lon:"+getGeodeticLongitude()+" Lat:"+getGeodeticLatitude()+" H:"+getGeodeticHeight()+lineBreak +
+		"      http://maps.google.com?q=%3.4f,%3.4f" + lineBreak, getGeodeticLatitude(), getGeodeticLongitude() );
 		return out;
 	}
 }

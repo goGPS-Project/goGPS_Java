@@ -1,7 +1,7 @@
 package org.gogpsproject;
 
 /**
- * All the values that the goGPS object can be in during processing
+ * All the status values that the goGPS object can be in during processing
  */
 public enum Status {
   None,

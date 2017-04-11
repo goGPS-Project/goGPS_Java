@@ -1135,8 +1135,6 @@ public class RinexNavigationParser extends EphemerisSystem implements Navigation
     if( refEph == null )
       return null;
 
-		//check satellite health
-		//temporary comment out by Yoshida, since NVS does not include health value
 		if( refEph.getSvHealth() != 0) {
 		  return EphGps.UnhealthyEph;
 		}

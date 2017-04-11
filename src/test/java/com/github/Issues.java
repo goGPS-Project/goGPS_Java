@@ -1,12 +1,12 @@
 package com.github;
 
-import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 import org.gogpsproject.GoGPS;
 import org.gogpsproject.NavigationProducer;
 import org.gogpsproject.Observations;
 import org.gogpsproject.ObservationsProducer;
+import org.gogpsproject.RoverPosition;
 import org.gogpsproject.parser.rinex.RinexNavigation;
 import org.gogpsproject.parser.rinex.RinexNavigationParser;
 import org.gogpsproject.parser.rinex.RinexObservationParser;
@@ -14,6 +14,8 @@ import org.gogpsproject.parser.ublox.DecodeRXMRAWX;
 import org.gogpsproject.parser.ublox.UBXException;
 import org.gogpsproject.parser.ublox.UBXFileReader;
 import org.gogpsproject.producer.KmlProducer;
+
+import static org.junit.Assert.*;
 
 import java.io.*;
 
@@ -25,14 +27,14 @@ public class Issues {
    */
   @Test
   public void i27(){
-    ObservationsProducer roverIn = new UBXFileReader(new File("./src/test/resources/ublox.ubx"));
-    ObservationsProducer masterIn = new RinexObservationParser(new File("./src/test/resources/vrs.17o"));
-//    NavigationProducer navigationIn = new RinexNavigationParser(new File("./src/test/resources/vrs.17n"));
+    ObservationsProducer roverIn = new UBXFileReader(new File("./src/test/resources/i27/ublox.ubx"));
+    ObservationsProducer masterIn = new RinexObservationParser(new File("./src/test/resources/i27/vrs.17o"));
+//    NavigationProducer navigationIn = new RinexNavigationParser(new File("./src/test/resources/i27/vrs.17n"));
     NavigationProducer navigationIn = new RinexNavigation( RinexNavigation.NASA_NAVIGATION_DAILY ); 
 
     double goodDopThreshold = 3.0; // Threshold - próg graniczny
     int TimeSampleDelaySec = 30;
-    String outPath = "./out.kml";
+    String outPath = "./src/test/resources/i27/out.kml";
     // should be tuned according to the dataset;
     // use '0' to disable timestamps in the KML String outPath = "./test/out.kml";
     try {
@@ -62,4 +64,33 @@ public class Issues {
     }
 
   }
+
+  /** https://github.com/goGPS-Project/goGPS_Java/issues/32 */
+  @Test
+  public void i32(){
+    ObservationsProducer roverIn = new UBXFileReader(new File("./src/test/resources/i32/Fail/ublox3.ubx"));
+    NavigationProducer navigationIn = new RinexNavigation( RinexNavigation.NASA_NAVIGATION_DAILY ); 
+
+    double goodDopThreshold = 3.0; 
+    int TimeSampleDelaySec = 30;
+    String outPath = "./src/test/resources/i32/Fail/ublox3.kml";
+    try {
+        KmlProducer kml = new KmlProducer(outPath, goodDopThreshold, TimeSampleDelaySec);
+
+        navigationIn.init();
+        roverIn.init();
+
+        int dynamicModel = GoGPS.DYN_MODEL_STATIC; //may be also set to constant acceleration or static
+        RoverPosition roverPos = new GoGPS(navigationIn, roverIn )
+                                     .addPositionConsumerListener(kml)
+                                     .setDynamicModel(dynamicModel)
+                                     .setCutoff(0)
+                                     .runCodeStandalone();
+        assertTrue( roverPos.isValidXYZ() );
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+
+  }
+
 }

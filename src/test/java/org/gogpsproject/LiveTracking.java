@@ -108,11 +108,11 @@ public class LiveTracking {
 			/******************************************
 			 * MASTER RTCM/RINEX
 			 */
-			RTCM3Client rtcmClient = RTCM3Client.getInstance(NTRIPurl.trim(), NTRIPport, NTRIPuser.trim(), NTRIPpass.trim(), NTRIPmountpoint.trim());
+			RTCM3Client rtcmClient = RTCM3Client.getInstance(NTRIPurl.trim(), NTRIPport, NTRIPuser.trim(), NTRIPpass.trim(), NTRIPmountpoint.trim())
 			//navigationIn = new RinexNavigation(RinexNavigation.IGN_NAVIGATION_HOURLY_ZIM2);
-			rtcmClient.setVirtualReferenceStationPosition(initialPosition);
-			rtcmClient.setReconnectionPolicy(RTCM3Client.CONNECTION_POLICY_RECONNECT);
-			rtcmClient.setExitPolicy(RTCM3Client.EXIT_ON_LAST_LISTENER_LEAVE);
+			 .setVirtualReferenceStationPosition(initialPosition)
+			 .setReconnectionPolicy(RTCM3Client.CONNECTION_POLICY_RECONNECT)
+			 .setExitPolicy(RTCM3Client.EXIT_ON_LAST_LISTENER_LEAVE);
 			rtcmClient.init();
 
 			ObservationsBuffer masterIn = new ObservationsBuffer(rtcmClient,"./test/masterOut.dat");

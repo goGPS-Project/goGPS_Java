@@ -253,6 +253,7 @@ public class GoGPS implements Runnable{
 		// Create a new object for the rover position
 		roverPos = new ReceiverPosition(this);
 		roverPos.setDebug(this.debug);
+		RoverPosition coord = null;
 		try {
 			Observations obsR = roverIn.getNextObservations();
 			while( obsR!=null && running ) { // buffStreamObs.ready()
@@ -298,7 +299,7 @@ public class GoGPS implements Runnable{
 							}
 //							else 
 							{
-								RoverPosition coord = new RoverPosition(roverPos, RoverPosition.DOP_TYPE_STANDARD, roverPos.getpDop(), roverPos.gethDop(), roverPos.getvDop());
+								coord = new RoverPosition(roverPos, RoverPosition.DOP_TYPE_STANDARD, roverPos.getpDop(), roverPos.gethDop(), roverPos.getvDop());
 
 								if(positionConsumers.size()>0){
 									coord.setRefTime(new Time(obsR.getRefTime().getMsec()));
@@ -324,7 +325,7 @@ public class GoGPS implements Runnable{
 		} finally {
 			notifyPositionConsumerEvent(PositionConsumer.EVENT_END_OF_TRACK);
 		}
-		return null;
+		return coord;
 	}
 
 	/**
@@ -950,8 +951,8 @@ public class GoGPS implements Runnable{
           roverObs.obs = obsR;
           roverObs.satsInView = obsR.getNumSat();
           roverObs.satsInUse = roverPos.satsInUse;
-          roverObs.status = Status.Valid;
           roverObs.eRes = roverPos.eRes;
+          roverObs.status = Status.Valid;
           roverObs.cErr  = (obsR.getRefTime().getMsec() - roverObs.sampleTime.getMsec())/1000.0;
         }
         if(positionConsumers.size()>0){

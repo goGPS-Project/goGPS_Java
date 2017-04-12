@@ -23,14 +23,18 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.SimpleTimeZone;
 import java.util.TimeZone;
+import java.util.zip.GZIPInputStream;
 
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
@@ -59,6 +63,7 @@ public class RinexNavigation implements NavigationProducer {
 	public final static String IGN_NAVIGATION_HOURLY_ZIM2 = "ftp://igs.ensg.ign.fr/pub/igs/data/hourly/${yyyy}/${ddd}/zim2${ddd}${h}.${yy}n.Z";
 	public final static String NASA_NAVIGATION_DAILY = "ftp://cddis.gsfc.nasa.gov/pub/gps/data/daily/${yyyy}/${ddd}/${yy}n/brdc${ddd}0.${yy}n.Z";
 	public final static String NASA_NAVIGATION_HOURLY = "ftp://cddis.gsfc.nasa.gov/pub/gps/data/hourly/${yyyy}/${ddd}/hour${ddd}0.${yy}n.Z";
+  public final static String GARNER_NAVIGATION_AUTO_HTTP = "http://garner.ucsd.edu/pub/rinex/${yyyy}/${ddd}/auto${ddd}0.${yy}n.Z"; // ex http://garner.ucsd.edu/pub/rinex/2016/034/auto0340.16n.Z
 
 	/** cache for negative answers */
 	private Hashtable<String,Date> negativeChache = new Hashtable<String, Date>();
@@ -174,7 +179,6 @@ public class RinexNavigation implements NavigationProducer {
 
 		RinexNavigationParser rnp = null;
 		long reqTime = unixTime;
-		boolean retrievable = true;
 
 		do{
 			// found none, retrieve from urltemplate
@@ -183,29 +187,28 @@ public class RinexNavigation implements NavigationProducer {
 
 			String url = t.formatTemplate(urltemplate);
 
-			if(url.startsWith("ftp://")){
-				try {
-					if(pool.containsKey(url)){
-						rnp = pool.get(url);
-					}
-					else{
-						rnp = getFromFTP(url);
-						if(rnp != null){
-							pool.put(url, rnp);
-	        	}
-					}
-					return rnp;
-				} catch (FileNotFoundException e) {
-				  return null;
-				}  catch (IOException e) {
-          return null;
-				}
+      try {
+        if(pool.containsKey(url)){
+          rnp = pool.get(url);
+        }else{
+          if(url.toLowerCase().startsWith("http"))
+            rnp = getFromHTTP(url);
+          else if(url.toLowerCase().startsWith("ftp"))
+            rnp = getFromFTP(url);
+          else 
+//        no way to get out
+            throw new RuntimeException("Invalid url template " + url);
+    
+          if(rnp != null){
+            pool.put(url, rnp);
+          }
+        }
+        return rnp;
+      } catch( IOException e) {
+        reqTime = reqTime - (1L*3600L*1000L);
+      }
 
-			}else{
-				// no way to get out
-				retrievable = false;
-			}
-		} while(retrievable && waitForData && rnp==null);
+		} while( waitForData && rnp==null);
 
 		return null;
 	}
@@ -303,6 +306,89 @@ public class RinexNavigation implements NavigationProducer {
 		return rnp;
 	}
 
+  private RinexNavigationParser getFromHTTP(String tUrl) throws IOException{
+    RinexNavigationParser rnp = null;
+
+    String origurl = tUrl;
+    if(negativeChache.containsKey(tUrl)){
+      if(System.currentTimeMillis()-negativeChache.get(tUrl).getTime() < 60*60*1000){
+        throw new FileNotFoundException("cached answer");
+      }else{
+        negativeChache.remove(tUrl);
+      }
+    }
+
+    String filename = tUrl.replaceAll("[ ,/:]", "_");
+    if(filename.endsWith(".Z")) filename = filename.substring(0, filename.length()-2);
+    File rnf = new File(RNP_CACHE,filename);
+
+    if(rnf.exists()){
+      System.out.println(tUrl+" from cache file "+rnf);
+      rnp = new RinexNavigationParser(rnf);
+      rnp.init();
+    }
+    else {
+      System.out.println(tUrl+" from the net.");
+      
+      System.out.println("URL: "+tUrl);
+      tUrl = tUrl.substring("http://".length());
+      String remoteFile = tUrl.substring(tUrl.indexOf('/'));
+      remoteFile = remoteFile.substring(remoteFile.lastIndexOf('/')+1);
+
+      URL url = new URL("http://" + tUrl);
+      HttpURLConnection con = (HttpURLConnection) url.openConnection();
+      con.setRequestMethod("GET");
+//      con.setRequestProperty("Authorization", "Basic "+ new String(Base64.encode(new String("anonymous:info@eriadne.org"))));
+      con.setRequestProperty("Authorization", "Basic "+ new String(Base64.getEncoder().encode((new String("anonymous:info@eriadne.org").getBytes()))));
+
+      int reply = con.getResponseCode();
+
+      if (reply>200) {
+        if( reply == 404 )
+          System.err.println("404 Not Found");
+        else
+          System.err.println("HTTP server refused connection.");
+//        System.out.print(new String(res.getContent()));
+
+        return null;
+      }
+
+      try{
+        if(remoteFile.endsWith(".Z")){
+          try{
+//            InputStream is = new ByteArrayInputStream(res.getContent());
+            InputStream is  = con.getInputStream();
+            InputStream uis = new UncompressInputStream(is);
+            rnp = new RinexNavigationParser(uis,rnf);
+            rnp.init();
+            uis.close();
+          }
+          catch( IOException e ){
+            InputStream is  = con.getInputStream();
+            InputStream uis = new GZIPInputStream(is);
+            rnp = new RinexNavigationParser(uis,rnf);
+            rnp.init();
+  //        Reader decoder = new InputStreamReader(gzipStream, encoding);
+  //        BufferedReader buffered = new BufferedReader(decoder);
+            uis.close();
+          }
+        }
+        else {
+          InputStream is  = con.getInputStream();
+          rnp = new RinexNavigationParser(is,rnf);
+          rnp.init();
+          is.close();
+        }
+      }
+      catch(IOException e ){
+        e.printStackTrace();
+        // TODO delete file, maybe it's corrupt
+      }
+    }
+    return rnp;
+  }
+  
+	
 	/* (non-Javadoc)
 	 * @see org.gogpsproject.NavigationProducer#getIono(int)
 	 */

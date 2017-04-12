@@ -25,8 +25,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Calendar;
 import java.util.Date;
@@ -309,7 +307,6 @@ public class RinexNavigation implements NavigationProducer {
   private RinexNavigationParser getFromHTTP(String tUrl) throws IOException{
     RinexNavigationParser rnp = null;
 
-    String origurl = tUrl;
     if(negativeChache.containsKey(tUrl)){
       if(System.currentTimeMillis()-negativeChache.get(tUrl).getTime() < 60*60*1000){
         throw new FileNotFoundException("cached answer");

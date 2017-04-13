@@ -29,6 +29,9 @@ import java.util.TimeZone;
 
 import org.gogpsproject.PositionConsumer;
 import org.gogpsproject.RoverPosition;
+import org.gogpsproject.RoverPositionObs;
+import org.gogpsproject.Status;
+
 /**
  * <p>
  * Produces KML file
@@ -87,6 +90,26 @@ public class KmlProducer implements PositionConsumer, Runnable {
 		t.start();
 	}
 
+	 public KmlProducer(String filename, double goodDopTreshold, int timeSampleDelaySec, String goodColorLine) throws IOException{
+	   this.goodColorLine = goodColorLine;
+//	   this.worstColorLine = goodColorLine;
+	   
+	    this.filename = filename;
+	    this.goodDopThreshold = goodDopTreshold;
+	    this.timeSampleDelaySec = timeSampleDelaySec;
+	    
+	    timeKML.setTimeZone(TZ);
+
+	    goodDop = false;
+	    FileWriter out = startOfTrack();
+	    if(out!=null){
+
+	      endOfTrack(out);
+	    }
+	    t = new Thread(this, "KmlProducer" );
+	    t.start();
+	 }
+	 
 	/* (non-Javadoc)
 	 * @see org.gogpsproject.producer.PositionConsumer#addCoordinate(org.gogpsproject.Coordinates)
 	 */
@@ -108,6 +131,10 @@ public class KmlProducer implements PositionConsumer, Runnable {
 	 */
 	public void writeCoordinate(RoverPosition coord,FileWriter out) {
 		try {
+      RoverPositionObs c = (RoverPositionObs)coord;
+      if( c.status != Status.Valid )
+        return;
+      
 			boolean prevDopResponse = goodDop;
 			goodDop = coord.getpDop()<goodDopThreshold;
 			if(prevDopResponse != goodDop){
@@ -173,7 +200,7 @@ public class KmlProducer implements PositionConsumer, Runnable {
 				"  <Style id=\"LineStyle_worst\"><LineStyle><color>"+worstOpacity+worstColorLine+"</color><width>"+worstLinePixelWidth+"</width></LineStyle><PolyStyle><color>"+worstOpacity+worstColorLine+"</color></PolyStyle></Style>\n"+
 				"  <Style id=\"LineStyle_good\"><LineStyle><color>"+goodOpacity+goodColorLine+"</color><width>"+goodLinePixelWidth+"</width></LineStyle><PolyStyle><color>"+goodOpacity+goodColorLine+"</color></PolyStyle></Style>\n"+
 				"  <Style id=\"CircleStyle\"><LineStyle><color>"+circleOpacity+circleColorLine+"</color><width>"+circlePixelWidth+"</width></LineStyle><PolyStyle><color>"+circleOpacity+circleColorLine+"</color></PolyStyle></Style>\n"+
-				"  <Style id=\"dot-icon\"><IconStyle><Icon><href>http://maps.google.com/mapfiles/kml/shapes/donut.png</href></Icon></IconStyle></Style>\n"+
+				"  <Style id=\"dot-icon\"><IconStyle><Icon><href>http://www.eriadne.org/icons/MapPointer.png</href></Icon></IconStyle></Style>\n"+
 				"  <Folder><Placemark>\n"+
 				"    <name></name>\n"+
 				"    <description></description>\n"+
@@ -197,10 +224,10 @@ public class KmlProducer implements PositionConsumer, Runnable {
 			// Write KML footer part
 			try {
 				String circle = null;
-				if(positions.size()>0){
-					RoverPosition last = positions.get(positions.size()-1);
-					circle = generateCircle(last.getGeodeticLatitude(), last.getGeodeticLongitude(), last.getGeodeticHeight(), 90, last.getpDop());
-				}
+//				if(positions.size()>0){
+//					RoverPosition last = positions.get(positions.size()-1);
+//					circle = generateCircle(last.getGeodeticLatitude(), last.getGeodeticLongitude(), last.getGeodeticHeight(), 90, last.getpDop());
+//				}
 
 				out.write("</coordinates></LineString></Placemark></Folder>"+(timeline==null?"":timeline+"</Folder>")+(circle!=null?circle:"")+"</Document>\n");
 				// Close FileWriter

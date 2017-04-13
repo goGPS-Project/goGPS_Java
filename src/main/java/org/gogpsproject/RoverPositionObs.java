@@ -12,6 +12,10 @@ public class RoverPositionObs extends RoverPosition{
   //Snapshot Variables to review
   public long satsInView = 0;
   public long satsInUse = 0;
+  
+  /** clock error in ms */
+  public long cErrMS = 0;
+
   //
   /**
    * Average Residual Error

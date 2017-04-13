@@ -700,7 +700,7 @@ public class GoGPS implements Runnable{
   
     Long runOffset( Observations obsR, long offsetsec ){
 	    if( roverPos == null || obsR == null )
-	  return null;
+	      return null;
     
 	    System.out.println( "\r\n>>Try offset = " + offsetsec/1000 + " (s)");
 
@@ -711,10 +711,10 @@ public class GoGPS implements Runnable{
       Time refTime = new Time( obsR.getRefTime().getMsec() + offsetsec*1000 );
 	    obsR.setRefTime( refTime );
 	    
-     if( !roverPos.isValidXYZ() && aPrioriPos.isValidXYZ() ){
+      if( !roverPos.isValidXYZ() && aPrioriPos.isValidXYZ() ){
        roverPos.setXYZ( aPrioriPos.getX(), aPrioriPos.getY(), aPrioriPos.getZ() );
        roverPos.computeGeodetic();
-	     }
+	    }
 	    
 	    Long updatedms = roverPos.snapshotPos(obsR);
 	    return updatedms!=null? 
@@ -889,7 +889,7 @@ public class GoGPS implements Runnable{
            offsetms += newOffsetms;
 
            roverObs.status = Status.Valid;
-           roverObs.cErr  = (obsR.getRefTime().getMsec() - refTime.getMsec())/1000.0;
+           roverObs.cErrMS = offsetms;
            // update a priori location
            roverPos.cloneInto(aPrioriPos);
 
@@ -1165,7 +1165,7 @@ public class GoGPS implements Runnable{
           roverObs.satsInUse = roverPos.satsInUse;
           roverObs.eRes = roverPos.eRes;
           roverObs.status = Status.Valid;
-          roverObs.cErr  = (obsR.getRefTime().getMsec() - roverObs.sampleTime.getMsec())/1000.0;
+          roverObs.cErrMS = obsR.getRefTime().getMsec() - roverObs.sampleTime.getMsec();
         }
         if(positionConsumers.size()>0){
           roverObs.setRefTime(new Time(obsR.getRefTime().getMsec()));

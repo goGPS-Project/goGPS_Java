@@ -16,16 +16,9 @@ public class RoverPositionObs extends RoverPosition{
   /** clock error in ms */
   public long cErrMS = 0;
 
-  //
-  /**
-   * Average Residual Error
-   */
+  /** average residual error */
   public double eRes;
-  /**
-   * Coarse Time Clock Error (in seconds)
-   */
-  public double cErr;
-  
+
   public RoverPositionObs(Coordinates c) {
     super(c);
   }

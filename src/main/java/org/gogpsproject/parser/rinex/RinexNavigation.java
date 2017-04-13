@@ -37,7 +37,6 @@ import java.util.zip.GZIPInputStream;
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPReply;
-import org.gogpsproject.Coordinates;
 import org.gogpsproject.EphGps;
 import org.gogpsproject.IonoGps;
 import org.gogpsproject.NavigationProducer;
@@ -159,7 +158,8 @@ public class RinexNavigation implements NavigationProducer {
 					eph = rnp.findEph(unixTime, satID, satType);
 				}
 			}
-			if(eph==null) requestedTime -= (1L*3600L*1000L);
+      if(eph==null) 
+      	requestedTime -= (1L*3600L*1000L);
 		}
 
 		return eph;
@@ -194,7 +194,6 @@ public class RinexNavigation implements NavigationProducer {
           else if(url.toLowerCase().startsWith("ftp"))
             rnp = getFromFTP(url);
           else 
-//        no way to get out
             throw new RuntimeException("Invalid url template " + url);
     
           if(rnp != null){
@@ -203,13 +202,13 @@ public class RinexNavigation implements NavigationProducer {
         }
         return rnp;
       } catch( IOException e) {
-        reqTime = reqTime - (1L*3600L*1000L);
+				  System.out.println( e.getClass().getName() + " url: " + url);
+				  return null;
       }
 
 		} while( waitForData && rnp==null);
+  }
 
-		return null;
-	}
 	private RinexNavigationParser getFromFTP(String url) throws IOException{
 		RinexNavigationParser rnp = null;
 
@@ -307,6 +306,7 @@ public class RinexNavigation implements NavigationProducer {
   private RinexNavigationParser getFromHTTP(String tUrl) throws IOException{
     RinexNavigationParser rnp = null;
 
+    String origurl = tUrl;
     if(negativeChache.containsKey(tUrl)){
       if(System.currentTimeMillis()-negativeChache.get(tUrl).getTime() < 60*60*1000){
         throw new FileNotFoundException("cached answer");

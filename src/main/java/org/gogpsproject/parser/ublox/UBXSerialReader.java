@@ -46,21 +46,21 @@ import org.gogpsproject.util.InputStreamCounter;
 
 public class UBXSerialReader implements Runnable,StreamEventProducer {
 
-	private InputStreamCounter in;
-	private OutputStream out;
-	private Thread t = null;
-	private boolean stop = false;
-	private Vector<StreamEventListener> streamEventListeners = new Vector<StreamEventListener>();
-	private UBXReader reader;
-	private String COMPort;
-	private int measRate = 1;
-	private boolean sysTimeLogEnabled = false;
-	private List<String> requestedNmeaMsgs = null;
-	private String dateFile;
-	private String outputDir = "./out";
-	private int msgAidEphRate = 0; //seconds
-	private int msgAidHuiRate = 0; //seconds
-	private boolean debugModeEnabled = false;
+  protected InputStreamCounter in;
+  protected OutputStream out;
+  private Thread t = null;
+  protected boolean stop = false;
+  protected Vector<StreamEventListener> streamEventListeners = new Vector<StreamEventListener>();
+  protected UBXReader reader;
+  protected String COMPort;
+  private int measRate = 1;
+  protected boolean sysTimeLogEnabled = false;
+  protected List<String> requestedNmeaMsgs = null;
+  protected String dateFile;
+  protected String outputDir = "./test";
+  protected int msgAidEphRate = 0; //seconds
+  protected int msgAidHuiRate = 0; //seconds
+  protected boolean debugModeEnabled = false;
 
 	public UBXSerialReader(InputStream in,OutputStream out, String COMPort, String outputDir) {
 		this(in,out,COMPort,outputDir,null);
@@ -98,7 +98,7 @@ public class UBXSerialReader implements Runnable,StreamEventProducer {
 
 	public void start()  throws IOException{
 		t = new Thread(this);
-		t.setName("UBXSerialReader");
+		t.setName("UBXSerialReader - " + COMPort );
 		t.start();
 		
 		Date date = new Date();
@@ -128,7 +128,7 @@ public class UBXSerialReader implements Runnable,StreamEventProducer {
 
 		int nmeaRequested[];
 		try {
-			if (requestedNmeaMsgs == null) {
+			if (requestedNmeaMsgs.isEmpty()) {
 				System.out.println(date1+" - "+COMPort+" - NMEA messages disabled");
 			} else {
 				nmeaRequested = new int[requestedNmeaMsgs.size()];
@@ -203,7 +203,7 @@ public class UBXSerialReader implements Runnable,StreamEventProducer {
 			System.out.println(date1+" - "+COMPort+" - System time logging disabled");
 		}
 		
-		if (requestedNmeaMsgs != null) {
+		if (!requestedNmeaMsgs.isEmpty()) {
 			try {
 				System.out.println(date1+" - "+COMPort+" - Logging NMEA sentences in "+outputDir+"/"+COMPortStr+ "_" + dateFile + "_NMEA.txt");
 				fos_nmea = new FileOutputStream(outputDir+"/"+COMPortStr+ "_" + dateFile + "_NMEA.txt");
@@ -254,7 +254,7 @@ public class UBXSerialReader implements Runnable,StreamEventProducer {
 									if(streamEventListeners!=null && o!=null){
 										for(StreamEventListener sel:streamEventListeners){
 											Observations co = sel.getCurrentObservations();
-										    //sel.pointToNextObservations();
+										    sel.pointToNextObservations();
 
 										    if (this.sysTimeLogEnabled) {
 										    	dateGps = sdf1.format(new Date(co.getRefTime().getMsec()));
@@ -266,7 +266,7 @@ public class UBXSerialReader implements Runnable,StreamEventProducer {
 							} catch (NullPointerException e) {
 							}
 						}else if(data == 0x24){
-							if (requestedNmeaMsgs != null) {
+							if (!requestedNmeaMsgs.isEmpty()) {
 								String sentence = "" + (char) data;
 								data = in.read();
 								if(data == 0x47) {
@@ -420,7 +420,7 @@ public class UBXSerialReader implements Runnable,StreamEventProducer {
 		return COMPortIn;
 	}
 	
-	private String prepareCOMStringForFilename(String COMPort) {
+	protected String prepareCOMStringForFilename(String COMPort) {
 		String [] tokens = COMPort.split("/");
 		if (tokens.length > 0) {
 			COMPort = tokens[tokens.length-1].trim();          //for UNIX /dev/tty* ports

@@ -25,12 +25,12 @@ import org.gogpsproject.parser.AbstractSerialConnection;
 
 public class UBXSerialConnection extends AbstractSerialConnection<UBXSerialReader> {
 
-	private int setEphemerisRate = 10;
-	private int setIonosphereRate = 60;
-	private Boolean enableDebug = false;
-	private Boolean enableTimetag = false;
-	private String outputDir = "./out";
-	private List<String> enableNmeaList;
+	protected int setEphemerisRate = 10;
+	protected int setIonosphereRate = 60;
+  protected Boolean enableDebug = false;
+  protected Boolean enableTimetag = false;
+  protected String outputDir = "./out";
+	protected List<String> enableNmeaList;
 
 	public UBXSerialConnection(String portName, int speed) {
 		this.portName = portName;

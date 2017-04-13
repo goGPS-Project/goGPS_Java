@@ -1888,7 +1888,7 @@ public class GoGPS implements Runnable{
 	}
 
   public GoGPS runUntilFinished() {
-    while (Thread.activeCount() > 1){
+    while (Thread.activeCount() > 2){
       try {
         Thread.sleep(1000);
       } catch (InterruptedException e) {

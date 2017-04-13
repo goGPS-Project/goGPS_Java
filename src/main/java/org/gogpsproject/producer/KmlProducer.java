@@ -131,9 +131,9 @@ public class KmlProducer implements PositionConsumer, Runnable {
 	 */
 	public void writeCoordinate(RoverPosition coord,FileWriter out) {
 		try {
-      RoverPositionObs c = (RoverPositionObs)coord;
-      if( c.status != Status.Valid )
-        return;
+//      RoverPositionObs c = (RoverPositionObs)coord;
+//      if( c.status != Status.Valid )
+//        return;
       
 			boolean prevDopResponse = goodDop;
 			goodDop = coord.getpDop()<goodDopThreshold;

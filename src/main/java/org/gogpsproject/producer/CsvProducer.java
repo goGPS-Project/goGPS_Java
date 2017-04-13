@@ -114,7 +114,7 @@ public class CsvProducer implements PositionConsumer, Runnable {
         
       
       pw.printf("%d,%d,", c.satsInUse, c.satsInView ); 
-      pw.printf("%3.1f,%4.3f,\r\n", c.eRes, c.cErr ); 
+      pw.printf("%3.1f,%4.3f,\r\n", c.eRes, Math.round(c.cErrMS/1000.0)); 
 
       out.flush();
 

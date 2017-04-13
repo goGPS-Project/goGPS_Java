@@ -68,12 +68,14 @@ public class Issues {
   /** https://github.com/goGPS-Project/goGPS_Java/issues/32 */
   @Test
   public void i32(){
-    ObservationsProducer roverIn = new UBXFileReader(new File("./src/test/resources/i32/Fail/ublox3.ubx"));
-    NavigationProducer navigationIn = new RinexNavigation( RinexNavigation.NASA_NAVIGATION_DAILY ); 
+    String name = "ublox2";
+    ObservationsProducer roverIn = new UBXFileReader(new File("./src/test/resources/i32/Fail/" + name + ".ubx"));
+//    NavigationProducer navigationIn = new RinexNavigation( RinexNavigation.NASA_NAVIGATION_DAILY ); 
+    NavigationProducer navigationIn = new RinexNavigation( RinexNavigation.GARNER_NAVIGATION_AUTO_HTTP ); 
 
     double goodDopThreshold = 3.0; 
     int TimeSampleDelaySec = 30;
-    String outPath = "./src/test/resources/i32/Fail/ublox3.kml";
+    String outPath = "./src/test/resources/i32/Fail/"+ name + ".kml";
     try {
         KmlProducer kml = new KmlProducer(outPath, goodDopThreshold, TimeSampleDelaySec);
 
@@ -81,12 +83,16 @@ public class Issues {
         roverIn.init();
 
         int dynamicModel = GoGPS.DYN_MODEL_STATIC; //may be also set to constant acceleration or static
-        RoverPosition roverPos = new GoGPS(navigationIn, roverIn )
+        GoGPS goGPS = new GoGPS(navigationIn, roverIn );
+        RoverPosition roverPos = goGPS
                                      .addPositionConsumerListener(kml)
                                      .setDynamicModel(dynamicModel)
                                      .setCutoff(0)
                                      .runCodeStandalone();
+        goGPS.runUntilFinished();
+
         assertTrue( roverPos.isValidXYZ() );
+        
     } catch (Exception e) {
         e.printStackTrace();
     }

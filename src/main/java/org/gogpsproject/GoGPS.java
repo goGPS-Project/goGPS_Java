@@ -138,9 +138,11 @@ public class GoGPS implements Runnable{
   public final static int RUN_MODE_STANDALONE_COARSETIME = 11;
 
 	private int runMode = -1;
+	
 	private Thread runThread=null;
 	private volatile boolean running = false;
-
+  private volatile boolean interrupt = false;
+	
 	/** The navigation. */
 	private NavigationProducer navigation;
 
@@ -717,6 +719,12 @@ public class GoGPS implements Runnable{
 	    }
 	    
 	    Long updatedms = roverPos.snapshotPos(obsR);
+	    
+      if( updatedms == null && roverPos.status == Status.MaxCorrection ){
+        System.out.println("Reset aPrioriPos");        
+        aPrioriPos.cloneInto(roverPos);
+      }
+	    
 	    return updatedms!=null? 
 	        offsetsec + Math.round( updatedms/1000.0 ) : 
 	        null ;
@@ -733,13 +741,6 @@ public class GoGPS implements Runnable{
       
       Long updatesec = runOffset( obsR, offsetsec );
       
-      if( updatesec == null && roverPos.status == Status.MaxCorrection ){
-					System.out.println("TODO Reset aPrioriPos");        
-//        SnapshotProducer sp =  (SnapshotProducer)roverIn;
-//        aPrioriPos = sp.getAprioriPos(sp.currentE);
-//        updatesec = runOffset( obsR, offsetsec );
-      }
-
       if( updatesec == null && 
           (roverPos.status == Status.EphNotFound 
         || roverPos.status == Status.MaxHDOP 
@@ -807,14 +808,14 @@ public class GoGPS implements Runnable{
       roverPos.setDebug(debug);
       if( aPrioriPos == null ){
         aPrioriPos = new Coordinates();
-  }
+      }
 
       Time refTime;
       try {
         obsR = roverIn.getCurrentObservations();
         
         notifyPositionConsumerEvent(PositionConsumer.EVENT_START_OF_TRACK);
-        while( obsR!=null ) { // buffStreamObs.ready()
+        while( obsR!=null && !interrupt ) { // buffStreamObs.ready()
          System.out.println("Index: " + obsR.index );
          roverPos.satsInUse = 0;
 
@@ -835,39 +836,13 @@ public class GoGPS implements Runnable{
          }
          
          if( aPrioriPos != null ){
-           roverPos.setXYZ( aPrioriPos.getX(), aPrioriPos.getY(), aPrioriPos.getZ() );
-           roverPos.computeGeodetic();
+           aPrioriPos.cloneInto(roverPos);
          }
          else if( obsR.getNumSat()>0 && !Float.isNaN(obsR.getSatByIdx(0).getDoppler(0))){
            roverPos.setXYZ(0, 0, 0);
 //           roverPos.selectSatellitesStandaloneFractional(obsR, -100);
            runElevationMethod(obsR);
            roverPos.dopplerPos(obsR);
-         }
-         
-         if( roverPos.isValidXYZ() ) {
-//           System.out.println( "A priori pos: " + roverPos );
-           aPrioriPos = new Coordinates();
-           roverPos.cloneInto(aPrioriPos);
-         } 
-         else {
-           roverObs = new RoverPositionObs( roverPos, RoverPosition.DOP_TYPE_STANDARD, roverPos.getpDop(), roverPos.gethDop(), roverPos.getvDop());
-           roverObs.index = obsR.index;
-           roverObs.sampleTime = refTime;
-           roverObs.obs = obsR;
-           roverObs.satsInView = obsR.getNumSat();
-           roverObs.satsInUse = roverPos.satsInUse;
-           roverObs.eRes = roverPos.eRes;
-           roverObs.status = Status.NoAprioriPos;
-           
-           if(positionConsumers.size()>0){
-             roverObs.setRefTime(new Time(obsR.getRefTime().getMsec()));
-             notifyPositionConsumerAddCoordinate(roverObs);
-           }
-
-           obsR = roverIn.getNextObservations();
-           roverPos.status = Status.None;
-           continue;
          }
          
          tryOffset( aPrioriPos, obsR );
@@ -885,6 +860,7 @@ public class GoGPS implements Runnable{
          roverObs.status = roverPos.status;
 
          if( roverPos.isValidXYZ() ){
+           
            newOffsetms = obsR.getRefTime().getMsec() - newOffsetms;
            offsetms += newOffsetms;
 
@@ -1836,6 +1812,9 @@ public class GoGPS implements Runnable{
   public void stopThreadMode(){
 	  if( !running )
 	    return;
+	  
+	  interrupt = true;
+	  
     if( runThread != null) {
       try {
         runThread.join();
@@ -1876,14 +1855,6 @@ public class GoGPS implements Runnable{
 		}
 
 		notifyPositionConsumerEvent(PositionConsumer.EVENT_GOGPS_THREAD_ENDED);
-    if( runThread != null) {
-        try {
-          runThread.join();
-        } catch (InterruptedException e) {
-          // FIXME Auto-generated catch block
-          e.printStackTrace();
-        }
-    }
     running = false;
 	}
 

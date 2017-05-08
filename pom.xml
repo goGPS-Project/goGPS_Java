@@ -25,9 +25,9 @@
 			<version>0.3-3</version>
 		</dependency>
 		<dependency>
-			<groupId>com.googlecode.efficient-java-matrix-library</groupId>
-			<artifactId>ejml</artifactId>
-			<version>0.17</version>
+		    <groupId>org.ejml</groupId>
+		    <artifactId>simple</artifactId>
+		    <version>0.30</version>
 		</dependency>
 		<dependency>
 			<groupId>net.sourceforge.argparse4j</groupId>

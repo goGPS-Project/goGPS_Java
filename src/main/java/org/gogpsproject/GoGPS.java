@@ -236,7 +236,6 @@ public class GoGPS implements Runnable{
 	 */
 	public RoverPosition runCodeStandalone() {
 		try {
-		  running = true;
 			return runCodeStandalone(-1);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -253,10 +252,7 @@ public class GoGPS implements Runnable{
 	 */
 	public RoverPosition runCodeStandalone(double stopAtDopThreshold) throws Exception {
 
-//		GoGPS goGPS = new GoGPS(navigation, roverIn);
-//		roverPos = new ReceiverPosition(goGPS);
-
-		// Create a new object for the rover position
+    running = true;
 		roverPos = new ReceiverPosition(this);
 		roverPos.setDebug(this.debug);
 		RoverPosition coord = null;
@@ -704,11 +700,11 @@ public class GoGPS implements Runnable{
 	    if( roverPos == null || obsR == null )
 	      return null;
     
-	    System.out.println( "\r\n>>Try offset = " + offsetsec/1000 + " (s)");
+	    if(debug) System.out.println( "\r\n>>Try offset = " + offsetsec/1000 + " (s)");
 
 	    roverPos.setXYZ( aPrioriPos.getX(), aPrioriPos.getY(), aPrioriPos.getZ() );
 	    roverPos.computeGeodetic();
-      System.out.println( "A priori pos: " + aPrioriPos );
+	    if(debug) System.out.println( "A priori pos: " + aPrioriPos );
 
       Time refTime = new Time( obsR.getRefTime().getMsec() + offsetsec*1000 );
 	    obsR.setRefTime( refTime );
@@ -721,7 +717,7 @@ public class GoGPS implements Runnable{
 	    Long updatedms = roverPos.snapshotPos(obsR);
 	    
       if( updatedms == null && roverPos.status == Status.MaxCorrection ){
-        System.out.println("Reset aPrioriPos");        
+        if(debug) System.out.println("Reset aPrioriPos");        
         aPrioriPos.cloneInto(roverPos);
       }
 	    
@@ -733,12 +729,9 @@ public class GoGPS implements Runnable{
 	  void tryOffset( Coordinates aPrioriPos, Observations obsR ) throws Exception{
       roverPos.setDebug(debug);
 
-      Long offsetsec = Math.round(offsetms/1000.0);
+//      Long offsetsec = Math.round(offsetms/1000.0);
+      Long offsetsec = 0l;
 
-      // fix ms bug
-      if( Math.abs(offsetsec)>1000 )
-        offsetsec = 0l;
-      
       Long updatesec = runOffset( obsR, offsetsec );
       
       if( updatesec == null && 
@@ -816,7 +809,7 @@ public class GoGPS implements Runnable{
         
         notifyPositionConsumerEvent(PositionConsumer.EVENT_START_OF_TRACK);
         while( obsR!=null && !interrupt ) { // buffStreamObs.ready()
-         System.out.println("Index: " + obsR.index );
+         if(debug) System.out.println("Index: " + obsR.index );
          roverPos.satsInUse = 0;
 
          refTime = obsR.getRefTime();
@@ -825,7 +818,7 @@ public class GoGPS implements Runnable{
          long newOffsetms = obsR.getRefTime().getMsec();
 
          if( truePos != null ){
-           System.out.println( String.format( "\r\n* True Pos: %8.4f, %8.4f, %8.4f", 
+           if(debug) System.out.println( String.format( "\r\n* True Pos: %8.4f, %8.4f, %8.4f", 
                truePos.getGeodeticLatitude(),
                truePos.getGeodeticLongitude(),
                truePos.getGeodeticHeight()

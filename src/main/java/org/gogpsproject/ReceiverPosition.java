@@ -4648,7 +4648,7 @@ public class ReceiverPosition extends Coordinates{
 
     if( Double.isNaN(correction_mag) || correction_mag>goGPS.getPosLimit() ||  Math.abs(tg) > goGPS.getTimeLimit() ){
       
-      System.out.println("Correction exceeds the limits: dist = " + (long)correction_mag +"m; t offset = " + (long)tg +"s" );
+      if(debug) System.out.println("Correction exceeds the limits: dist = " + (long)correction_mag +"m; t offset = " + (long)tg +"s" );
 
       setXYZ(0, 0, 0);
       status = Status.MaxCorrection;
@@ -4699,8 +4699,8 @@ public class ReceiverPosition extends Coordinates{
     hDop = Math.sqrt(covENU.get(0, 0) + covENU.get(1, 1));
     vDop = Math.sqrt(covENU.get(2, 2));
     
-    if( Math.abs(cbiasms)>0.5 )
-      System.out.println( pivotSatId + ") cbiasms " + cbiasms); 
+//    if( Math.abs(cbiasms)>0.5 )
+//      System.out.println( pivotSatId + ") cbiasms " + cbiasms); 
     
     return new SnapshotPivotResult( savedIndex, pivotSatId, pivotElevation, this, unixTime, eRes, hDop, getSatAvailNumber(), cbiasms );
   }
@@ -4743,9 +4743,7 @@ public class ReceiverPosition extends Coordinates{
       // select a pivot with at least elCutOff elevation
       int maxIterations = 3;
       residCutOff = 0.001;
-      setDebug(true);
       SnapshotPivotResult pivotRes = snapshotProcessPivot( roverObs, satIdx, maxIterations, elCutOff, residCutOff  );
-      setDebug(true);
       
       if( pivotRes == null && this.status == Status.EphNotFound ){
         // don't keep requesting Ephemeris if they're not ready yet
@@ -4765,7 +4763,7 @@ public class ReceiverPosition extends Coordinates{
       this.setXYZ(0, 0, 0);
       return null;
     }
-//    if(debug) 
+    if(debug) 
       System.out.println( String.format( "\r\n>> Selected Pivot SatId = %d; SatIdx = %d; eRes = %5.2f;  cbias = %5.2f; elevation = %5.2f\r\n", 
         result.satId, 
         result.satIndex,

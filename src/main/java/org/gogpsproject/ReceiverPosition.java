@@ -4732,7 +4732,6 @@ public class ReceiverPosition extends Coordinates{
     Time refTime = roverObs.getRefTime();
     
     for( int satIdx = 0; satIdx<roverObs.getNumSat(); satIdx++ ){
-      setDebug(false);
       if(debug) System.out.println( "\r\n===> Try Pivot " + satIdx );
       
       // restore this position before trying

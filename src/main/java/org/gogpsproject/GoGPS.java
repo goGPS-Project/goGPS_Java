@@ -696,22 +696,21 @@ public class GoGPS implements Runnable{
     return null;
   }
   
-    Long runOffset( Observations obsR, long offsetsec ){
+    Long runOffset( Observations obsR, long offsetms ){
 	    if( roverPos == null || obsR == null )
 	      return null;
     
-	    if(debug) System.out.println( "\r\n>>Try offset = " + offsetsec/1000 + " (s)");
+	    if(debug) System.out.println( "\r\n>>Try offset = " + offsetms/1000 + " (s)");
 
 	    roverPos.setXYZ( aPrioriPos.getX(), aPrioriPos.getY(), aPrioriPos.getZ() );
 	    roverPos.computeGeodetic();
 	    if(debug) System.out.println( "A priori pos: " + aPrioriPos );
 
-      Time refTime = new Time( obsR.getRefTime().getMsec() + offsetsec*1000 );
+      Time refTime = new Time( obsR.getRefTime().getMsec() + offsetms );
 	    obsR.setRefTime( refTime );
 	    
       if( !roverPos.isValidXYZ() && aPrioriPos.isValidXYZ() ){
-       roverPos.setXYZ( aPrioriPos.getX(), aPrioriPos.getY(), aPrioriPos.getZ() );
-       roverPos.computeGeodetic();
+        aPrioriPos.cloneInto(roverPos);
 	    }
 	    
 	    Long updatedms = roverPos.snapshotPos(obsR);
@@ -722,7 +721,7 @@ public class GoGPS implements Runnable{
       }
 	    
 	    return updatedms!=null? 
-	        offsetsec + Math.round( updatedms/1000.0 ) : 
+	        offsetms + updatedms : 
 	        null ;
 	  }
 	
@@ -730,11 +729,11 @@ public class GoGPS implements Runnable{
       roverPos.setDebug(debug);
 
 //      Long offsetsec = Math.round(offsetms/1000.0);
-      Long offsetsec = 0l;
+      Long offsetms = 0l;
 
-      Long updatesec = runOffset( obsR, offsetsec );
+      Long updatems = runOffset( obsR, offsetms );
       
-      if( updatesec == null && 
+      if( updatems == null && 
           (roverPos.status == Status.EphNotFound 
         || roverPos.status == Status.MaxHDOP 
         || roverPos.status == Status.MaxEres 
@@ -743,52 +742,52 @@ public class GoGPS implements Runnable{
         return;
       }
 
-      if(  updatesec == null  )
-        updatesec = runOffset( obsR, offsetsec - 2*maxTimeUpdateSec );
+      if(  updatems == null  )
+        updatems = runOffset( obsR, offsetms - 2*maxTimeUpdateSec*1000 );
 
-      if(  updatesec == null  )
-        updatesec = runOffset( obsR, offsetsec + 2*maxTimeUpdateSec );
+      if(  updatems == null  )
+        updatems = runOffset( obsR, offsetms + 2*maxTimeUpdateSec*1000 );
 
-      if(  updatesec == null  )
-        updatesec = runOffset( obsR, offsetsec - 4*maxTimeUpdateSec );
+      if(  updatems == null  )
+        updatems = runOffset( obsR, offsetms - 4*maxTimeUpdateSec*1000 );
 
-      if(  updatesec == null  )
-        updatesec = runOffset( obsR, offsetsec + 4*maxTimeUpdateSec );
+      if(  updatems == null  )
+        updatems = runOffset( obsR, offsetms + 4*maxTimeUpdateSec*1000 );
 
-      if(  updatesec == null  )
-        updatesec = runOffset( obsR, offsetsec - 6*maxTimeUpdateSec );
+      if(  updatems == null  )
+        updatems = runOffset( obsR, offsetms - 6*maxTimeUpdateSec*1000 );
 
-      if(  updatesec == null  )
-        updatesec = runOffset( obsR, offsetsec + 6*maxTimeUpdateSec );
+      if(  updatems == null  )
+        updatems = runOffset( obsR, offsetms + 6*maxTimeUpdateSec*1000 );
 
-      if(  updatesec == null  )
-        updatesec = runOffset( obsR, offsetsec - 8*maxTimeUpdateSec );
+      if(  updatems == null  )
+        updatems = runOffset( obsR, offsetms - 8*maxTimeUpdateSec*1000 );
 
-      if(  updatesec == null  )
-        updatesec = runOffset( obsR, offsetsec + 8*maxTimeUpdateSec );
+      if(  updatems == null  )
+        updatems = runOffset( obsR, offsetms + 8*maxTimeUpdateSec*1000 );
 
-      if(  updatesec == null  )
-        updatesec = runOffset( obsR, offsetsec - 10*maxTimeUpdateSec );
+      if(  updatems == null  )
+        updatems = runOffset( obsR, offsetms - 10*maxTimeUpdateSec*1000 );
 
-      if(  updatesec == null  )
-        updatesec = runOffset( obsR, offsetsec + 10*maxTimeUpdateSec );
+      if(  updatems == null  )
+        updatems = runOffset( obsR, offsetms + 10*maxTimeUpdateSec*1000 );
 
-      if(  updatesec == null  )
-        updatesec = runOffset( obsR, offsetsec - 12*maxTimeUpdateSec );
+      if(  updatems == null  )
+        updatems = runOffset( obsR, offsetms - 12*maxTimeUpdateSec*1000 );
 
-      if(  updatesec == null  )
-        updatesec = runOffset( obsR, offsetsec - 14*maxTimeUpdateSec );
+      if(  updatems == null  )
+        updatems = runOffset( obsR, offsetms - 14*maxTimeUpdateSec*1000 );
 
-      if(  updatesec == null  )
-        updatesec = runOffset( obsR, offsetsec - 16*maxTimeUpdateSec );
+      if(  updatems == null  )
+        updatems = runOffset( obsR, offsetms - 16*maxTimeUpdateSec*1000 );
 
-      if(  updatesec == null  )
-        updatesec = runOffset( obsR, offsetsec - 18*maxTimeUpdateSec );
+      if(  updatems == null  )
+        updatems = runOffset( obsR, offsetms - 18*maxTimeUpdateSec*1000 );
 
-      if(  updatesec == null  )
-        updatesec = runOffset( obsR, offsetsec - 20*maxTimeUpdateSec );
+      if(  updatems == null  )
+        updatems = runOffset( obsR, offsetms - 20*maxTimeUpdateSec*1000 );
 
-      if( updatesec == null )
+      if( updatems == null )
         roverPos.setXYZ(0, 0, 0);
   }
 
@@ -828,14 +827,17 @@ public class GoGPS implements Runnable{
            truePos.selectSatellitesStandaloneFractional( obsR, -100, MODULO1MS );
          }
          
-         if( aPrioriPos != null ){
+         if( !roverPos.isValidXYZ() && aPrioriPos != null && aPrioriPos.isValidXYZ()){
            aPrioriPos.cloneInto(roverPos);
          }
-         else if( obsR.getNumSat()>0 && !Float.isNaN(obsR.getSatByIdx(0).getDoppler(0))){
+         else if(  !roverPos.isValidXYZ() && obsR.getNumSat()>0 && !Float.isNaN(obsR.getSatByIdx(0).getDoppler(0))){
            roverPos.setXYZ(0, 0, 0);
 //           roverPos.selectSatellitesStandaloneFractional(obsR, -100);
            runElevationMethod(obsR);
            roverPos.dopplerPos(obsR);
+           
+           if( roverPos.isValidXYZ() )
+             roverPos.cloneInto(aPrioriPos);
          }
          
          tryOffset( aPrioriPos, obsR );

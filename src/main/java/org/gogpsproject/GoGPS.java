@@ -801,8 +801,8 @@ public class GoGPS implements Runnable{
       if( aPrioriPos == null ){
         aPrioriPos = new Coordinates();
       }
-
       Time refTime;
+      int leapSeconds;
       try {
         obsR = roverIn.getCurrentObservations();
         
@@ -811,10 +811,16 @@ public class GoGPS implements Runnable{
          if(debug) System.out.println("Index: " + obsR.index );
          roverPos.satsInUse = 0;
 
+         // apply time offset
          refTime = obsR.getRefTime();
          obsR.setRefTime(new Time(obsR.getRefTime().getMsec() + offsetms ));
 
-         long newOffsetms = obsR.getRefTime().getMsec();
+         // Add Leap Seconds, remove at the end
+         leapSeconds = refTime.getLeapSeconds();
+         Time GPSTime = new Time( refTime.getMsec() + leapSeconds * 1000);
+         obsR.setRefTime(GPSTime);
+
+         long refTimeMs = obsR.getRefTime().getMsec();
 
          if( truePos != null ){
            if(debug) System.out.println( String.format( "\r\n* True Pos: %8.4f, %8.4f, %8.4f", 
@@ -856,8 +862,10 @@ public class GoGPS implements Runnable{
 
          if( roverPos.isValidXYZ() ){
            
-           newOffsetms = obsR.getRefTime().getMsec() - newOffsetms;
-           offsetms += newOffsetms;
+           offsetms = obsR.getRefTime().getMsec()-refTimeMs;
+
+           // remove Leap Seconds
+           obsR.setRefTime(new Time(obsR.getRefTime().getMsec() - leapSeconds * 1000));
 
            roverObs.status = Status.Valid;
            roverObs.cErrMS = offsetms;

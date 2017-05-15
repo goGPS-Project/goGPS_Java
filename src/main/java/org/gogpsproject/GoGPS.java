@@ -20,9 +20,18 @@
  */
 package org.gogpsproject;
 
+import static org.gogpsproject.positioning.LS_SA_code.*;
+
 import java.util.*;
 
-import org.gogpsproject.core.ReceiverPosition;
+import org.gogpsproject.positioning.Core;
+import org.gogpsproject.positioning.KalmanFilter;
+import org.gogpsproject.positioning.LS_DD_code;
+import org.gogpsproject.positioning.LS_SA_code;
+import org.gogpsproject.positioning.LS_SA_code_coarse_time;
+import org.gogpsproject.positioning.LS_SA_code_snapshot;
+import org.gogpsproject.positioning.LS_SA_dopplerPos;
+import org.gogpsproject.positioning.ReceiverPosition;
 
 /**
  * The Class GoGPS.
@@ -201,7 +210,493 @@ public class GoGPS implements Runnable{
   /** time update limit for LMS iterations */
   final double TG_TOL = 1;  // milliseconds
 
-	/**
+	public ReceiverPosition getReceiverPosition(){
+    return roverPos;
+  }
+
+  public void setRoverPos(ReceiverPosition roverPos) {
+    this.roverPos = roverPos;
+  }
+
+  /**
+   * Gets the freq.
+   *
+   * @return the freq
+   */
+  public int getFreq() {
+  	return freq;
+  }
+
+  /**
+   * Sets the freq.
+   *
+   * @param freq the freq to set
+   * @return 
+   */
+  public GoGPS setFreq(int freq) {
+  	this.freq = freq;
+  	return this;
+  }
+
+  /**
+   * Checks if is dual freq.
+   *
+   * @return the dualFreq
+   */
+  public boolean isDualFreq() {
+  	return dualFreq;
+  }
+
+  /**
+   * Sets the dual freq.
+   *
+   * @param dualFreq the dualFreq to set
+   * @return 
+   */
+  public GoGPS setDualFreq(boolean dualFreq) {
+  	this.dualFreq = dualFreq;
+    return this;
+  }
+
+  /**
+   * Gets the cutoff.
+   *
+   * @return the cutoff
+   */
+  public double getCutoff() {
+  	return cutoff;
+  }
+
+  /**
+   * Sets the cutoff.
+   *
+   * @param cutoff the cutoff to set
+   */
+  public GoGPS setCutoff(double cutoff) {
+  	this.cutoff = cutoff;
+  	return this;
+  }
+
+  /**
+   * Gets the order.
+   *
+   * @return the order
+   */
+  public int getOrder() {
+  	return dynamicModel;
+  }
+
+  /**
+   * Sets the order.
+   *
+   * @param order the order to set
+   * @return 
+   */
+  public GoGPS setOrder(int order) {
+  	this.dynamicModel = order;
+    return this;
+  }
+
+  /**
+   * Gets the st dev init.
+   *
+   * @return the stDevInit
+   */
+  public double getStDevInit() {
+  	return stDevInit;
+  }
+
+  /**
+   * Sets the st dev init.
+   *
+   * @param stDevInit the stDevInit to set
+   * @return 
+   */
+  public GoGPS setStDevInit(double stDevInit) {
+  	this.stDevInit = stDevInit;
+    return this;
+  }
+
+  /**
+   * Gets the st dev e.
+   *
+   * @return the stDevE
+   */
+  public double getStDevE() {
+  	return stDevE;
+  }
+
+  /**
+   * Sets the st dev e.
+   *
+   * @param stDevE the stDevE to set
+   * @return 
+   */
+  public GoGPS setStDevE(double stDevE) {
+  	this.stDevE = stDevE;
+    return this;
+  }
+
+  /**
+   * Gets the st dev n.
+   *
+   * @return the stDevN
+   */
+  public double getStDevN() {
+  	return stDevN;
+  }
+
+  /**
+   * Sets the st dev n.
+   *
+   * @param stDevN the stDevN to set
+   * @return 
+   */
+  public GoGPS setStDevN(double stDevN) {
+  	this.stDevN = stDevN;
+    return this;
+  }
+
+  /**
+   * Gets the st dev u.
+   *
+   * @return the stDevU
+   */
+  public double getStDevU() {
+  	return stDevU;
+  }
+
+  /**
+   * Sets the st dev u.
+   *
+   * @param stDevU the stDevU to set
+   * @return 
+   */
+  public GoGPS setStDevU(double stDevU) {
+  	this.stDevU = stDevU;
+    return this;
+  }
+
+  /**
+   * Gets the st dev code.
+   *
+   * @param roverObsSet the rover observation set
+   * @param masterObsSet the master observation set
+   * @param i the selected GPS frequency
+   * @return the stDevCode
+   */
+  public double getStDevCode(ObservationSet obsSet, int i) {
+  	return obsSet.isPseudorangeP(i)?stDevCodeP[i]:stDevCodeC;
+  }
+
+  /**
+   * Gets the st dev code c.
+   *
+   * @return the stDevCodeC
+   */
+  public double getStDevCodeC() {
+  	return stDevCodeC;
+  }
+
+  /**
+   * Sets the st dev code c.
+   *
+   * @param stDevCodeC the stDevCodeC to set
+   * @return 
+   */
+  public GoGPS setStDevCodeC(double stDevCodeC) {
+  	this.stDevCodeC = stDevCodeC;
+    return this;
+  }
+
+  /**
+   * Gets the st dev code p.
+   *
+   * @param i the selected GPS frequency
+   * @return the stDevCodeP
+   */
+  public double getStDevCodeP(int i) {
+  	return stDevCodeP[i];
+  }
+
+  /**
+   * Sets the st dev code p.
+   *
+   * @param stDevCodeP the stDevCodeP to set
+   * @param i the selected GPS frequency
+   * @return 
+   */
+  public GoGPS setStDevCodeP(double stDevCodeP, int i) {
+  	this.stDevCodeP[i] = stDevCodeP;
+    return this;
+  }
+
+  /**
+   * Gets the st dev phase.
+   *
+   * @return the stDevPhase
+   */
+  public double getStDevPhase() {
+  	return stDevPhase;
+  }
+
+  /**
+   * Sets the st dev phase.
+   *
+   * @param stDevPhase the stDevPhase to set
+   * @return 
+   */
+  public GoGPS setStDevPhase(double stDevPhase) {
+  	this.stDevPhase = stDevPhase;
+    return this;
+  }
+
+  /**
+   * Gets the st dev ambiguity.
+   *
+   * @return the stDevAmbiguity
+   */
+  public double getStDevAmbiguity() {
+  	return stDevAmbiguity;
+  }
+
+  /**
+   * Sets the st dev ambiguity.
+   *
+   * @param stDevAmbiguity the stDevAmbiguity to set
+   * @return 
+   */
+  public GoGPS setStDevAmbiguity(double stDevAmbiguity) {
+  	this.stDevAmbiguity = stDevAmbiguity;
+    return this;
+  }
+
+  /**
+   * Gets the min num sat.
+   *
+   * @return the minNumSat
+   */
+  public int getMinNumSat() {
+  	return minNumSat;
+  }
+
+  /**
+   * Sets the min num sat.
+   *
+   * @param minNumSat the minNumSat to set
+   * @return 
+   */
+  public GoGPS setMinNumSat(int minNumSat) {
+  	this.minNumSat = minNumSat;
+    return this;
+  }
+
+  /**
+   * Gets the cycle slip threshold.
+   *
+   * @return the cycle slip threshold
+   */
+  public double getCycleSlipThreshold() {
+  	return cycleSlipThreshold;
+  }
+
+  /**
+   * Sets the cycle slip threshold.
+   *
+   * @param csThreshold the cycle slip threshold to set
+   * @return 
+   */
+  public GoGPS setCycleSlipThreshold(double csThreshold) {
+  	this.cycleSlipThreshold = csThreshold;
+    return this;
+  }
+
+  /**
+   * Gets the navigation.
+   *
+   * @return the navigation
+   */
+  public NavigationProducer getNavigation() {
+  	return navigation;
+  }
+
+  /**
+   * Sets the navigation.
+   *
+   * @param navigation the navigation to set
+   * @return 
+   */
+  public GoGPS setNavigation(NavigationProducer navigation) {
+  	this.navigation = navigation;
+    return this;
+  }
+
+  /**
+   * Gets the weights.
+   *
+   * @return the weights
+   */
+  public int getWeights() {
+  	return weights;
+  }
+
+  /**
+   * Sets the weights.
+   *
+   * @param weights the weights to set
+   * @return 
+   */
+  public GoGPS setWeights(int weights) {
+  	this.weights = weights;
+    return this;
+  }
+
+  /**
+   * Gets the dynamic model.
+   *
+   * @return the dynamicModel
+   */
+  public int getDynamicModel() {
+  	return dynamicModel;
+  }
+
+  /**
+   * Sets the dynamic model.
+   *
+   * @param dynamicModel the dynamicModel to set
+   */
+  public GoGPS setDynamicModel(int dynamicModel) {
+  	this.dynamicModel = dynamicModel;
+  	return this;
+  }
+
+  /**
+   * Gets the cycle-slip detection strategy.
+   *
+   * @return the cycleSlipDetectionStrategy
+   */
+  public int getCycleSlipDetectionStrategy() {
+  	return cycleSlipDetectionStrategy;
+  }
+
+  /**
+   * Sets the cycle-slip detection strategy.
+   *
+   * @param cycleSlipDetectionStrategy the cycleSlipDetectionStrategy to set
+   * @return 
+   */
+  public GoGPS setCycleSlipDetection(int cycleSlipDetectionStrategy) {
+  	this.cycleSlipDetectionStrategy = cycleSlipDetectionStrategy;
+    return this;
+  }
+
+  /**
+   * Gets the ambiguity strategy.
+   *
+   * @return the ambiguityStrategy
+   */
+  public int getAmbiguityStrategy() {
+  	return ambiguityStrategy;
+  }
+
+  /**
+   * Sets the ambiguity strategy.
+   *
+   * @param ambiguityStrategy the ambiguityStrategy to set
+   * @return 
+   */
+  public GoGPS setAmbiguityStrategy(int ambiguityStrategy) {
+  	this.ambiguityStrategy = ambiguityStrategy;
+    return this;
+  }
+
+  /**
+   * @return the validPosition
+   */
+  public boolean isValidPosition() {
+  	return validPosition;
+  }
+
+  /**
+   * @return the debug
+   */
+  public boolean isDebug() {
+  	return debug;
+  }
+
+  /**
+   * @param debug the debug to set
+   * @return 
+   */
+  public GoGPS setDebug(boolean debug) {
+  	this.debug = debug;
+    return this;
+  }
+
+  public boolean useDTM(){
+    return useDTM;
+  }
+
+  public GoGPS useDTM( boolean useDTM ){
+    this.useDTM = useDTM;
+    return this;
+  }
+
+  public long getMaxHeight() {
+    return maxHeight;
+  }
+
+  public GoGPS setMaxHeight(long maxHeight) {
+    this.maxHeight = maxHeight;
+    return this;
+  }
+
+  public double getResidThreshold(){
+    return this.residThreshold;
+  }
+
+  public GoGPS setResidThreshold(double residThreshold) {
+    this.residThreshold = residThreshold;
+    return this;
+  }
+
+  public double getHdopLimit(){
+    return hdopLimit;
+  }
+
+  public GoGPS setHdopLimit(double hdopLimit) {
+    this.hdopLimit  = hdopLimit;
+    return this;
+  }
+
+  public long getPosLimit(){
+    return posLimit;
+  }
+
+  public GoGPS setPosLimit(long maxPosUpdate) {
+    this.posLimit  = maxPosUpdate;
+    return this;
+  }
+
+  public long getTimeLimit(){
+    return maxTimeUpdateSec;
+  }
+
+  public GoGPS setTimeLimit(long maxTimeUpdateSec) {
+    this.maxTimeUpdateSec  = maxTimeUpdateSec;
+    return this;
+  }
+
+  public long getOffssetMs(){
+    return offsetms;
+  }
+
+  public GoGPS setOffsetMs( long offsetms){
+    this.offsetms = offsetms;
+    return this;
+  }
+
+  /**
 	 * Instantiates a new go gps.
 	 *
 	 * @param navigation the navigation
@@ -255,8 +750,9 @@ public class GoGPS implements Runnable{
 	public RoverPosition runCodeStandalone(double stopAtDopThreshold) throws Exception {
 
     running = true;
-		roverPos = new ReceiverPosition(this);
-		roverPos.setDebug(this.debug);
+		roverPos = new ReceiverPosition();
+		LS_SA_code sa = new LS_SA_code(this);
+		
 		RoverPosition coord = null;
 		try {
 			Observations obsR = roverIn.getNextObservations();
@@ -272,9 +768,9 @@ public class GoGPS implements Runnable{
             if (!roverPos.isValidXYZ()) {
 						for (int iter = 0; iter < 3; iter++) {
 							// Select all satellites
-							roverPos.selectSatellitesStandalone(obsR, -100);
-							if (roverPos.getSatAvailNumber() >= 4) {
-								roverPos.codeStandalone(obsR, false, true);
+							sa.selectSatellitesStandalone( obsR, -100);
+							if (sa.getSatAvailNumber() >= 4) {
+								sa.codeStandalone( obsR, false, true);
 							}
 						}
 
@@ -283,12 +779,12 @@ public class GoGPS implements Runnable{
             }
 						if (roverPos.isValidXYZ()) {
 							// Select available satellites
-							roverPos.selectSatellitesStandalone(obsR);
+							sa.selectSatellitesStandalone(obsR);
 							
-							if (roverPos.getSatAvailNumber() >= 4){
-								if(debug) System.out.println("Number of selected satellites: " + roverPos.getSatAvailNumber());
+							if (sa.getSatAvailNumber() >= 4){
+								if(debug) System.out.println("Number of selected satellites: " + sa.getSatAvailNumber());
 								// Compute code stand-alone positioning (epoch-by-epoch solution)
-								roverPos.codeStandalone(obsR, false, false);
+								sa.codeStandalone( obsR, false, false);
 							}
 							else
 								// Discard approximate positioning
@@ -338,7 +834,7 @@ public class GoGPS implements Runnable{
 	public GoGPS runCodeDoubleDifferences() {
 
 		// Create a new object for the rover position
-		roverPos = new ReceiverPosition(this);
+		roverPos = new ReceiverPosition();
 
 		try {
 			Observations obsR = roverIn.getNextObservations();
@@ -368,9 +864,10 @@ public class GoGPS implements Runnable{
 						// Compute approximate positioning by iterative least-squares
 						for (int iter = 0; iter < 3; iter++) {
 							// Select all satellites
-							roverPos.selectSatellitesStandalone(obsR, -100);
-							if (roverPos.getSatAvailNumber() >= 4) {
-								roverPos.codeStandalone(obsR, false, true);
+						  LS_SA_code sa = new LS_SA_code(this);
+							sa.selectSatellitesStandalone(obsR, -100);
+							if (sa.getSatAvailNumber() >= 4) {
+								sa.codeStandalone( obsR, false, true);
 							}
 						}
 
@@ -378,13 +875,14 @@ public class GoGPS implements Runnable{
 						if (roverPos.isValidXYZ()) {
 
 							// Select satellites available for double differences
-							roverPos.selectSatellitesDoubleDiff(obsR,
+							LS_DD_code dd = new LS_DD_code(this);
+						  dd.selectSatellitesDoubleDiff(obsR,
 									obsM, masterIn.getDefinedPosition());
 
-							if (roverPos.getSatAvailNumber() >= 4)
+							if (dd.getSatAvailNumber() >= 4)
 								// Compute code double differences positioning
 								// (epoch-by-epoch solution)
-								roverPos.codeDoubleDifferences(obsR,
+								dd.codeDoubleDifferences(obsR,
 										obsM, masterIn.getDefinedPosition());
 							else
 								// Discard approximate positioning
@@ -430,9 +928,9 @@ public class GoGPS implements Runnable{
 		long timeProc = 0;
 		long depProc = 0;
 
-		// Create a new object for the rover position
-		roverPos = new ReceiverPosition(this);
-
+		roverPos = new ReceiverPosition();
+		KalmanFilter kf = new KalmanFilter(this);
+		
 		// Flag to check if Kalman filter has been initialized
 		boolean kalmanInitialized = false;
 
@@ -458,9 +956,10 @@ public class GoGPS implements Runnable{
 					// Compute approximate positioning by iterative least-squares
 					for (int iter = 0; iter < 3; iter++) {
 						// Select all satellites
-						roverPos.selectSatellitesStandalone(obsR, -100);
-						if (roverPos.getSatAvailNumber() >= 4) {
-							roverPos.codeStandalone(obsR, false, true);
+					  LS_SA_code sa = new LS_SA_code(this);
+					  sa.selectSatellitesStandalone(obsR, -100);
+						if (sa.getSatAvailNumber() >= 4) {
+							sa.codeStandalone( obsR, false, true);
 						}
 					}
 
@@ -468,7 +967,7 @@ public class GoGPS implements Runnable{
 					if (roverPos.isValidXYZ()) {
 
 						// Initialize Kalman filter
-						roverPos.kalmanFilterInit(obsR, null, roverIn.getDefinedPosition());
+						kf.init( obsR, null, roverIn.getDefinedPosition());
 
 						if (roverPos.isValidXYZ()) {
 							kalmanInitialized = true;
@@ -483,7 +982,7 @@ public class GoGPS implements Runnable{
 
 					// Do a Kalman filter loop
 					try{
-						roverPos.kalmanFilterLoop(obsR, null, roverIn.getDefinedPosition());
+						kf.loop( obsR, null, roverIn.getDefinedPosition());
 					}catch(Exception e){
 						e.printStackTrace();
 						valid = false;
@@ -543,8 +1042,9 @@ public class GoGPS implements Runnable{
 		long depProc = 0;
 
 		// Create a new object for the rover position
-		roverPos = new ReceiverPosition(this);
-
+		roverPos = new ReceiverPosition();
+		KalmanFilter kf = new KalmanFilter(this);
+		
 		// Flag to check if Kalman filter has been initialized
 		boolean kalmanInitialized = false;
 
@@ -611,17 +1111,18 @@ public class GoGPS implements Runnable{
 						// Compute approximate positioning by iterative least-squares
 						for (int iter = 0; iter < 3; iter++) {
 							// Select all satellites
-							roverPos.selectSatellitesStandalone(obsR, -100);
-							if (roverPos.getSatAvailNumber() >= 4) {
-								roverPos.codeStandalone(obsR, false, true);
+						  LS_SA_code sa = new LS_SA_code(this);
+							sa.selectSatellitesStandalone(obsR, -100);
+							if (sa.getSatAvailNumber() >= 4) {
+								sa.codeStandalone( obsR, false, true );
 							}
 						}
 
 						// If an approximate position was computed
 						if (roverPos.isValidXYZ()) {
-
+						  
 							// Initialize Kalman filter
-							roverPos.kalmanFilterInit(obsR, obsM, masterIn.getDefinedPosition());
+							kf.init(obsR, obsM, masterIn.getDefinedPosition());
 
 							if (roverPos.isValidXYZ()) {
 								kalmanInitialized = true;
@@ -636,7 +1137,7 @@ public class GoGPS implements Runnable{
 
 						// Do a Kalman filter loop
 						try{
-							roverPos.kalmanFilterLoop(obsR,obsM, masterIn.getDefinedPosition());
+							kf.loop(obsR,obsM, masterIn.getDefinedPosition());
 						}catch(Exception e){
 							e.printStackTrace();
 							valid = false;
@@ -715,7 +1216,7 @@ public class GoGPS implements Runnable{
         aPrioriPos.cloneInto(roverPos);
 	    }
 	    
-	    Long updatedms = roverPos.snapshotPos(obsR);
+	    Long updatedms = new LS_SA_code_snapshot(this).snapshotPos(obsR);
 	    
       if( updatedms == null && roverPos.status == Status.MaxCorrection ){
         if(debug) System.out.println("Reset aPrioriPos");        
@@ -728,7 +1229,6 @@ public class GoGPS implements Runnable{
 	  }
 	
 	  void tryOffset( Coordinates aPrioriPos, Observations obsR ) throws Exception{
-      roverPos.setDebug(debug);
 
 //      Long offsetsec = Math.round(offsetms/1000.0);
       Long offsetms = 0l;
@@ -798,8 +1298,7 @@ public class GoGPS implements Runnable{
       Observations obsR = null;
       RoverPositionObs roverObs;
 
-      roverPos = new ReceiverPosition(this);
-      roverPos.setDebug(debug);
+      roverPos = new ReceiverPosition();
       if( aPrioriPos == null ){
         aPrioriPos = new Coordinates();
       }
@@ -824,16 +1323,14 @@ public class GoGPS implements Runnable{
 
          long refTimeMs = obsR.getRefTime().getMsec();
 
-         if( truePos != null ){
-           if(debug) System.out.println( String.format( "\r\n* True Pos: %8.4f, %8.4f, %8.4f", 
-               truePos.getGeodeticLatitude(),
-               truePos.getGeodeticLongitude(),
-               truePos.getGeodeticHeight()
-               ));
-           roverPos.setDebug(true);
-           truePos.setDebug(true);
-           truePos.selectSatellitesStandaloneFractional( obsR, -100, MODULO1MS );
-         }
+//         if( truePos != null ){
+//           if(debug) System.out.println( String.format( "\r\n* True Pos: %8.4f, %8.4f, %8.4f", 
+//               truePos.getGeodeticLatitude(),
+//               truePos.getGeodeticLongitude(),
+//               truePos.getGeodeticHeight()
+//               ));
+//           truePos.selectSatellitesStandaloneFractional( obsR, -100, MODULO1MS );
+//         }
          
          if( !roverPos.isValidXYZ() && aPrioriPos != null && aPrioriPos.isValidXYZ()){
            aPrioriPos.cloneInto(roverPos);
@@ -842,7 +1339,8 @@ public class GoGPS implements Runnable{
            roverPos.setXYZ(0, 0, 0);
 //           roverPos.selectSatellitesStandaloneFractional(obsR, -100);
            runElevationMethod(obsR);
-           roverPos.dopplerPos(obsR);
+           
+           new LS_SA_dopplerPos(this).dopplerPos(obsR);
            
            if( roverPos.isValidXYZ() )
              roverPos.cloneInto(aPrioriPos);
@@ -908,8 +1406,11 @@ public class GoGPS implements Runnable{
     for (int iter = 0; iter < 500; iter++) {
       // Select all satellites
       System.out.println("////// Itr = " + iter);
-      double correctionMag = roverPos.selectSatellitesStandalonePositionUpdate(obsR);
-      if (roverPos.getSatAvailNumber() < 6) {
+      
+      Core cp = new Core(this);
+      
+      double correctionMag = cp.selectSatellitesStandalonePositionUpdate(obsR);
+      if (cp.getSatAvailNumber() < 6) {
         roverPos.status = Status.NoAprioriPos;
         break;
       }
@@ -926,24 +1427,25 @@ public class GoGPS implements Runnable{
       if(debug) System.out.println("\r\n////// itr = " + iter );
       long   updatems = obsR.getRefTime().getMsec();
 
-      if( truePos != null ){
-        System.out.println( String.format( "\r\n* True Pos: %8.4f, %8.4f, %8.4f", 
-            truePos.getGeodeticLatitude(),
-            truePos.getGeodeticLongitude(),
-            truePos.getGeodeticHeight()
-            ));
-        truePos.selectSatellitesStandaloneFractional( obsR, -100, MODULO20MS );
-      }
+//      if( truePos != null ){
+//        System.out.println( String.format( "\r\n* True Pos: %8.4f, %8.4f, %8.4f", 
+//            truePos.getGeodeticLatitude(),
+//            truePos.getGeodeticLongitude(),
+//            truePos.getGeodeticHeight()
+//            ));
+//        truePos.selectSatellitesStandaloneFractional( obsR, -100, MODULO20MS );
+//      }
       
       System.out.println( String.format( "\r\n* Rover Pos: %8.4f, %8.4f, %8.4f", 
           roverPos.getGeodeticLatitude(),
           roverPos.getGeodeticLongitude(),
           roverPos.getGeodeticHeight()
           ));
-      roverPos.selectSatellitesStandaloneFractional( obsR, -100, MODULO20MS );
+      LS_SA_code_coarse_time sa = new LS_SA_code_coarse_time(this);
+      sa.selectSatellitesStandaloneFractional( obsR, -100, MODULO20MS );
       System.out.println();
 
-      if (roverPos.getSatAvailNumber() < 3) {
+      if (sa.getSatAvailNumber() < 3) {
         if(debug) System.out.println("Not enough satellites" );
         roverPos.setXYZ(0, 0, 0);
         roverPos.status = Status.NotEnoughSats;
@@ -951,9 +1453,9 @@ public class GoGPS implements Runnable{
       }
       else {
         double correction_mag = 
-            roverPos.getSatAvailNumber() == 3?
-            roverPos.codeStandaloneDTM(obsR, MODULO )
-          : roverPos.codeStandaloneCoarseTime(obsR, MODULO );
+            sa.getSatAvailNumber() == 3?
+            sa.codeStandaloneDTM(obsR, MODULO )
+          : sa.codeStandaloneCoarseTime(obsR, MODULO );
         updatems = obsR.getRefTime().getMsec() - updatems;
         
         if( Math.abs( updatems/1000 )> 12*60*60 ){
@@ -990,10 +1492,8 @@ public class GoGPS implements Runnable{
     Time refTime;
     int leapSeconds;
     
-    roverPos = new ReceiverPosition(this);
+    roverPos = new ReceiverPosition();
    
-    roverPos.setDebug(debug);
-    
     // read the whole file
     List<Observations> obsl = new ArrayList<Observations>();
     do{
@@ -1172,8 +1672,8 @@ public class GoGPS implements Runnable{
     long index = 0;
     Observations obsR = null;
     
-    roverPos = new ReceiverPosition(this);
-    roverPos.setDebug(debug);
+    roverPos = new ReceiverPosition();
+    LS_SA_dopplerPos sa = new LS_SA_dopplerPos(this);
     Time refTime;
     try {
       obsR = roverIn.getNextObservations();
@@ -1189,7 +1689,7 @@ public class GoGPS implements Runnable{
 //                System.out.println("OK "+obsR.getGpsSize()+" satellites");
 
             // compute a priori pos based on doppler
-            roverPos.dopplerPos(obsR);
+            sa.dopplerPos(obsR);
 
             // If an approximate position was computed
             if(debug) System.out.println("Valid position? "+roverPos.isValidXYZ());
@@ -1244,492 +1744,7 @@ public class GoGPS implements Runnable{
     return new RoverPosition( roverPos, RoverPosition.DOP_TYPE_STANDARD, roverPos.getpDop(), roverPos.gethDop(), roverPos.getvDop());
   }
 	
-
-	/**
-	 * Gets the freq.
-	 *
-	 * @return the freq
-	 */
-	public int getFreq() {
-		return freq;
-	}
-
-	/**
-	 * Sets the freq.
-	 *
-	 * @param freq the freq to set
-	 * @return 
-	 */
-	public GoGPS setFreq(int freq) {
-		this.freq = freq;
-		return this;
-	}
-
-	/**
-	 * Checks if is dual freq.
-	 *
-	 * @return the dualFreq
-	 */
-	public boolean isDualFreq() {
-		return dualFreq;
-	}
-
-	/**
-	 * Sets the dual freq.
-	 *
-	 * @param dualFreq the dualFreq to set
-	 * @return 
-	 */
-	public GoGPS setDualFreq(boolean dualFreq) {
-		this.dualFreq = dualFreq;
-    return this;
-	}
-
-	/**
-	 * Gets the cutoff.
-	 *
-	 * @return the cutoff
-	 */
-	public double getCutoff() {
-		return cutoff;
-	}
-
-	/**
-	 * Sets the cutoff.
-	 *
-	 * @param cutoff the cutoff to set
-	 */
-	public GoGPS setCutoff(double cutoff) {
-		this.cutoff = cutoff;
-		return this;
-	}
-
-	/**
-	 * Gets the order.
-	 *
-	 * @return the order
-	 */
-	public int getOrder() {
-		return dynamicModel;
-	}
-
-	/**
-	 * Sets the order.
-	 *
-	 * @param order the order to set
-	 * @return 
-	 */
-	public GoGPS setOrder(int order) {
-		this.dynamicModel = order;
-    return this;
-	}
-
-	/**
-	 * Gets the st dev init.
-	 *
-	 * @return the stDevInit
-	 */
-	public double getStDevInit() {
-		return stDevInit;
-	}
-
-	/**
-	 * Sets the st dev init.
-	 *
-	 * @param stDevInit the stDevInit to set
-	 * @return 
-	 */
-	public GoGPS setStDevInit(double stDevInit) {
-		this.stDevInit = stDevInit;
-    return this;
-	}
-
-	/**
-	 * Gets the st dev e.
-	 *
-	 * @return the stDevE
-	 */
-	public double getStDevE() {
-		return stDevE;
-	}
-
-	/**
-	 * Sets the st dev e.
-	 *
-	 * @param stDevE the stDevE to set
-	 * @return 
-	 */
-	public GoGPS setStDevE(double stDevE) {
-		this.stDevE = stDevE;
-    return this;
-	}
-
-	/**
-	 * Gets the st dev n.
-	 *
-	 * @return the stDevN
-	 */
-	public double getStDevN() {
-		return stDevN;
-	}
-
-	/**
-	 * Sets the st dev n.
-	 *
-	 * @param stDevN the stDevN to set
-	 * @return 
-	 */
-	public GoGPS setStDevN(double stDevN) {
-		this.stDevN = stDevN;
-    return this;
-	}
-
-	/**
-	 * Gets the st dev u.
-	 *
-	 * @return the stDevU
-	 */
-	public double getStDevU() {
-		return stDevU;
-	}
-
-	/**
-	 * Sets the st dev u.
-	 *
-	 * @param stDevU the stDevU to set
-	 * @return 
-	 */
-	public GoGPS setStDevU(double stDevU) {
-		this.stDevU = stDevU;
-    return this;
-	}
-
-	/**
-	 * Gets the st dev code.
-	 *
-	 * @param roverObsSet the rover observation set
-	 * @param masterObsSet the master observation set
-	 * @param i the selected GPS frequency
-	 * @return the stDevCode
-	 */
-	public double getStDevCode(ObservationSet obsSet, int i) {
-		return obsSet.isPseudorangeP(i)?stDevCodeP[i]:stDevCodeC;
-	}
-
-	/**
-	 * Gets the st dev code c.
-	 *
-	 * @return the stDevCodeC
-	 */
-	public double getStDevCodeC() {
-		return stDevCodeC;
-	}
-
-	/**
-	 * Sets the st dev code c.
-	 *
-	 * @param stDevCodeC the stDevCodeC to set
-	 * @return 
-	 */
-	public GoGPS setStDevCodeC(double stDevCodeC) {
-		this.stDevCodeC = stDevCodeC;
-    return this;
-	}
-
-	/**
-	 * Gets the st dev code p.
-	 *
-	 * @param i the selected GPS frequency
-	 * @return the stDevCodeP
-	 */
-	public double getStDevCodeP(int i) {
-		return stDevCodeP[i];
-	}
-
-	/**
-	 * Sets the st dev code p.
-	 *
-	 * @param stDevCodeP the stDevCodeP to set
-	 * @param i the selected GPS frequency
-	 * @return 
-	 */
-	public GoGPS setStDevCodeP(double stDevCodeP, int i) {
-		this.stDevCodeP[i] = stDevCodeP;
-    return this;
-	}
-
-	/**
-	 * Gets the st dev phase.
-	 *
-	 * @return the stDevPhase
-	 */
-	public double getStDevPhase() {
-		return stDevPhase;
-	}
-
-	/**
-	 * Sets the st dev phase.
-	 *
-	 * @param stDevPhase the stDevPhase to set
-	 * @return 
-	 */
-	public GoGPS setStDevPhase(double stDevPhase) {
-		this.stDevPhase = stDevPhase;
-    return this;
-	}
-
-	/**
-	 * Gets the st dev ambiguity.
-	 *
-	 * @return the stDevAmbiguity
-	 */
-	public double getStDevAmbiguity() {
-		return stDevAmbiguity;
-	}
-
-	/**
-	 * Sets the st dev ambiguity.
-	 *
-	 * @param stDevAmbiguity the stDevAmbiguity to set
-	 * @return 
-	 */
-	public GoGPS setStDevAmbiguity(double stDevAmbiguity) {
-		this.stDevAmbiguity = stDevAmbiguity;
-    return this;
-	}
-
-	/**
-	 * Gets the min num sat.
-	 *
-	 * @return the minNumSat
-	 */
-	public int getMinNumSat() {
-		return minNumSat;
-	}
-
-	/**
-	 * Sets the min num sat.
-	 *
-	 * @param minNumSat the minNumSat to set
-	 * @return 
-	 */
-	public GoGPS setMinNumSat(int minNumSat) {
-		this.minNumSat = minNumSat;
-    return this;
-	}
-
-	/**
-	 * Gets the cycle slip threshold.
-	 *
-	 * @return the cycle slip threshold
-	 */
-	public double getCycleSlipThreshold() {
-		return cycleSlipThreshold;
-	}
-
-	/**
-	 * Sets the cycle slip threshold.
-	 *
-	 * @param csThreshold the cycle slip threshold to set
-	 * @return 
-	 */
-	public GoGPS setCycleSlipThreshold(double csThreshold) {
-		this.cycleSlipThreshold = csThreshold;
-    return this;
-	}
-
-	/**
-	 * Gets the navigation.
-	 *
-	 * @return the navigation
-	 */
-	public NavigationProducer getNavigation() {
-		return navigation;
-	}
-
-	/**
-	 * Sets the navigation.
-	 *
-	 * @param navigation the navigation to set
-	 * @return 
-	 */
-	public GoGPS setNavigation(NavigationProducer navigation) {
-		this.navigation = navigation;
-    return this;
-	}
-
-	/**
-	 * Gets the weights.
-	 *
-	 * @return the weights
-	 */
-	public int getWeights() {
-		return weights;
-	}
-
-	/**
-	 * Sets the weights.
-	 *
-	 * @param weights the weights to set
-	 * @return 
-	 */
-	public GoGPS setWeights(int weights) {
-		this.weights = weights;
-    return this;
-	}
-
-	/**
-	 * Gets the dynamic model.
-	 *
-	 * @return the dynamicModel
-	 */
-	public int getDynamicModel() {
-		return dynamicModel;
-	}
-
-	/**
-	 * Sets the dynamic model.
-	 *
-	 * @param dynamicModel the dynamicModel to set
-	 */
-	public GoGPS setDynamicModel(int dynamicModel) {
-		this.dynamicModel = dynamicModel;
-		return this;
-	}
-	
-	/**
-	 * Gets the cycle-slip detection strategy.
-	 *
-	 * @return the cycleSlipDetectionStrategy
-	 */
-	public int getCycleSlipDetectionStrategy() {
-		return cycleSlipDetectionStrategy;
-	}
-
-	/**
-	 * Sets the cycle-slip detection strategy.
-	 *
-	 * @param cycleSlipDetectionStrategy the cycleSlipDetectionStrategy to set
-	 * @return 
-	 */
-	public GoGPS setCycleSlipDetection(int cycleSlipDetectionStrategy) {
-		this.cycleSlipDetectionStrategy = cycleSlipDetectionStrategy;
-    return this;
-	}
-
-	/**
-	 * Gets the ambiguity strategy.
-	 *
-	 * @return the ambiguityStrategy
-	 */
-	public int getAmbiguityStrategy() {
-		return ambiguityStrategy;
-	}
-
-	/**
-	 * Sets the ambiguity strategy.
-	 *
-	 * @param ambiguityStrategy the ambiguityStrategy to set
-	 * @return 
-	 */
-	public GoGPS setAmbiguityStrategy(int ambiguityStrategy) {
-		this.ambiguityStrategy = ambiguityStrategy;
-    return this;
-	}
-
-	/**
-	 * @return the validPosition
-	 */
-	public boolean isValidPosition() {
-		return validPosition;
-	}
-
-	/**
-   * @return the debug
-   */
-  public boolean isDebug() {
-  	return debug;
-  }
-
   /**
-   * @param debug the debug to set
-   * @return 
-   */
-  public GoGPS setDebug(boolean debug) {
-  	this.debug = debug;
-    return this;
-  }
-
-  public boolean useDTM(){
-    return useDTM;
-  }
-
-  public GoGPS useDTM( boolean useDTM ){
-    this.useDTM = useDTM;
-    return this;
-  }
-
-  public long getMaxHeight() {
-    return maxHeight;
-  }
-
-  public GoGPS setMaxHeight(long maxHeight) {
-    this.maxHeight = maxHeight;
-    return this;
-  }
-
-  public double getResidThreshold(){
-    return this.residThreshold;
-  }
-
-  public GoGPS setResidThreshold(double residThreshold) {
-    this.residThreshold = residThreshold;
-    return this;
-  }
-
-  public double getHdopLimit(){
-    return hdopLimit;
-  }
-
-  public GoGPS setHdopLimit(double hdopLimit) {
-    this.hdopLimit  = hdopLimit;
-    return this;
-  }
-
-  public long getPosLimit(){
-    return posLimit;
-  }
-
-  public GoGPS setPosLimit(long maxPosUpdate) {
-    this.posLimit  = maxPosUpdate;
-    return this;
-  }
-  
-  public long getTimeLimit(){
-    return maxTimeUpdateSec;
-  }
-
-  public GoGPS setTimeLimit(long maxTimeUpdateSec) {
-    this.maxTimeUpdateSec  = maxTimeUpdateSec;
-    return this;
-  }
-  
-  public long getOffssetMs(){
-    return offsetms;
-  }
-  
-  public GoGPS setOffsetMs( long offsetms){
-    this.offsetms = offsetms;
-    return this;
-  }
-  /**
-	 * @return the roverPos
-	 */
-	public Coordinates getRoverPos() {
-		return (Coordinates)roverPos.clone();
-	}
-
-	/**
 	 * @return the positionConsumer
 	 */
 	public void cleanPositionConsumers() {

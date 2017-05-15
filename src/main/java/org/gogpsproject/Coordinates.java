@@ -49,6 +49,7 @@ public class Coordinates implements Streamable{
 		geod = new SimpleMatrix(3, 1);
 		enu = new SimpleMatrix(3, 1);
 	}
+	
 	public static Coordinates readFromStream(DataInputStream dai, boolean oldVersion) throws IOException{
 		Coordinates c = new Coordinates();
 		c.read(dai, oldVersion);

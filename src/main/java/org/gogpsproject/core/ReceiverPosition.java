@@ -18,11 +18,22 @@
  *
  *
  */
-package org.gogpsproject;
+package org.gogpsproject.core;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.ejml.simple.SimpleMatrix;
+import org.gogpsproject.Constants;
+import org.gogpsproject.Coordinates;
+import org.gogpsproject.GoGPS;
+import org.gogpsproject.IonoGps;
+import org.gogpsproject.NavigationProducer;
+import org.gogpsproject.ObservationSet;
+import org.gogpsproject.Observations;
+import org.gogpsproject.SatellitePosition;
+import org.gogpsproject.Status;
+import org.gogpsproject.Time;
+import org.gogpsproject.TopocentricCoordinates;
 
 //import com.google.maps.ElevationApi;
 //import com.google.maps.GeoApiContext;
@@ -3547,7 +3558,7 @@ public class ReceiverPosition extends Coordinates{
      for( k=0; k<satAvail.size(); k++){
        int satId = roverObs.getSatID(k);
        ObservationSet os = roverObs.getSatByID(satId);
-       if( !os.inUse )
+       if( !os.isInUse() )
          continue;
        
        double d = resid.get(k);
@@ -4245,7 +4256,7 @@ public class ReceiverPosition extends Coordinates{
     int satIndex;
     int satId;
     double elevation;
-    Coordinates roverPos = new Coordinates();
+    Coordinates roverPos;
     public long unixTime;
     public Double eRes;
     public double hDop;
@@ -4261,7 +4272,7 @@ public class ReceiverPosition extends Coordinates{
       this.satIndex = satIndex;
       this.satId = satId;
       this.elevation = elevation;
-      roverPos.cloneInto( this.roverPos );
+      this.roverPos = (Coordinates) roverPos.clone();
       this.unixTime = unixTime;
       this.eRes = eRes;
       this.hDop = hDop;
@@ -4294,8 +4305,7 @@ public class ReceiverPosition extends Coordinates{
     // Number of unknown parameters
     int nUnknowns = 5;
 
-    Coordinates refPos = new Coordinates();
-    this.cloneInto(refPos);
+    Coordinates refPos = (Coordinates) this.clone();
     
     long refTime = roverObs.getRefTime().getMsec();
     long unixTime = refTime;
@@ -4631,7 +4641,7 @@ public class ReceiverPosition extends Coordinates{
          int satId = roverObs.getSatID(k);
          ObservationSet os = roverObs.getSatByID(satId);
          os.eRes = Math.abs( eResM.get(k));
-         if( os.inUse )
+         if( os.isInUse() )
            eRes += Math.pow( os.eRes, 2); 
        }
        eRes = Math.sqrt(eRes/satsInUse);

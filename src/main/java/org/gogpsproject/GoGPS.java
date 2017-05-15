@@ -22,6 +22,8 @@ package org.gogpsproject;
 
 import java.util.*;
 
+import org.gogpsproject.core.ReceiverPosition;
+
 /**
  * The Class GoGPS.
  *

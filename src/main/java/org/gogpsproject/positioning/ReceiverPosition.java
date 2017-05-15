@@ -31,19 +31,37 @@ import org.gogpsproject.Status;
  */
 public class ReceiverPosition extends Coordinates{
 
-	double receiverClockError; /* Clock error */
-	double receiverClockErrorRate; /* Clock error rate */
-	double pDop; /* Position dilution of precision (PDOP) */
-	double hDop; /* Horizontal dilution of precision (HDOP) */
-	double vDop; /* Vertical dilution of precision (VDOP) */
-	double kpDop; /* Kalman-derived position dilution of precision (KPDOP) */
-	double khDop; /* Kalman-derived horizontal dilution of precision (KHDOP) */
-	double kvDop; /* Kalman-derived vertical dilution of precision (KVDOP) */
+  /** Clock error */
+	double receiverClockError; 
+
+  /** Clock error rate */
+	double receiverClockErrorRate; 
+	
+  /** Position dilution of precision (PDOP) */
+	double pDop; 
+
+	/** Horizontal dilution of precision (HDOP) */
+	double hDop; 
+
+  /** Vertical dilution of precision (VDOP) */
+	double vDop; 
+	
+	/** Kalman-derived position dilution of precision (KPDOP) */
+	double kpDop; 
+	
+	/** Kalman-derived horizontal dilution of precision (KHDOP) */
+	double khDop; 
+	
+	/** Kalman-derived vertical dilution of precision (KVDOP) */
+	double kvDop; 
+	
+  /** Sats in use from an observation set */
+	public long satsInUse = 0;
+  
+	/** Average residual error for least-squares computation */
+  public double eRes;
 
   public Status status = Status.None;
-
-  public long satsInUse = 0;
-  public double eRes;
 
 	public ReceiverPosition(){
 		super();
@@ -51,23 +69,14 @@ public class ReceiverPosition extends Coordinates{
 		this.receiverClockError = 0.0;
 	}
 
-	/**
-	 * @return the receiver clock error
-	 */
 	public double getReceiverClockError() {
 		return receiverClockError;
 	}
 
-	/**
-	 * @param receiverClockError the receiver clock error to set
-	 */
 	public void setReceiverClockError(double receiverClockError) {
 		this.receiverClockError = receiverClockError;
 	}
 
-	/**
-   * @return the receiver clock error rate
-   */
   public double getReceiverClockErrorRate() {
     return receiverClockErrorRate;
   }
@@ -76,86 +85,50 @@ public class ReceiverPosition extends Coordinates{
     this.receiverClockErrorRate = receiverClockErrorRate;
   }
 
-	/**
-	 * @return the pDop
-	 */
 	public double getpDop() {
 		return pDop;
 	}
 
-	/**
-	 * @param pDop the pDop to set
-	 */
 	public void setpDop(double pDop) {
 		this.pDop = pDop;
 	}
 
-	/**
-	 * @return the hDop
-	 */
 	public double gethDop() {
 		return hDop;
 	}
 
-	/**
-	 * @param hDop the hDop to set
-	 */
 	public void sethDop(double hDop) {
 		this.hDop = hDop;
 	}
 
-	/**
-	 * @return the vDop
-	 */
 	public double getvDop() {
 		return vDop;
 	}
 
-	/**
-	 * @param vDop the vDop to set
-	 */
 	public void setvDop(double vDop) {
 		this.vDop = vDop;
 	}
 
-	/**
-	 * @return the kpDop
-	 */
 	public double getKpDop() {
 		return kpDop;
 	}
 
-	/**
-	 * @param kpDop the kpDop to set
-	 */
 	public void setKpDop(double kpDop) {
 		this.kpDop = kpDop;
 	}
 
-	/**
-	 * @return the khDop
-	 */
 	public double getKhDop() {
 		return khDop;
 	}
 
-	/**
-	 * @param khDop the khDop to set
-	 */
 	public void setKhDop(double khDop) {
 		this.khDop = khDop;
 	}
 
-	/**
-	 * @return the kvDop
-	 */
 	public double getKvDop() {
 		return kvDop;
 	}
 
-	/**
-	 * @param kvDop the kvDop to set
-	 */
 	public void setKvDop(double kvDop) {
 		this.kvDop = kvDop;
 	}

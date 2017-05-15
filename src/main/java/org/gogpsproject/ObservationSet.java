@@ -77,7 +77,7 @@ public class ObservationSet implements Streamable {
 		 could be below the elevation threshold for example
      or unhealthy
   */
-	boolean inUse = false;
+	private boolean inUse = false;
 
   /* residual error */
   public double eRes;
@@ -378,10 +378,18 @@ public class ObservationSet implements Streamable {
 	}
 
   public boolean inUse() {
-    return inUse;
+    return isInUse();
   }
   
   public void inUse(boolean inUse) {
+    this.setInUse(inUse);
+  }
+
+  public boolean isInUse() {
+    return inUse;
+  }
+
+  public void setInUse(boolean inUse) {
     this.inUse = inUse;
   }
 }

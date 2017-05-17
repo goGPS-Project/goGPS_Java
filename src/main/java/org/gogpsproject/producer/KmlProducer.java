@@ -40,7 +40,7 @@ import org.gogpsproject.Status;
  * @author Lorenzo Patocchi cryms.com
  */
 
-public class KmlProducer implements PositionConsumer, Runnable {
+public class KmlProducer extends Thread implements PositionConsumer {
 
 	private static DecimalFormat f = new DecimalFormat("0.000");
 	private static DecimalFormat g = new DecimalFormat("0.00000000");
@@ -67,13 +67,12 @@ public class KmlProducer implements PositionConsumer, Runnable {
 	private int worstLinePixelWidth = 3;
 	private boolean debug=false;
 
-	private Thread t = null;
-
 	private ArrayList<RoverPosition> positions = new ArrayList<RoverPosition>();
 	
 	private final static TimeZone TZ = TimeZone.getTimeZone("GMT");
 
 	public KmlProducer(String filename, double goodDopTreshold, int timeSampleDelaySec) throws IOException{
+	  super("KmlProducer");
 		this.filename = filename;
 		this.goodDopThreshold = goodDopTreshold;
 		this.timeSampleDelaySec = timeSampleDelaySec;
@@ -86,12 +85,12 @@ public class KmlProducer implements PositionConsumer, Runnable {
 
 			endOfTrack(out);
 		}
-		t = new Thread(this, "KmlProducer");
-		t.start();
+		start();
 	}
 
 	 public KmlProducer(String filename, double goodDopTreshold, int timeSampleDelaySec, String goodColorLine) throws IOException{
-	   this.goodColorLine = goodColorLine;
+	    super("KmlProducer");
+	    this.goodColorLine = goodColorLine;
 //	   this.worstColorLine = goodColorLine;
 	   
 	    this.filename = filename;
@@ -106,8 +105,7 @@ public class KmlProducer implements PositionConsumer, Runnable {
 
 	      endOfTrack(out);
 	    }
-	    t = new Thread(this, "KmlProducer" );
-	    t.start();
+	    start();
 	 }
 	 
 	/* (non-Javadoc)
@@ -249,7 +247,7 @@ public class KmlProducer implements PositionConsumer, Runnable {
 //		}
 		if(event == EVENT_END_OF_TRACK){
 			// finish writing
-			t = null;
+		  this.interrupt();
 		}
 	}
 
@@ -400,60 +398,30 @@ public class KmlProducer implements PositionConsumer, Runnable {
 		this.debug = debug;
 	}
 
-	/**
-	 * @return the debug
-	 */
 	public boolean isDebug() {
 		return debug;
 	}
 
-	/* (non-Javadoc)
-	 * @see java.lang.Runnable#run()
-	 */
-	@SuppressWarnings("unchecked")
 	@Override
 	public void run() {
 		int last = 0;
-		try {
-			while(t!=null && Thread.currentThread()==t){
-				if(last != positions.size()){ // check if we have more data to write
-					last = positions.size();
-
+    FileWriter out = startOfTrack();
+		while(!isInterrupted() || last<positions.size()){
 //					goodDop = false;
-					FileWriter out = startOfTrack();
-					if(out!=null){
-						
-						// TODO Below process is taking time? 
-						for(RoverPosition pos: (ArrayList<RoverPosition>) positions.clone()){
-							writeCoordinate(pos, out);
-						}
-						endOfTrack(out);
-					}
-
-				}
-
-				Thread.sleep(1000);
+			for( ; last<positions.size(); last++ ) {
+				writeCoordinate(positions.get(last), out);
 			}
-
-			//flush the last coordinates
-			if(last != positions.size()){ // check if we have more data to write
-				last = positions.size();
-
-//				goodDop = false;
-				FileWriter out = startOfTrack();
-				if(out!=null){
-					for(RoverPosition pos: (ArrayList<RoverPosition>) positions.clone()){
-						writeCoordinate(pos, out);
-					}
-					endOfTrack(out);
-				}
-
-			}
-		} catch (InterruptedException e) {
-			e.printStackTrace();
+			try {
+        Thread.sleep(200);
+      } catch (InterruptedException e) {
+        this.interrupt();
+      }
 		}
+    endOfTrack(out);
 	}
+	
 	public void cleanStop(){
-		t=null;
+		this.interrupt();
 	}
 }
+

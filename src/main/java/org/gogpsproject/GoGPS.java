@@ -1408,7 +1408,6 @@ public class GoGPS implements Runnable{
       System.out.println("////// Itr = " + iter);
       
       Core cp = new Core(this);
-      
       double correctionMag = cp.selectSatellitesStandalonePositionUpdate(obsR);
       if (cp.getSatAvailNumber() < 6) {
         roverPos.status = Status.NoAprioriPos;
@@ -1879,12 +1878,14 @@ public class GoGPS implements Runnable{
 	}
 
   public GoGPS runUntilFinished() {
-    while (Thread.activeCount() > 2){
-      try {
-        Thread.sleep(1000);
-      } catch (InterruptedException e) {
-        // FIXME Auto-generated catch block
-        e.printStackTrace();
+    for( PositionConsumer pc: positionConsumers ){
+      if( pc instanceof Thread ){
+        try {
+          ((Thread)pc).join();
+        } catch (InterruptedException e) {
+          // FIXME Auto-generated catch block
+          e.printStackTrace();
+        }
       }
     }
     return this;

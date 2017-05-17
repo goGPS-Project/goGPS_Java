@@ -1,0 +1,1 @@
+    Date        GPS time        GPS week         GPS tow        Latitude       Longitude     h (ellips.)          ECEF X          ECEF Y          ECEF Z       UTM North        UTM East     h (orthom.)        UTM zone            HDOP           KHDOP

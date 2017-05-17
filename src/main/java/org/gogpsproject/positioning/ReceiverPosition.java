@@ -29,7 +29,7 @@ import org.gogpsproject.Status;
  *
  * @author Eugenio Realini, Cryms.com, Daisuke Yoshida, Emanuele Ziglioli (Sirtrack Ltd)
  */
-public class ReceiverPosition extends Coordinates{
+public class ReceiverPosition extends Position {
 
   /** Clock error */
 	double receiverClockError; 

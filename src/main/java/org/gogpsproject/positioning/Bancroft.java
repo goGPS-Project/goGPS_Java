@@ -64,7 +64,7 @@ public class Bancroft extends Core {
       //pos[i].computePositionGps(goGPS.getNavigation());
     
       double obsPseudorange = obs.getSatByIDType(id, satType).getPseudorange(goGPS.getFreq());
-      pos[i] = goGPS.getNavigation().getGpsSatPosition(obs, id, satType, roverPos.getReceiverClockError());
+      pos[i] = goGPS.getNavigation().getGpsSatPosition(obs, id, satType, rover.getReceiverClockError());
     
       try {
 //      System.out.println("SatPos "+obs.getGpsSatID(i)+" x:"+pos[i].getX()+" y:"+pos[i].getY()+" z:"+pos[i].getZ());
@@ -126,9 +126,9 @@ public class Bancroft extends Core {
           travelTime = Constants.GPS_APPROX_TRAVEL_TIME;
         } else {
           double z = B.get(i, 2);
-          rho = Math.pow((x - roverPos.getX()), 2)
-              + Math.pow((y - roverPos.getY()), 2)
-              + Math.pow((z - roverPos.getZ()), 2);
+          rho = Math.pow((x - rover.getX()), 2)
+              + Math.pow((y - rover.getY()), 2)
+              + Math.pow((z - rover.getZ()), 2);
           travelTime = Math.sqrt(rho) / Constants.SPEED_OF_LIGHT;
         }
         angle = travelTime * Constants.EARTH_ANGULAR_VELOCITY;
@@ -179,15 +179,15 @@ public class Bancroft extends Core {
       if (Math.abs(omc[0]) > Math.abs(omc[1])) {
         //roverPos.coord.ecef = possiblePosB.extractMatrix(0, 3, 0, 1); // new SimpleMatrix(
         SimpleMatrix sm = possiblePosB.extractMatrix(0, 3, 0, 1);
-        roverPos.setXYZ(sm.get(0),sm.get(1),sm.get(2));
+        rover.setXYZ(sm.get(0),sm.get(1),sm.get(2));
         // Clock offset
-        roverPos.receiverClockError = possiblePosB.get(3, 0) / Constants.SPEED_OF_LIGHT;
+        rover.receiverClockError = possiblePosB.get(3, 0) / Constants.SPEED_OF_LIGHT;
       } else {
         //roverPos.coord.ecef = possiblePosA.extractMatrix(0, 3, 0, 1); // new SimpleMatrix(
         SimpleMatrix sm = possiblePosA.extractMatrix(0, 3, 0, 1);
-        roverPos.setXYZ(sm.get(0),sm.get(1),sm.get(2));
+        rover.setXYZ(sm.get(0),sm.get(1),sm.get(2));
         // Clock offset
-        roverPos.receiverClockError = possiblePosA.get(3, 0) / Constants.SPEED_OF_LIGHT;
+        rover.receiverClockError = possiblePosA.get(3, 0) / Constants.SPEED_OF_LIGHT;
       }
     }
 //    System.out.println("## x: " + roverPos.getX() );
@@ -195,6 +195,6 @@ public class Bancroft extends Core {
 //    System.out.println("## z: " + roverPos.getZ() );
     
     // Compute Bancroft's positioning in geodetic coordinates
-    roverPos.computeGeodetic();
+    rover.computeGeodetic();
   }
 }

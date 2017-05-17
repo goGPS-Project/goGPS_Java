@@ -33,6 +33,7 @@ import org.gogpsproject.positioning.LS_SA_code;
 import org.gogpsproject.positioning.LS_SA_code_coarse_time;
 import org.gogpsproject.positioning.LS_SA_code_snapshot;
 import org.gogpsproject.positioning.LS_SA_dopplerPos;
+import org.gogpsproject.positioning.MasterPosition;
 import org.gogpsproject.positioning.ReceiverPosition;
 
 /**
@@ -166,7 +167,10 @@ public class GoGPS implements Runnable{
 	private ObservationsProducer masterIn;
 
 	/** The rover calculated position */
-	private ReceiverPosition roverPos = null;
+	private final ReceiverPosition roverPos;
+
+	 /** The master position */
+  private final MasterPosition masterPos;
 
 	/** The rover calculated position is valid */
 	private boolean validPosition = false;
@@ -216,8 +220,16 @@ public class GoGPS implements Runnable{
     return roverPos;
   }
 
-  public void setRoverPos(ReceiverPosition roverPos) {
-    this.roverPos = roverPos;
+  public void setRoverPos(Coordinates roverPos) {
+    roverPos.cloneInto(roverPos);
+  }
+
+  public MasterPosition getMasterPosition(){
+    return masterPos;
+  }
+
+  public void setMasterPos(Coordinates masterPos) {
+    masterPos.cloneInto(masterPos);
   }
 
   /**
@@ -716,18 +728,13 @@ public class GoGPS implements Runnable{
 		this.masterIn = masterIn;
 
 		validPosition = false;
+		
+    roverPos = new ReceiverPosition();
+    masterPos = new MasterPosition();
 	}
 	
 	public GoGPS(NavigationProducer navigation, ObservationsProducer roverIn){
-
-		stDevCodeP = new double[2];
-		stDevCodeP[0] = 0.6;
-		stDevCodeP[1] = 0.4;
-
-		this.navigation = navigation;
-		this.roverIn = roverIn;
-
-		validPosition = false;
+	  this(navigation,roverIn,null);
 	}
 
 	/**
@@ -752,7 +759,6 @@ public class GoGPS implements Runnable{
 	public GoGPS runCodeStandalone(double stopAtDopThreshold) throws Exception {
 
     running = true;
-		roverPos = new ReceiverPosition();
 		LS_SA_code sa = new LS_SA_code(this);
 		
 		RoverPosition coord = null;
@@ -834,9 +840,6 @@ public class GoGPS implements Runnable{
 	 * Run code double differences.
 	 */
 	public GoGPS runCodeDoubleDifferences() {
-
-		// Create a new object for the rover position
-		roverPos = new ReceiverPosition();
 
 		try {
 			Observations obsR = roverIn.getNextObservations();
@@ -930,7 +933,6 @@ public class GoGPS implements Runnable{
 		long timeProc = 0;
 		long depProc = 0;
 
-		roverPos = new ReceiverPosition();
 		KalmanFilter kf = new KF_SA_code_phase(this);
 		
 		// Flag to check if Kalman filter has been initialized
@@ -1043,8 +1045,6 @@ public class GoGPS implements Runnable{
 		long timeProc = 0;
 		long depProc = 0;
 
-		// Create a new object for the rover position
-		roverPos = new ReceiverPosition();
 		KalmanFilter kf = new KF_DD_code_phase(this);
 		
 		// Flag to check if Kalman filter has been initialized
@@ -1300,7 +1300,6 @@ public class GoGPS implements Runnable{
       Observations obsR = null;
       RoverPositionObs roverObs;
 
-      roverPos = new ReceiverPosition();
       if( aPrioriPos == null ){
         aPrioriPos = new Coordinates();
       }
@@ -1493,8 +1492,6 @@ public class GoGPS implements Runnable{
     Time refTime;
     int leapSeconds;
     
-    roverPos = new ReceiverPosition();
-   
     // read the whole file
     List<Observations> obsl = new ArrayList<Observations>();
     do{
@@ -1673,7 +1670,6 @@ public class GoGPS implements Runnable{
     long index = 0;
     Observations obsR = null;
     
-    roverPos = new ReceiverPosition();
     LS_SA_dopplerPos sa = new LS_SA_dopplerPos(this);
     Time refTime;
     try {

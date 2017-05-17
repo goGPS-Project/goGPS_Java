@@ -89,28 +89,28 @@ public class LS_DD_code extends Core {
     double masterPivotObs = masterObs.getSatByIDType(pivotId, satType).getPseudorange(goGPS.getFreq());
 
     // Rover-pivot approximate pseudoranges
-    SimpleMatrix diffRoverPivot = diffRoverSat[pivot];
-    double roverPivotAppRange   = roverSatAppRange[pivot];
+    SimpleMatrix diffRoverPivot = rover.diffSat[pivot];
+    double roverPivotAppRange   = rover.satAppRange[pivot];
 
     // Master-pivot approximate pseudoranges
-    double masterPivotAppRange = masterSatAppRange[pivot];
+    double masterPivotAppRange = master.satAppRange[pivot];
 
     // Computation of rover-pivot troposphere correction
-    double roverPivotTropoCorr = roverSatTropoCorr[pivot];
+    double roverPivotTropoCorr = rover.satTropoCorr[pivot];
 
     // Computation of master-pivot troposphere correction
-    double masterPivotTropoCorr = masterSatTropoCorr[pivot];;
+    double masterPivotTropoCorr = master.satTropoCorr[pivot];;
 
     // Computation of rover-pivot ionosphere correction
-    double roverPivotIonoCorr = roverSatIonoCorr[pivot];
+    double roverPivotIonoCorr = rover.satIonoCorr[pivot];
 
     // Computation of master-pivot ionosphere correction
-    double masterPivotIonoCorr = masterSatIonoCorr[pivot];
+    double masterPivotIonoCorr = master.satIonoCorr[pivot];
 
     // Compute rover-pivot and master-pivot weights
-    double roverPivotWeight = computeWeight(roverTopo[pivot].getElevation(),
+    double roverPivotWeight = computeWeight(rover.topo[pivot].getElevation(),
         roverObs.getSatByIDType(pivotId, satType).getSignalStrength(goGPS.getFreq()));
-    double masterPivotWeight = computeWeight(masterTopo[pivot].getElevation(),
+    double masterPivotWeight = computeWeight(master.topo[pivot].getElevation(),
         masterObs.getSatByIDType(pivotId, satType).getSignalStrength(goGPS.getFreq()));
     Q.set(roverPivotWeight + masterPivotWeight);
 
@@ -128,17 +128,17 @@ public class LS_DD_code extends Core {
 //      if (pos[i] !=null && satAvail.contains(id) && satTypeAvail.contains(satType) && i != pivot) {
 
         // Fill in one row in the design matrix
-        A.set(k, 0, diffRoverSat[i].get(0) / roverSatAppRange[i]
+        A.set(k, 0, rover.diffSat[i].get(0) / rover.satAppRange[i]
             - diffRoverPivot.get(0) / roverPivotAppRange); /* X */
 
-        A.set(k, 1, diffRoverSat[i].get(1) / roverSatAppRange[i]
+        A.set(k, 1, rover.diffSat[i].get(1) / rover.satAppRange[i]
             - diffRoverPivot.get(1) / roverPivotAppRange); /* Y */
 
-        A.set(k, 2, diffRoverSat[i].get(2) / roverSatAppRange[i]
+        A.set(k, 2, rover.diffSat[i].get(2) / rover.satAppRange[i]
             - diffRoverPivot.get(2) / roverPivotAppRange); /* Z */
 
         // Add the differenced approximate pseudorange value to b
-        b.set(k, 0, (roverSatAppRange[i] - masterSatAppRange[i])
+        b.set(k, 0, (rover.satAppRange[i] - master.satAppRange[i])
             - (roverPivotAppRange - masterPivotAppRange));
 
         // Add the differenced observed pseudorange value to y0
@@ -147,15 +147,15 @@ public class LS_DD_code extends Core {
 
         // Fill in troposphere and ionosphere double differenced
         // corrections
-        tropoCorr.set(k, 0, (roverSatTropoCorr[i] - masterSatTropoCorr[i])
+        tropoCorr.set(k, 0, (rover.satTropoCorr[i] - master.satTropoCorr[i])
             - (roverPivotTropoCorr - masterPivotTropoCorr));
-        ionoCorr.set(k, 0, (roverSatIonoCorr[i] - masterSatIonoCorr[i])
+        ionoCorr.set(k, 0, (rover.satIonoCorr[i] - master.satIonoCorr[i])
             - (roverPivotIonoCorr - masterPivotIonoCorr));
 
         // Fill in the cofactor matrix
-        double roverSatWeight = computeWeight(roverTopo[i].getElevation(),
+        double roverSatWeight = computeWeight(rover.topo[i].getElevation(),
             roverObs.getSatByIDType(id, satType).getSignalStrength(goGPS.getFreq()));
-        double masterSatWeight = computeWeight(masterTopo[i].getElevation(),
+        double masterSatWeight = computeWeight(master.topo[i].getElevation(),
             masterObs.getSatByIDType(id, satType).getSignalStrength(goGPS.getFreq()));
         Q.set(k, k, Q.get(k, k) + roverSatWeight + masterSatWeight);
 
@@ -167,9 +167,9 @@ public class LS_DD_code extends Core {
       if (pos[i] !=null && gnssAvail.contains(checkAvailGnss)) {
 //      if (pos[i] != null && satAvail.contains(id) && satTypeAvail.contains(satType)) {
         // Fill in one row in the design matrix (complete one, for DOP)
-        Adop.set(d, 0, diffRoverSat[i].get(0) / roverSatAppRange[i]); /* X */
-        Adop.set(d, 1, diffRoverSat[i].get(1) / roverSatAppRange[i]); /* Y */
-        Adop.set(d, 2, diffRoverSat[i].get(2) / roverSatAppRange[i]); /* Z */
+        Adop.set(d, 0, rover.diffSat[i].get(0) / rover.satAppRange[i]); /* X */
+        Adop.set(d, 1, rover.diffSat[i].get(1) / rover.satAppRange[i]); /* Y */
+        Adop.set(d, 2, rover.diffSat[i].get(2) / rover.satAppRange[i]); /* Z */
         d++;
       }
     }
@@ -184,7 +184,7 @@ public class LS_DD_code extends Core {
 
     // Receiver position
     //this.coord.ecef.set(this.coord.ecef.plus(x));
-    roverPos.setPlusXYZ(x);
+    rover.setPlusXYZ(x);
 
     // Estimation of the variance of the observation error
     vEstim = y0.minus(A.mult(x).plus(b));
@@ -206,17 +206,17 @@ public class LS_DD_code extends Core {
 
     // Allocate and build rotation matrix
     SimpleMatrix R = new SimpleMatrix(3, 3);
-    R = Coordinates.rotationMatrix(roverPos);
+    R = Coordinates.rotationMatrix(rover);
 
     // Propagate covariance from global system to local system
     covENU = R.mult(covXYZ).mult(R.transpose());
 
     //Compute DOP values
-    roverPos.pDop = Math.sqrt(covXYZ.get(0, 0) + covXYZ.get(1, 1) + covXYZ.get(2, 2));
-    roverPos.hDop = Math.sqrt(covENU.get(0, 0) + covENU.get(1, 1));
-    roverPos.vDop = Math.sqrt(covENU.get(2, 2));
+    rover.pDop = Math.sqrt(covXYZ.get(0, 0) + covXYZ.get(1, 1) + covXYZ.get(2, 2));
+    rover.hDop = Math.sqrt(covENU.get(0, 0) + covENU.get(1, 1));
+    rover.vDop = Math.sqrt(covENU.get(2, 2));
 
     // Compute positioning in geodetic coordinates
-    roverPos.computeGeodetic();
+    rover.computeGeodetic();
   }
 }

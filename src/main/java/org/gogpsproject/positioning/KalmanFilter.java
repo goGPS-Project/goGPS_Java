@@ -42,9 +42,9 @@ public abstract class KalmanFilter extends Core {
    */
   void computeDopplerPredictedPhase(Observations roverObs, Observations masterObs) {
 
-    this.roverDopplerPredPhase = new double[32];
+    rover.dopplerPredPhase = new double[32];
     if (masterObs != null)
-      this.masterDopplerPredPhase = new double[32];
+      master.dopplerPredPhase = new double[32];
 
     for (int i = 0; i < satAvailPhase.size(); i++) {
 
@@ -54,13 +54,13 @@ public abstract class KalmanFilter extends Core {
       double roverPhase = roverObs.getSatByIDType(satID, satType).getPhaseCycles(goGPS.getFreq());
       float roverDoppler = roverObs.getSatByIDType(satID, satType).getDoppler(goGPS.getFreq());
       if (!Double.isNaN(roverPhase) && !Float.isNaN(roverDoppler))
-        this.setRoverDopplerPredictedPhase(satAvailPhase.get(i), roverPhase - roverDoppler);
+        rover.setDopplerPredictedPhase(satAvailPhase.get(i), roverPhase - roverDoppler);
       
       if (masterObs != null) {
         double masterPhase = masterObs.getSatByIDType(satID, satType).getPhaseCycles(goGPS.getFreq());
         float masterDoppler = masterObs.getSatByIDType(satID, satType).getDoppler(goGPS.getFreq());
         if (!Double.isNaN(masterPhase) && !Float.isNaN(masterDoppler))
-          this.setMasterDopplerPredictedPhase(satAvailPhase.get(i), masterPhase - masterDoppler);
+          master.setDopplerPredictedPhase(satAvailPhase.get(i), masterPhase - masterDoppler);
       }
     }
   }
@@ -121,7 +121,7 @@ public abstract class KalmanFilter extends Core {
         else
           new LS_SA_code(goGPS).codeStandalone( roverObs, false, false);
       } else {
-        roverPos.setXYZ(0, 0, 0);
+        rover.setXYZ(0, 0, 0);
         return;
       }
     }
@@ -136,9 +136,9 @@ public abstract class KalmanFilter extends Core {
     computeDopplerPredictedPhase(roverObs, masterObs);
   
     // Initial state
-    KFstate.set(0, 0, roverPos.getX());
-    KFstate.set(i1 + 1, 0, roverPos.getY());
-    KFstate.set(i2 + 1, 0, roverPos.getZ());
+    KFstate.set(0, 0, rover.getX());
+    KFstate.set(i1 + 1, 0, rover.getY());
+    KFstate.set(i2 + 1, 0, rover.getZ());
   
     // Prediction
     KFprediction = T.mult(KFstate);
@@ -174,7 +174,7 @@ public abstract class KalmanFilter extends Core {
     covENU = new SimpleMatrix(3, 3);
 
     // Set linearization point (approximate coordinates by KF prediction at previous step)
-    roverPos.setXYZ(KFprediction.get(0), KFprediction.get(i1 + 1), KFprediction.get(i2 + 1));
+    rover.setXYZ(KFprediction.get(0), KFprediction.get(i1 + 1), KFprediction.get(i2 + 1));
 
     // Save previous list of available satellites with phase
     satOld = satAvailPhase;
@@ -235,7 +235,7 @@ public abstract class KalmanFilter extends Core {
       if (o1 != 1) {
         // Allocate and build rotation matrix
         SimpleMatrix R = new SimpleMatrix(3, 3);
-        R = Coordinates.rotationMatrix(roverPos);
+        R = Coordinates.rotationMatrix(rover);
 
         // Build 3x3 diagonal matrix with variances
         SimpleMatrix diagonal = new SimpleMatrix(3, 3);
@@ -286,7 +286,7 @@ public abstract class KalmanFilter extends Core {
     computeDopplerPredictedPhase(roverObs, masterObs);
 
     // Set receiver position
-    roverPos.setXYZ(KFstate.get(0), KFstate.get(i1 + 1), KFstate.get(i2 + 1));
+    rover.setXYZ(KFstate.get(0), KFstate.get(i1 + 1), KFstate.get(i2 + 1));
 
     positionCovariance.set(0, 0, Cee.get(0, 0));
     positionCovariance.set(1, 1, Cee.get(i1 + 1, i1 + 1));
@@ -300,17 +300,17 @@ public abstract class KalmanFilter extends Core {
 
     // Allocate and build rotation matrix
     SimpleMatrix R = new SimpleMatrix(3, 3);
-    R = Coordinates.rotationMatrix(roverPos);
+    R = Coordinates.rotationMatrix(rover);
 
     // Propagate covariance from global system to local system
     covENU = R.mult(positionCovariance).mult(R.transpose());
 
     // Kalman filter DOP computation
-    roverPos.kpDop = Math.sqrt(positionCovariance.get(0, 0) + positionCovariance.get(1, 1) + positionCovariance.get(2, 2));
-    roverPos.khDop = Math.sqrt(covENU.get(0, 0) + covENU.get(1, 1));
-    roverPos.kvDop = Math.sqrt(covENU.get(2, 2));
+    rover.kpDop = Math.sqrt(positionCovariance.get(0, 0) + positionCovariance.get(1, 1) + positionCovariance.get(2, 2));
+    rover.khDop = Math.sqrt(covENU.get(0, 0) + covENU.get(1, 1));
+    rover.kvDop = Math.sqrt(covENU.get(2, 2));
 
     // Compute positioning in geodetic coordinates
-    roverPos.computeGeodetic();
+    rover.computeGeodetic();
   }
 }

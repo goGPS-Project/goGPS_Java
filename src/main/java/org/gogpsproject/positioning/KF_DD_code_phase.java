@@ -62,23 +62,23 @@ public class KF_DD_code_phase extends KalmanFilter {
     double masterPivotPhaseObs = masterObs.getSatByIDType(pivotId, satType).getPhaserange(goGPS.getFreq());
 
     // Rover-pivot approximate pseudoranges
-    SimpleMatrix diffRoverPivot = diffRoverSat[pivot];
-    double roverPivotAppRange = roverSatAppRange[pivot];
+    SimpleMatrix diffRoverPivot = rover.diffSat[pivot];
+    double roverPivotAppRange = rover.satAppRange[pivot];
 
     // Master-pivot approximate pseudoranges
-    double masterPivotAppRange = masterSatAppRange[pivot];
+    double masterPivotAppRange = master.satAppRange[pivot];
 
     // Rover-pivot and master-pivot troposphere correction
-    double roverPivotTropoCorr = roverSatTropoCorr[pivot];
-    double masterPivotTropoCorr = masterSatTropoCorr[pivot];;
+    double roverPivotTropoCorr = rover.satTropoCorr[pivot];
+    double masterPivotTropoCorr = master.satTropoCorr[pivot];;
 
     // Rover-pivot and master-pivot ionosphere correction
-    double roverPivotIonoCorr = roverSatIonoCorr[pivot];
-    double masterPivotIonoCorr = masterSatIonoCorr[pivot];
+    double roverPivotIonoCorr = rover.satIonoCorr[pivot];
+    double masterPivotIonoCorr = master.satIonoCorr[pivot];
 
     // Compute rover-pivot and master-pivot weights
-    double roverElevation = roverTopo[pivot].getElevation();
-    double masterElevation = masterTopo[pivot].getElevation();
+    double roverElevation = rover.topo[pivot].getElevation();
+    double masterElevation = master.topo[pivot].getElevation();
     double roverPivotWeight = computeWeight(roverElevation,
         roverObs.getSatByIDType(pivotId, satType).getSignalStrength(goGPS.getFreq()));
     double masterPivotWeight = computeWeight(masterElevation,
@@ -114,11 +114,11 @@ public class KF_DD_code_phase extends KalmanFilter {
           && i != pivot) {
 
         // Compute parameters obtained from linearization of observation equations
-        double alphaX = diffRoverSat[i].get(0) / roverSatAppRange[i]
+        double alphaX = rover.diffSat[i].get(0) / rover.satAppRange[i]
             - diffRoverPivot.get(0) / roverPivotAppRange;
-        double alphaY = diffRoverSat[i].get(1) / roverSatAppRange[i]
+        double alphaY = rover.diffSat[i].get(1) / rover.satAppRange[i]
             - diffRoverPivot.get(1) / roverPivotAppRange;
-        double alphaZ = diffRoverSat[i].get(2) / roverSatAppRange[i]
+        double alphaZ = rover.diffSat[i].get(2) / rover.satAppRange[i]
             - diffRoverPivot.get(2) / roverPivotAppRange;
 
         // Fill in the A matrix
@@ -127,7 +127,7 @@ public class KF_DD_code_phase extends KalmanFilter {
         A.set(k, 2, alphaZ); /* Z */
 
         // Approximate code double difference
-        double ddcApp = (roverSatAppRange[i] - masterSatAppRange[i])
+        double ddcApp = (rover.satAppRange[i] - master.satAppRange[i])
             - (roverPivotAppRange - masterPivotAppRange);
 
         // Observed code double difference
@@ -139,9 +139,9 @@ public class KF_DD_code_phase extends KalmanFilter {
             - (roverPivotPhaseObs - masterPivotPhaseObs);
 
         // Compute troposphere and ionosphere residuals
-        double tropoResiduals = (roverSatTropoCorr[i] - masterSatTropoCorr[i])
+        double tropoResiduals = (rover.satTropoCorr[i] - master.satTropoCorr[i])
             - (roverPivotTropoCorr - masterPivotTropoCorr);
-        double ionoResiduals = (roverSatIonoCorr[i] - masterSatIonoCorr[i])
+        double ionoResiduals = (rover.satIonoCorr[i] - master.satIonoCorr[i])
             - (roverPivotIonoCorr - masterPivotIonoCorr);
 
         // Compute approximate ranges
@@ -161,13 +161,13 @@ public class KF_DD_code_phase extends KalmanFilter {
         H.set(k, i2 + 1, alphaZ);
 
         // Fill in one element of the observation vector (for code)
-        y0.set(k, 0, ddcObs - appRangeCode + alphaX * roverPos.getX()
-            + alphaY * roverPos.getY() + alphaZ
-            * roverPos.getZ());
+        y0.set(k, 0, ddcObs - appRangeCode + alphaX * rover.getX()
+            + alphaY * rover.getY() + alphaZ
+            * rover.getZ());
 
         // Fill in the observation error covariance matrix (for code)
-        double roverSatWeight = computeWeight(roverTopo[i].getElevation(), roverObs.getSatByIDType(id, satType).getSignalStrength(goGPS.getFreq()));
-        double masterSatWeight = computeWeight(masterTopo[i].getElevation(), masterObs.getSatByIDType(id, satType).getSignalStrength(goGPS.getFreq()));
+        double roverSatWeight = computeWeight(rover.topo[i].getElevation(), roverObs.getSatByIDType(id, satType).getSignalStrength(goGPS.getFreq()));
+        double masterSatWeight = computeWeight(master.topo[i].getElevation(), masterObs.getSatByIDType(id, satType).getSignalStrength(goGPS.getFreq()));
         double CnnBase = Cnn.get(k, k);
         Cnn.set(k, k, CnnBase + goGPS.getStDevCode(roverObs.getSatByIDType(id, satType), goGPS.getFreq())
             * goGPS.getStDevCode(masterObs.getSatByIDType(id, satType), goGPS.getFreq())
@@ -184,9 +184,9 @@ public class KF_DD_code_phase extends KalmanFilter {
 
           // Fill in one element of the observation vector (for phase)
           y0.set(nObsAvail + p, 0, ddpObs - appRangePhase + alphaX
-              * roverPos.getX() + alphaY
-              * roverPos.getY() + alphaZ
-              * roverPos.getZ());
+              * rover.getX() + alphaY
+              * rover.getY() + alphaZ
+              * rover.getZ());
 
           // Fill in the observation error covariance matrix (for
           // phase)
@@ -209,15 +209,15 @@ public class KF_DD_code_phase extends KalmanFilter {
 
     // Allocate and build rotation matrix
     SimpleMatrix R = new SimpleMatrix(3, 3);
-    R = Coordinates.rotationMatrix(roverPos);
+    R = Coordinates.rotationMatrix(rover);
 
     // Propagate covariance from global system to local system
     covENU = R.mult(covXYZ).mult(R.transpose());
 
     //Compute DOP values
-    roverPos.pDop = Math.sqrt(covXYZ.get(0, 0) + covXYZ.get(1, 1) + covXYZ.get(2, 2));
-    roverPos.hDop = Math.sqrt(covENU.get(0, 0) + covENU.get(1, 1));
-    roverPos.vDop = Math.sqrt(covENU.get(2, 2));
+    rover.pDop = Math.sqrt(covXYZ.get(0, 0) + covXYZ.get(1, 1) + covXYZ.get(2, 2));
+    rover.hDop = Math.sqrt(covENU.get(0, 0) + covENU.get(1, 1));
+    rover.vDop = Math.sqrt(covENU.get(2, 2));
   }
   
   /**
@@ -261,11 +261,11 @@ public class KF_DD_code_phase extends KalmanFilter {
     double masterPivotPhaseObs = masterObs.getSatByIDType(pivotId, satType).getPhaserange(goGPS.getFreq());
 
     // Rover-pivot approximate pseudoranges
-    SimpleMatrix diffRoverPivot = diffRoverSat[pivotIndex];
-    double roverPivotAppRange = roverSatAppRange[pivotIndex];
+    SimpleMatrix diffRoverPivot = rover.diffSat[pivotIndex];
+    double roverPivotAppRange = rover.satAppRange[pivotIndex];
 
     // Master-pivot approximate pseudoranges
-    double masterPivotAppRange = masterSatAppRange[pivotIndex];
+    double masterPivotAppRange = master.satAppRange[pivotIndex];
 
     // Estimated ambiguity combinations (double differences)
     double[] estimatedAmbiguityComb;
@@ -335,8 +335,8 @@ public class KF_DD_code_phase extends KalmanFilter {
         if( pos[i]!=null && satAmb.contains(id) && id != pivotId) {
 
           // Rover-satellite and master-satellite approximate pseudorange
-                  roverSatCodeAppRange  = roverSatAppRange[i];
-                  masterSatCodeAppRange = masterSatAppRange[i];
+                  roverSatCodeAppRange  = rover.satAppRange[i];
+                  masterSatCodeAppRange = master.satAppRange[i];
 
                   // Rover-satellite and master-satellite observed phase
           roverSatPhaseObs = roverObs.getSatByIDType(id, satType).getPhaserange(goGPS.getFreq());
@@ -407,17 +407,17 @@ public class KF_DD_code_phase extends KalmanFilter {
       int p = 0;
 
       // Rover-pivot and master-pivot troposphere correction
-      double roverPivotTropoCorr  = roverSatTropoCorr[pivotIndex];
-      double masterPivotTropoCorr = masterSatTropoCorr[pivotIndex];;
+      double roverPivotTropoCorr  = rover.satTropoCorr[pivotIndex];
+      double masterPivotTropoCorr = master.satTropoCorr[pivotIndex];;
 
       // Rover-pivot and master-pivot ionosphere correction
-      double roverPivotIonoCorr  = roverSatIonoCorr[pivotIndex];
-      double masterPivotIonoCorr = masterSatIonoCorr[pivotIndex];
+      double roverPivotIonoCorr  = rover.satIonoCorr[pivotIndex];
+      double masterPivotIonoCorr = master.satIonoCorr[pivotIndex];
 
       // Compute rover-pivot and master-pivot weights
-      double roverPivotWeight = computeWeight(roverTopo[pivotIndex].getElevation(),
+      double roverPivotWeight = computeWeight(rover.topo[pivotIndex].getElevation(),
           roverObs.getSatByIDType(pivotId, satType).getSignalStrength(goGPS.getFreq()));
-      double masterPivotWeight = computeWeight(masterTopo[pivotIndex].getElevation(),
+      double masterPivotWeight = computeWeight(master.topo[pivotIndex].getElevation(),
           masterObs.getSatByIDType(pivotId, satType).getSignalStrength(goGPS.getFreq()));
       Qcode.set(goGPS.getStDevCode(roverObs.getSatByIDType(pivotId, satType), goGPS.getFreq())
           * goGPS.getStDevCode(masterObs.getSatByIDType(pivotId, satType), goGPS.getFreq())
@@ -436,14 +436,14 @@ public class KF_DD_code_phase extends KalmanFilter {
             && i != pivotIndex) {
 
           // Fill in one row in the design matrix
-          A.set(k, 0, diffRoverSat[i].get(0) / roverSatAppRange[i] - diffRoverPivot.get(0) / roverPivotAppRange); /* X */
+          A.set(k, 0, rover.diffSat[i].get(0) / rover.satAppRange[i] - diffRoverPivot.get(0) / roverPivotAppRange); /* X */
 
-          A.set(k, 1, diffRoverSat[i].get(1) / roverSatAppRange[i] - diffRoverPivot.get(1) / roverPivotAppRange); /* Y */
+          A.set(k, 1, rover.diffSat[i].get(1) / rover.satAppRange[i] - diffRoverPivot.get(1) / roverPivotAppRange); /* Y */
 
-          A.set(k, 2, diffRoverSat[i].get(2) / roverSatAppRange[i] - diffRoverPivot.get(2) / roverPivotAppRange); /* Z */
+          A.set(k, 2, rover.diffSat[i].get(2) / rover.satAppRange[i] - diffRoverPivot.get(2) / roverPivotAppRange); /* Z */
 
           // Add the differenced approximate pseudorange value to b
-          b.set(k, 0, (roverSatAppRange[i] - masterSatAppRange[i])
+          b.set(k, 0, (rover.satAppRange[i] - master.satAppRange[i])
               - (roverPivotAppRange - masterPivotAppRange));
 
           // Add the differenced observed pseudorange value to y0
@@ -452,15 +452,15 @@ public class KF_DD_code_phase extends KalmanFilter {
 
           // Fill in troposphere and ionosphere double differenced
           // corrections
-          tropoCorr.set(k, 0, (roverSatTropoCorr[i] - masterSatTropoCorr[i])
+          tropoCorr.set(k, 0, (rover.satTropoCorr[i] - master.satTropoCorr[i])
               - (roverPivotTropoCorr - masterPivotTropoCorr));
-          ionoCorr.set(k, 0, (roverSatIonoCorr[i] - masterSatIonoCorr[i])
+          ionoCorr.set(k, 0, (rover.satIonoCorr[i] - master.satIonoCorr[i])
               - (roverPivotIonoCorr - masterPivotIonoCorr));
 
           // Fill in the cofactor matrix
-          double roverSatWeight = computeWeight(roverTopo[i].getElevation(),
+          double roverSatWeight = computeWeight(rover.topo[i].getElevation(),
               roverObs.getSatByIDType(id, satType).getSignalStrength(goGPS.getFreq()));
-          double masterSatWeight = computeWeight(masterTopo[i].getElevation(),
+          double masterSatWeight = computeWeight(master.topo[i].getElevation(),
               masterObs.getSatByIDType(id, satType).getSignalStrength(goGPS.getFreq()));
           Qcode.set(k, k, Qcode.get(k, k) + goGPS.getStDevCode(roverObs.getSatByID(id), goGPS.getFreq())
               * goGPS.getStDevCode(masterObs.getSatByIDType(id, satType), goGPS.getFreq())
@@ -482,11 +482,9 @@ public class KF_DD_code_phase extends KalmanFilter {
             && i != pivotIndex) {
 
           // Fill in one row in the design matrix
-          A.set(k, 0, diffRoverSat[i].get(0) / roverSatAppRange[i] - diffRoverPivot.get(0) / roverPivotAppRange); /* X */
-
-          A.set(k, 1, diffRoverSat[i].get(1) / roverSatAppRange[i] - diffRoverPivot.get(1) / roverPivotAppRange); /* Y */
-
-          A.set(k, 2, diffRoverSat[i].get(2) / roverSatAppRange[i] - diffRoverPivot.get(2) / roverPivotAppRange); /* Z */
+          A.set(k, 0, rover.diffSat[i].get(0) / rover.satAppRange[i] - diffRoverPivot.get(0) / roverPivotAppRange); /* X */
+          A.set(k, 1, rover.diffSat[i].get(1) / rover.satAppRange[i] - diffRoverPivot.get(1) / roverPivotAppRange); /* Y */
+          A.set(k, 2, rover.diffSat[i].get(2) / rover.satAppRange[i] - diffRoverPivot.get(2) / roverPivotAppRange); /* Z */
 
           if (satAmb.contains(id)) {
             A.set(k, 3 + satAmb.indexOf(id), -roverObs.getSatByIDType(id, satType).getWavelength(goGPS.getFreq())); /* N */
@@ -501,19 +499,19 @@ public class KF_DD_code_phase extends KalmanFilter {
           }
 
           // Add the differenced approximate pseudorange value to b
-          b.set(k, 0, (roverSatAppRange[i] - masterSatAppRange[i])
+          b.set(k, 0, (rover.satAppRange[i] - master.satAppRange[i])
               - (roverPivotAppRange - masterPivotAppRange));
 
           // Fill in troposphere and ionosphere double differenced corrections
-          tropoCorr.set(k, 0, (roverSatTropoCorr[i] - masterSatTropoCorr[i]) - (roverPivotTropoCorr - masterPivotTropoCorr));
-          ionoCorr.set(k, 0, -((roverSatIonoCorr[i] - masterSatIonoCorr[i]) - (roverPivotIonoCorr - masterPivotIonoCorr)));
+          tropoCorr.set(k, 0, (rover.satTropoCorr[i] - master.satTropoCorr[i]) - (roverPivotTropoCorr - masterPivotTropoCorr));
+          ionoCorr.set(k, 0, -((rover.satIonoCorr[i] - master.satIonoCorr[i]) - (roverPivotIonoCorr - masterPivotIonoCorr)));
 
           // Fill in the cofactor matrix
           double roverSatWeight = computeWeight(
-              roverTopo[i].getElevation(), roverObs.getSatByIDType(id, satType)
+              rover.topo[i].getElevation(), roverObs.getSatByIDType(id, satType)
               .getSignalStrength(goGPS.getFreq()));
           double masterSatWeight = computeWeight(
-              masterTopo[i].getElevation(),
+              master.topo[i].getElevation(),
               masterObs.getSatByIDType(id, satType).getSignalStrength(goGPS.getFreq()));
           Qphase.set(p, p, Qphase.get(p, p)
               + (Math.pow(goGPS.getStDevPhase(), 2) + Math.pow(roverObs.getSatByIDType(id, satType).getWavelength(goGPS.getFreq()), 2) * Cee.get(i3 + id, i3 + id))
@@ -657,9 +655,9 @@ public class KF_DD_code_phase extends KalmanFilter {
           for (int j = 0; j < pos.length; j ++) {
             if (pos[j] != null && satAvailPhase.contains(pos[j].getSatID()) && satTypeAvailPhase.contains(pos[j].getSatType())
                 && j != pivot
-                && roverTopo[j].getElevation() > maxEl) {
+                && rover.topo[j].getElevation() > maxEl) {
               temporaryPivot = j;
-              maxEl = roverTopo[j].getElevation();
+              maxEl = rover.topo[j].getElevation();
             }
           }
           // Reset the ambiguities of other satellites according to the temporary pivot
@@ -729,8 +727,8 @@ public class KF_DD_code_phase extends KalmanFilter {
     double masterPivotPhaseObs = masterObs.getSatByIDType(pivotId, satType).getPhaserange(goGPS.getFreq());
     
     // Rover-pivot and master-pivot approximate pseudoranges
-    double roverPivotAppRange = roverSatAppRange[pivot];
-    double masterPivotAppRange = masterSatAppRange[pivot];
+    double roverPivotAppRange = rover.satAppRange[pivot];
+    double masterPivotAppRange = master.satAppRange[pivot];
     
     for (int i = 0; i < roverObs.getNumSat(); i++) {
 
@@ -748,10 +746,10 @@ public class KF_DD_code_phase extends KalmanFilter {
 
         // cycle slip detected by Doppler predicted phase range
         if (goGPS.getCycleSlipDetectionStrategy() == GoGPS.DOPPLER_PREDICTED_PHASE_RANGE) {
-          dopplerCycleSlipRover = this.getRoverDopplerPredictedPhase(satID) != 0.0 && (Math.abs(roverObs.getSatByIDType(satID, satType).getPhaseCycles(goGPS.getFreq())
-              - this.getRoverDopplerPredictedPhase(satID)) > goGPS.getCycleSlipThreshold());
-          dopplerCycleSlipMaster = this.getMasterDopplerPredictedPhase(satID) != 0.0 && (Math.abs(masterObs.getSatByIDType(satID, satType).getPhaseCycles(goGPS.getFreq())
-              - this.getMasterDopplerPredictedPhase(satID)) > goGPS.getCycleSlipThreshold());
+          dopplerCycleSlipRover = rover.getDopplerPredictedPhase(satID) != 0.0 && (Math.abs(roverObs.getSatByIDType(satID, satType).getPhaseCycles(goGPS.getFreq())
+              - rover.getDopplerPredictedPhase(satID)) > goGPS.getCycleSlipThreshold());
+          dopplerCycleSlipMaster = master.getDopplerPredictedPhase(satID) != 0.0 && (Math.abs(masterObs.getSatByIDType(satID, satType).getPhaseCycles(goGPS.getFreq())
+              - master.getDopplerPredictedPhase(satID)) > goGPS.getCycleSlipThreshold());
         } else {
           dopplerCycleSlipRover = false;
           dopplerCycleSlipMaster = false;
@@ -762,8 +760,8 @@ public class KF_DD_code_phase extends KalmanFilter {
         if (goGPS.getCycleSlipDetectionStrategy() == GoGPS.APPROX_PSEUDORANGE && satID != pivotId) {
 
           // Rover-satellite and master-satellite approximate pseudorange
-          double roverSatCodeAppRange = roverSatAppRange[i];
-          double masterSatCodeAppRange = masterSatAppRange[i];
+          double roverSatCodeAppRange = rover.satAppRange[i];
+          double masterSatCodeAppRange = master.satAppRange[i];
 
           // Rover-satellite and master-satellite observed phase
           double roverSatPhaseObs = roverObs.getSatByIDType(satID, satType).getPhaserange(goGPS.getFreq());
@@ -793,18 +791,18 @@ public class KF_DD_code_phase extends KalmanFilter {
           //        if (satID != pos[pivot].getSatID()) {
           if (dopplerCycleSlipRover)
             if(goGPS.isDebug()) System.out.println("[ROVER] Cycle slip on satellite "+satID+" (range diff = "+Math.abs(roverObs.getSatByIDType(satID, satType).getPhaseCycles(goGPS.getFreq())
-                - this.getRoverDopplerPredictedPhase(satID))+")");
+                - rover.getDopplerPredictedPhase(satID))+")");
           if (dopplerCycleSlipMaster)
             if(goGPS.isDebug()) System.out.println("[MASTER] Cycle slip on satellite "+satID+" (range diff = "+Math.abs(masterObs.getSatByIDType(satID, satType).getPhaseCycles(goGPS.getFreq())
-                - this.getMasterDopplerPredictedPhase(satID))+")");
+                - master.getDopplerPredictedPhase(satID))+")");
           //        } else {
           //          boolean slippedPivot = true;
           //          if (dopplerCycleSlipRover)
           //            System.out.println("[ROVER] Cycle slip on pivot satellite "+satID+" (range diff = "+Math.abs(roverObs.getGpsByID(satID).getPhase(goGPS.getFreq())
-          //                - this.getRoverDopplerPredictedPhase(satID))+")");
+          //                - this.rover.getDopplerPredictedPhase(satID))+")");
           //          if (dopplerCycleSlipMaster)
           //            System.out.println("[MASTER] Cycle slip on pivot satellite "+satID+" (range diff = "+Math.abs(masterObs.getGpsByID(satID).getPhase(goGPS.getFreq())
-          //                - this.getMasterDopplerPredictedPhase(satID))+")");
+          //                - this.master.getDopplerPredictedPhase(satID))+")");
           //        }
         }
       }

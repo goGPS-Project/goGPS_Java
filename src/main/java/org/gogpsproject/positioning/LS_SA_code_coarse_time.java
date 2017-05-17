@@ -27,7 +27,7 @@ public class LS_SA_code_coarse_time extends Core {
   public double codeStandaloneCoarseTime( Observations roverObs, final double MODULO ) {
     long unixTime = roverObs.getRefTime().getMsec();
 
-    roverPos.status = Status.None;
+    rover.status = Status.None;
 
     // Number of GNSS observations without cutoff
     int nObs = roverObs.getNumSat();
@@ -102,9 +102,9 @@ public class LS_SA_code_coarse_time extends Core {
       SimpleMatrix e = new SimpleMatrix(1,3);
 
       // Line Of Sight vector units (ECEF)
-      e.set( 0,0, diffRoverSat[i].get(0) / roverSatAppRange[i] );
-      e.set( 0,1, diffRoverSat[i].get(1) / roverSatAppRange[i] );
-      e.set( 0,2, diffRoverSat[i].get(2) / roverSatAppRange[i] );
+      e.set( 0,0, rover.diffSat[i].get(0) / rover.satAppRange[i] );
+      e.set( 0,1, rover.diffSat[i].get(1) / rover.satAppRange[i] );
+      e.set( 0,2, rover.diffSat[i].get(2) / rover.satAppRange[i] );
 
       // scalar product of speed vector X unit vector
       float doppler = roverObs.getSatByID(id).getDoppler(ObservationSet.L1);
@@ -124,8 +124,8 @@ public class LS_SA_code_coarse_time extends Core {
       A.set(k, 4, rodot );
 
       // Add the approximate pseudorange value to b
-//      b.set(k, 0, (roverSatAppRange[i] - pos[i].getSatelliteClockError() * Constants.SPEED_OF_LIGHT) % MODULO );
-      b.set(k, 0, (roverSatAppRange[i] - pos[i].getSatelliteClockError() * Constants.SPEED_OF_LIGHT) );
+//      b.set(k, 0, (rover.satAppRange[i] - pos[i].getSatelliteClockError() * Constants.SPEED_OF_LIGHT) % MODULO );
+      b.set(k, 0, (rover.satAppRange[i] - pos[i].getSatelliteClockError() * Constants.SPEED_OF_LIGHT) );
 
       ObservationSet os = roverObs.getSatByID(id);
       
@@ -136,25 +136,25 @@ public class LS_SA_code_coarse_time extends Core {
 
 //      if (!ignoreTopocentricParameters) {
       // cap tropo correction
-      if( Double.isNaN( roverSatTropoCorr[i] ))
-        roverSatTropoCorr[i] = 0;
+      if( Double.isNaN( rover.satTropoCorr[i] ))
+        rover.satTropoCorr[i] = 0;
       
-      if(  roverSatTropoCorr[i]>30 )
-        roverSatTropoCorr[i] = 30;
-      if(  roverSatTropoCorr[i]<-30 )
-        roverSatTropoCorr[i] = -30;
+      if(  rover.satTropoCorr[i]>30 )
+        rover.satTropoCorr[i] = 30;
+      if(  rover.satTropoCorr[i]<-30 )
+        rover.satTropoCorr[i] = -30;
       
-      tropoCorr.set(k, 0, roverSatTropoCorr[i]);
-      ionoCorr.set(k, 0, roverSatIonoCorr[i]);
+      tropoCorr.set(k, 0, rover.satTropoCorr[i]);
+      ionoCorr.set(k, 0, rover.satIonoCorr[i]);
    
       // Fill in the cofactor matrix
       double weight;
       
-      if( roverTopo[i].getElevation()<15 )
+      if( rover.topo[i].getElevation()<15 )
         weight = 1;
       else
         weight = Q.get(k, k)
-          + computeWeight(roverTopo[i].getElevation(),
+          + computeWeight(rover.topo[i].getElevation(),
               roverObs.getSatByIDType(id, 'G').getSignalStrength(goGPS.getFreq()));
       if( weight>5 )
         weight = 5;
@@ -171,9 +171,9 @@ public class LS_SA_code_coarse_time extends Core {
 
     {
       // Add height soft constraint
-      double lam = Math.toRadians(roverPos.getGeodeticLongitude());
-      double phi = Math.toRadians(roverPos.getGeodeticLatitude());
-      double hR_app = roverPos.getGeodeticHeight();
+      double lam = Math.toRadians(rover.getGeodeticLongitude());
+      double phi = Math.toRadians(rover.getGeodeticLatitude());
+      double hR_app = rover.getGeodeticHeight();
       //double hR_app = 0;
       //double h_dtm = recpos.getGeodeticHeight();
       
@@ -223,7 +223,7 @@ public class LS_SA_code_coarse_time extends Core {
     b = b.plus(tropoCorr);
     b = b.plus(ionoCorr);
 
-    roverPos.satsInUse = 0;
+    rover.satsInUse = 0;
     SimpleMatrix resid = y0.minus(b);
 
     
@@ -257,8 +257,8 @@ public class LS_SA_code_coarse_time extends Core {
 //    for( k=0; k<satAvail.size(); k++){
 //      int satId = roverObs.getSatID(k);
 //      ObservationSet os = roverObs.getSatByID(satId);
-//      if( roverTopo[k].getElevation() > pivotEl ){
-//        pivotEl = roverTopo[k].getElevation();
+//      if( rover.topo[k].getElevation() > pivotEl ){
+//        pivotEl = rover.topo[k].getElevation();
 //        pivot = resid.get(k);
 //      }
 //    }
@@ -346,19 +346,19 @@ public class LS_SA_code_coarse_time extends Core {
       else 
       {
         resid.set(k,d);
-        roverPos.satsInUse++;
+        rover.satsInUse++;
         os.inUse(true);
-        os.el = roverTopo[i].getElevation();
+        os.el = rover.topo[i].getElevation();
         System.out.println();
       }
       k++;
     }
     
-    if( roverPos.satsInUse < nUnknowns-1 ){
+    if( rover.satsInUse < nUnknowns-1 ){
       System.out.println("Not enough satellites for " + roverObs.getRefTime() );
-      roverPos.setXYZ(0, 0, 0);
-      if( roverPos.status == Status.None ){
-        roverPos.status = Status.NotEnoughSats;
+      rover.setXYZ(0, 0, 0);
+      if( rover.status == Status.None ){
+        rover.status = Status.NotEnoughSats;
       }
       return 0;
     }
@@ -377,7 +377,7 @@ public class LS_SA_code_coarse_time extends Core {
      double tg = x.get(4); 
 
      // compute eRes 
-     roverPos.eRes = 0;
+     rover.eRes = 0;
      for( k=0; k<satAvail.size(); k++){
        int satId = roverObs.getSatID(k);
        ObservationSet os = roverObs.getSatByID(satId);
@@ -386,10 +386,10 @@ public class LS_SA_code_coarse_time extends Core {
        
        double d = resid.get(k);
        os.eRes = Math.abs(d-cbias);
-       roverPos.eRes += Math.pow( os.eRes, 2); 
+       rover.eRes += Math.pow( os.eRes, 2); 
      }
-     roverPos.eRes = Math.sqrt(roverPos.eRes/roverPos.satsInUse);
-     System.out.println(String.format("eRes = %5.3f\r\n", roverPos.eRes));
+     rover.eRes = Math.sqrt(rover.eRes/rover.satsInUse);
+     System.out.println(String.format("eRes = %5.3f\r\n", rover.eRes));
      
      // expected
      System.out.println( String.format( "pos update:  %5.1f, %5.1f, %5.1f; Mag: %5d(m)", x.get(0), x.get(1), x.get(2), (long)correction_mag ));
@@ -397,24 +397,24 @@ public class LS_SA_code_coarse_time extends Core {
      System.out.println( String.format( "time update: %3.3f (s)", tg ));
 
      // Receiver clock error
-     roverPos.receiverClockError = x.get(3) / Constants.SPEED_OF_LIGHT;
+     rover.receiverClockError = x.get(3) / Constants.SPEED_OF_LIGHT;
 
      // apply correction to Rx position estimate
-     roverPos.setPlusXYZ(x.extractMatrix(0, 3, 0, 1));
-     roverPos.computeGeodetic();
+     rover.setPlusXYZ(x.extractMatrix(0, 3, 0, 1));
+     rover.computeGeodetic();
 
      // update refTime
      if( correction_mag < 10 ){
        unixTime += tg * 1000;
        Time newTime = new Time( unixTime);
        roverObs.setRefTime( newTime );
-       roverPos.setRefTime( newTime );
+       rover.setRefTime( newTime );
      }
      
      System.out.println( String.format( "recpos: %5.4f, %5.4f, %5.4f, %s", 
-         roverPos.getGeodeticLatitude(), 
-         roverPos.getGeodeticLongitude(), 
-         roverPos.getGeodeticHeight(), 
+         rover.getGeodeticLatitude(), 
+         rover.getGeodeticLongitude(), 
+         rover.getGeodeticHeight(), 
          new Time(unixTime).toString() ));
      
      // Estimation of the variance of the observation error
@@ -437,15 +437,15 @@ public class LS_SA_code_coarse_time extends Core {
 
      // Allocate and build rotation matrix
      SimpleMatrix R = new SimpleMatrix(3, 3);
-     R = Coordinates.rotationMatrix(roverPos);
+     R = Coordinates.rotationMatrix(rover);
 
      // Propagate covariance from global system to local system
      covENU = R.mult(covXYZ).mult(R.transpose());
 
      //Compute DOP values
-     roverPos.pDop = Math.sqrt(covXYZ.get(0, 0) + covXYZ.get(1, 1) + covXYZ.get(2, 2));
-     roverPos.hDop = Math.sqrt(covENU.get(0, 0) + covENU.get(1, 1));
-     roverPos.vDop = Math.sqrt(covENU.get(2, 2));
+     rover.pDop = Math.sqrt(covXYZ.get(0, 0) + covXYZ.get(1, 1) + covXYZ.get(2, 2));
+     rover.hDop = Math.sqrt(covENU.get(0, 0) + covENU.get(1, 1));
+     rover.vDop = Math.sqrt(covENU.get(2, 2));
      
      return correction_mag; // return correction_mag
   }
@@ -459,7 +459,7 @@ public class LS_SA_code_coarse_time extends Core {
   public double codeStandaloneCoarseTimeCodeAmbs( Observations roverObs, final double MODULO ) {
     long unixTime = roverObs.getRefTime().getMsec();
 
-    roverPos.status = Status.None;
+    rover.status = Status.None;
 
     // Number of GNSS observations without cutoff
     int nObs = roverObs.getNumSat();
@@ -539,7 +539,7 @@ public class LS_SA_code_coarse_time extends Core {
 
       A.set(k, k, -MODULO );
 
-      b.set(k, 0, (roverSatAppRange[i] - pos[i].getSatelliteClockError() * Constants.SPEED_OF_LIGHT) );
+      b.set(k, 0, (rover.satAppRange[i] - pos[i].getSatelliteClockError() * Constants.SPEED_OF_LIGHT) );
 
       ObservationSet os = roverObs.getSatByID(id);
       
@@ -547,16 +547,16 @@ public class LS_SA_code_coarse_time extends Core {
       y0.set(k, 0, os.getCodeC(0) );
 
       // cap tropo correction
-      if( Double.isNaN( roverSatTropoCorr[i] ))
-        roverSatTropoCorr[i] = 0;
+      if( Double.isNaN( rover.satTropoCorr[i] ))
+        rover.satTropoCorr[i] = 0;
       
-      if(  roverSatTropoCorr[i]>30 )
-        roverSatTropoCorr[i] = 30;
-      if(  roverSatTropoCorr[i]<-30 )
-        roverSatTropoCorr[i] = -30;
+      if(  rover.satTropoCorr[i]>30 )
+        rover.satTropoCorr[i] = 30;
+      if(  rover.satTropoCorr[i]<-30 )
+        rover.satTropoCorr[i] = -30;
       
-      tropoCorr.set(k, 0, roverSatTropoCorr[i]);
-      ionoCorr.set(k, 0, roverSatIonoCorr[i]);
+      tropoCorr.set(k, 0, rover.satTropoCorr[i]);
+      ionoCorr.set(k, 0, rover.satIonoCorr[i]);
    
       Q.set(k, k, 1);
 
@@ -565,9 +565,9 @@ public class LS_SA_code_coarse_time extends Core {
 
     {
       // Add height soft constraint
-      double lam = Math.toRadians(roverPos.getGeodeticLongitude());
-      double phi = Math.toRadians(roverPos.getGeodeticLatitude());
-      double hR_app = roverPos.getGeodeticHeight();
+      double lam = Math.toRadians(rover.getGeodeticLongitude());
+      double phi = Math.toRadians(rover.getGeodeticLatitude());
+      double hR_app = rover.getGeodeticHeight();
       double h_dtm = hR_app>0? hR_app : 30; // initialize to something above sea level
       if( h_dtm > 3000 )
         h_dtm = 3000;
@@ -589,14 +589,14 @@ public class LS_SA_code_coarse_time extends Core {
     b = b.plus(tropoCorr);
     b = b.plus(ionoCorr);
 
-    roverPos.satsInUse = 0;
+    rover.satsInUse = 0;
     SimpleMatrix resid = y0.minus(b);
     
     double pivot = MODULO;
     for( k=0; k<satAvail.size(); k++){
       int satId = roverObs.getSatID(k);
       
-      if( !satAvail.contains(satId) || pos[k] == null || roverTopo[k] == null )
+      if( !satAvail.contains(satId) || pos[k] == null || rover.topo[k] == null )
         continue;
       
       if( Math.abs(resid.get(k)) < pivot ){
@@ -624,19 +624,19 @@ public class LS_SA_code_coarse_time extends Core {
       
       resid.set(k,d);
     
-      roverPos.satsInUse++;
+      rover.satsInUse++;
       os.inUse(true);
       System.out.println();
-      roverPos.eRes += Math.pow( d-pivot, 2); 
+      rover.eRes += Math.pow( d-pivot, 2); 
     }
-    roverPos.eRes = Math.sqrt(roverPos.eRes/roverPos.satsInUse);
-    System.out.println(String.format("eRes = %5.3f\r\n", roverPos.eRes));
+    rover.eRes = Math.sqrt(rover.eRes/rover.satsInUse);
+    System.out.println(String.format("eRes = %5.3f\r\n", rover.eRes));
     
-    if( roverPos.satsInUse < nUnknowns-1 ){
+    if( rover.satsInUse < nUnknowns-1 ){
       System.out.println("Not enough satellites for " + roverObs.getRefTime() );
-      roverPos.setXYZ(0, 0, 0);
-      if( roverPos.status == Status.None ){
-        roverPos.status = Status.NotEnoughSats;
+      rover.setXYZ(0, 0, 0);
+      if( rover.status == Status.None ){
+        rover.status = Status.NotEnoughSats;
       }
       return 0;
     }
@@ -679,13 +679,13 @@ public class LS_SA_code_coarse_time extends Core {
        unixTime += tg * 1000;
        Time newTime = new Time( unixTime);
        roverObs.setRefTime( newTime );
-       roverPos.setRefTime( newTime );
+       rover.setRefTime( newTime );
      }
      
      System.out.println( String.format( "recpos: %5.4f, %5.4f, %5.4f, %s", 
-         roverPos.getGeodeticLatitude(), 
-         roverPos.getGeodeticLongitude(), 
-         roverPos.getGeodeticHeight(), 
+         rover.getGeodeticLatitude(), 
+         rover.getGeodeticLongitude(), 
+         rover.getGeodeticHeight(), 
          new Time(unixTime).toString() ));
      
      // Estimation of the variance of the observation error
@@ -708,15 +708,15 @@ public class LS_SA_code_coarse_time extends Core {
 
      // Allocate and build rotation matrix
      SimpleMatrix R = new SimpleMatrix(3, 3);
-     R = Coordinates.rotationMatrix(roverPos);
+     R = Coordinates.rotationMatrix(rover);
 
      // Propagate covariance from global system to local system
      covENU = R.mult(covXYZ).mult(R.transpose());
 
      //Compute DOP values
-     roverPos.pDop = Math.sqrt(covXYZ.get(0, 0) + covXYZ.get(1, 1) + covXYZ.get(2, 2));
-     roverPos.hDop = Math.sqrt(covENU.get(0, 0) + covENU.get(1, 1));
-     roverPos.vDop = Math.sqrt(covENU.get(2, 2));
+     rover.pDop = Math.sqrt(covXYZ.get(0, 0) + covXYZ.get(1, 1) + covXYZ.get(2, 2));
+     rover.hDop = Math.sqrt(covENU.get(0, 0) + covENU.get(1, 1));
+     rover.vDop = Math.sqrt(covENU.get(2, 2));
      
      return correction_mag; // return correction_mag
   }
@@ -730,7 +730,7 @@ public class LS_SA_code_coarse_time extends Core {
   public double codeStandaloneDTM( Observations roverObs, final double MODULO ) {
     long unixTime = roverObs.getRefTime().getMsec();
 
-    roverPos.status = Status.None;
+    rover.status = Status.None;
 
     // Number of GNSS observations without cutoff
     int nObs = roverObs.getNumSat();
@@ -803,9 +803,9 @@ public class LS_SA_code_coarse_time extends Core {
       SimpleMatrix e = new SimpleMatrix(1,3);
 
       // Line Of Sight vector units (ECEF)
-      e.set( 0,0, diffRoverSat[i].get(0) / roverSatAppRange[i] );
-      e.set( 0,1, diffRoverSat[i].get(1) / roverSatAppRange[i] );
-      e.set( 0,2, diffRoverSat[i].get(2) / roverSatAppRange[i] );
+      e.set( 0,0, rover.diffSat[i].get(0) / rover.satAppRange[i] );
+      e.set( 0,1, rover.diffSat[i].get(1) / rover.satAppRange[i] );
+      e.set( 0,2, rover.diffSat[i].get(2) / rover.satAppRange[i] );
 
       // scalar product of speed vector X unit vector
       float doppler = roverObs.getSatByID(id).getDoppler(ObservationSet.L1);
@@ -825,8 +825,8 @@ public class LS_SA_code_coarse_time extends Core {
      // A.set(k, 4, rodot );
 
       // Add the approximate pseudorange value to b
-//      b.set(k, 0, (roverSatAppRange[i] - pos[i].getSatelliteClockError() * Constants.SPEED_OF_LIGHT) % MODULO );
-      b.set(k, 0, (roverSatAppRange[i] - pos[i].getSatelliteClockError() * Constants.SPEED_OF_LIGHT) );
+//      b.set(k, 0, (rover.satAppRange[i] - pos[i].getSatelliteClockError() * Constants.SPEED_OF_LIGHT) % MODULO );
+      b.set(k, 0, (rover.satAppRange[i] - pos[i].getSatelliteClockError() * Constants.SPEED_OF_LIGHT) );
 
       ObservationSet os = roverObs.getSatByID(id);
       
@@ -837,25 +837,25 @@ public class LS_SA_code_coarse_time extends Core {
 
 //      if (!ignoreTopocentricParameters) {
       // cap tropo correction
-      if( Double.isNaN( roverSatTropoCorr[i] ))
-        roverSatTropoCorr[i] = 0;
+      if( Double.isNaN( rover.satTropoCorr[i] ))
+        rover.satTropoCorr[i] = 0;
       
-      if(  roverSatTropoCorr[i]>30 )
-        roverSatTropoCorr[i] = 30;
-      if(  roverSatTropoCorr[i]<-30 )
-        roverSatTropoCorr[i] = -30;
+      if(  rover.satTropoCorr[i]>30 )
+        rover.satTropoCorr[i] = 30;
+      if(  rover.satTropoCorr[i]<-30 )
+        rover.satTropoCorr[i] = -30;
       
-      tropoCorr.set(k, 0, roverSatTropoCorr[i]);
-      ionoCorr.set(k, 0, roverSatIonoCorr[i]);
+      tropoCorr.set(k, 0, rover.satTropoCorr[i]);
+      ionoCorr.set(k, 0, rover.satIonoCorr[i]);
    
       // Fill in the cofactor matrix
       double weight;
       
-      if( roverTopo[i].getElevation()<15 )
+      if( rover.topo[i].getElevation()<15 )
         weight = 1;
       else
         weight = Q.get(k, k)
-          + computeWeight(roverTopo[i].getElevation(),
+          + computeWeight(rover.topo[i].getElevation(),
               roverObs.getSatByIDType(id, 'G').getSignalStrength(goGPS.getFreq()));
       if( weight>5 )
         weight = 5;
@@ -872,9 +872,9 @@ public class LS_SA_code_coarse_time extends Core {
 
     {
       // Add height soft constraint
-      double lam = Math.toRadians(roverPos.getGeodeticLongitude());
-      double phi = Math.toRadians(roverPos.getGeodeticLatitude());
-      double hR_app = roverPos.getGeodeticHeight();
+      double lam = Math.toRadians(rover.getGeodeticLongitude());
+      double phi = Math.toRadians(rover.getGeodeticLatitude());
+      double hR_app = rover.getGeodeticHeight();
       //double hR_app = 0;
       //double h_dtm = recpos.getGeodeticHeight();
       
@@ -924,7 +924,7 @@ public class LS_SA_code_coarse_time extends Core {
     b = b.plus(tropoCorr);
     b = b.plus(ionoCorr);
 
-    roverPos.satsInUse = 0;
+    rover.satsInUse = 0;
     SimpleMatrix resid = y0.minus(b);
     
 // use smallest resid
@@ -941,11 +941,11 @@ public class LS_SA_code_coarse_time extends Core {
 //    for( k=0; k<satAvail.size(); k++){
 //      int satId = roverObs.getSatID(k);
 //      ObservationSet os = roverObs.getSatByID(satId);
-//      if( roverTopo[k] == null )
+//      if( rover.topo[k] == null )
 //        continue;
 //      
-//      if( roverTopo[k].getElevation() > pivotEl ){
-//        pivotEl = roverTopo[k].getElevation();
+//      if( rover.topo[k].getElevation() > pivotEl ){
+//        pivotEl = rover.topo[k].getElevation();
 //        pivot = resid.get(k);
 //      }
 //    }
@@ -984,25 +984,25 @@ public class LS_SA_code_coarse_time extends Core {
         A.set(k, 3, 0);
         os.inUse(false);
         os.eRes = d-pivot;
-        os.el = roverTopo[k].getElevation();
+        os.el = rover.topo[k].getElevation();
       }
       else 
       {
         resid.set(k,d);
-        roverPos.satsInUse++;
+        rover.satsInUse++;
         os.inUse(true);
         System.out.println();
-        roverPos.eRes += Math.pow( d-pivot, 2); 
+        rover.eRes += Math.pow( d-pivot, 2); 
       }
     }
-    roverPos.eRes = Math.sqrt(roverPos.eRes/roverPos.satsInUse);
-    System.out.println(String.format("eRes = %5.3f\r\n", roverPos.eRes));
+    rover.eRes = Math.sqrt(rover.eRes/rover.satsInUse);
+    System.out.println(String.format("eRes = %5.3f\r\n", rover.eRes));
     
-    if( roverPos.satsInUse < nUnknowns-1 ){
+    if( rover.satsInUse < nUnknowns-1 ){
       System.out.println("Not enough satellites for " + roverObs.getRefTime() );
-      roverPos.setXYZ(0, 0, 0);
-      if( roverPos.status == Status.None ){
-        roverPos.status = Status.NotEnoughSats;
+      rover.setXYZ(0, 0, 0);
+      if( rover.status == Status.None ){
+        rover.status = Status.NotEnoughSats;
       }
       return 0;
     }
@@ -1025,11 +1025,11 @@ public class LS_SA_code_coarse_time extends Core {
 //     System.out.println( String.format( "time update: %3.3f (s)", tg ));
 
      // Receiver clock error
-     roverPos.receiverClockError = x.get(3) / Constants.SPEED_OF_LIGHT;
+     rover.receiverClockError = x.get(3) / Constants.SPEED_OF_LIGHT;
 
      // apply correction to Rx position estimate
-     roverPos.setPlusXYZ(x.extractMatrix(0, 3, 0, 1));
-     roverPos.computeGeodetic();
+     rover.setPlusXYZ(x.extractMatrix(0, 3, 0, 1));
+     rover.computeGeodetic();
 
      // update refTime
 //     if( correction_mag < 10 ){
@@ -1040,9 +1040,9 @@ public class LS_SA_code_coarse_time extends Core {
 //     }
      
      System.out.println( String.format( "recpos: %5.4f, %5.4f, %5.4f, %s", 
-         roverPos.getGeodeticLatitude(), 
-         roverPos.getGeodeticLongitude(), 
-         roverPos.getGeodeticHeight(), 
+         rover.getGeodeticLatitude(), 
+         rover.getGeodeticLongitude(), 
+         rover.getGeodeticHeight(), 
          new Time(unixTime).toString() ));
      
      // Estimation of the variance of the observation error
@@ -1065,15 +1065,15 @@ public class LS_SA_code_coarse_time extends Core {
 
      // Allocate and build rotation matrix
      SimpleMatrix R = new SimpleMatrix(3, 3);
-     R = Coordinates.rotationMatrix(roverPos);
+     R = Coordinates.rotationMatrix(rover);
 
      // Propagate covariance from global system to local system
      covENU = R.mult(covXYZ).mult(R.transpose());
 
      //Compute DOP values
-     roverPos.pDop = Math.sqrt(covXYZ.get(0, 0) + covXYZ.get(1, 1) + covXYZ.get(2, 2));
-     roverPos.hDop = Math.sqrt(covENU.get(0, 0) + covENU.get(1, 1));
-     roverPos.vDop = Math.sqrt(covENU.get(2, 2));
+     rover.pDop = Math.sqrt(covXYZ.get(0, 0) + covXYZ.get(1, 1) + covXYZ.get(2, 2));
+     rover.hDop = Math.sqrt(covENU.get(0, 0) + covENU.get(1, 1));
+     rover.vDop = Math.sqrt(covENU.get(2, 2));
      
      return correction_mag; // return correction_mag
   }

@@ -24,10 +24,10 @@ public class LS_SA_dopplerPos extends Core {
     int nObsAvail = satAvail.size();
     if( nObsAvail < MINSV ){
       if( goGPS.isDebug() ) System.out.println("dopplerPos, not enough satellites for " + obs.getRefTime() );
-      if( roverPos.status == Status.None ){
-        roverPos.status = Status.NotEnoughSats;
+      if( rover.status == Status.None ){
+        rover.status = Status.NotEnoughSats;
       }
-      roverPos.setXYZ(0, 0, 0);
+      rover.setXYZ(0, 0, 0);
       return;
     }
     
@@ -94,7 +94,7 @@ public class LS_SA_dopplerPos extends Core {
           continue;
       }
         
-        SimpleMatrix tempv = roverPos.minusXYZ(pos[i]);
+        SimpleMatrix tempv = rover.minusXYZ(pos[i]);
 
         double Ym = Math.sqrt(Math.pow(tempv.get(0), 2)
             + Math.pow(tempv.get(1), 2)
@@ -113,7 +113,7 @@ public class LS_SA_dopplerPos extends Core {
         double tempd = satposxyz.mult(satvelxyz.transpose()).get(0,0);
 
         // B[j] = tempd+W[j]*Ym + Xc[3]*(A[j][3]-Ym);
-        double val = tempd + rodot[i]*Ym + roverPos.getReceiverClockErrorRate()*( A.get(i, 3) - Ym);
+        double val = tempd + rodot[i]*Ym + rover.getReceiverClockErrorRate()*( A.get(i, 3) - Ym);
         b.set(i, 0, val);
         if( Math.abs(val)<pivot)
           pivot = Math.abs(val);
@@ -135,25 +135,25 @@ public class LS_SA_dopplerPos extends Core {
      System.out.println( String.format( "Update %d: x: %3.3f, y: %3.3f, z: %3.3f, br: %3.3f", itr, 
          x.get(0), x.get(1), x.get(2), x.get(3) ));
 
-     double correction_mag = Math.sqrt( Math.pow( x.get(0) - roverPos.getX(), 2 ) + 
-                                        Math.pow( x.get(1) - roverPos.getY(), 2 ) +
-                                        Math.pow( x.get(2) - roverPos.getZ(), 2 ) );
+     double correction_mag = Math.sqrt( Math.pow( x.get(0) - rover.getX(), 2 ) + 
+                                        Math.pow( x.get(1) - rover.getY(), 2 ) +
+                                        Math.pow( x.get(2) - rover.getZ(), 2 ) );
 
      // expected
      System.out.println( String.format( "pos diff mag %f (m)", correction_mag ));
 
      // Update Rx position estimate
-     roverPos.setXYZ( x.get(0), 
+     rover.setXYZ( x.get(0), 
                     x.get(1), 
                     x.get(2));
 
-     roverPos.computeGeodetic();
+     rover.computeGeodetic();
 
      // Update receiver clock error rate
-     roverPos.receiverClockErrorRate = x.get(3);
+     rover.receiverClockErrorRate = x.get(3);
      
      System.out.println( "recpos (" + itr +")");
-     System.out.println( String.format( "%10.6f,%10.6f", roverPos.getGeodeticLatitude(), roverPos.getGeodeticLongitude() ));
+     System.out.println( String.format( "%10.6f,%10.6f", rover.getGeodeticLatitude(), rover.getGeodeticLongitude() ));
      System.out.println();
      
      // if correction is small enough, we're done, exit loop
@@ -162,12 +162,12 @@ public class LS_SA_dopplerPos extends Core {
     }
     
     // Compute positioning in geodetic coordinates
-    roverPos.computeGeodetic();
+    rover.computeGeodetic();
     
     // clamp it to the ground, not very elegant
-    if( roverPos.getGeodeticHeight()<30 || roverPos.getGeodeticHeight() > 100 ){
-      roverPos.setGeod( roverPos.getGeodeticLatitude(), roverPos.getGeodeticLongitude(), 30 );
-      roverPos.computeECEF();
+    if( rover.getGeodeticHeight()<30 || rover.getGeodeticHeight() > 100 ){
+      rover.setGeod( rover.getGeodeticLatitude(), rover.getGeodeticLongitude(), 30 );
+      rover.computeECEF();
     }
   }
 }

@@ -38,7 +38,7 @@ import org.gogpsproject.RoverPosition;
  * @author Eugenio Realini
  */
 
-public class TxtProducer implements PositionConsumer, Runnable {
+public class TxtProducer extends Thread implements PositionConsumer {
 
 	private static DecimalFormat f = new DecimalFormat("0.000");
 	private static DecimalFormat g = new DecimalFormat("0.00000000");
@@ -49,13 +49,12 @@ public class TxtProducer implements PositionConsumer, Runnable {
 	private String filename = null;
 	private boolean debug=false;
 
-	private Thread t = null;
-
 	private ArrayList<RoverPosition> positions = new ArrayList<RoverPosition>();
 	
 	private final static TimeZone TZ = TimeZone.getTimeZone("GMT");
 
 	public TxtProducer(String filename) throws IOException{
+    super("TxtProducer");
 		this.filename = filename;
 
 		writeHeader();
@@ -63,8 +62,7 @@ public class TxtProducer implements PositionConsumer, Runnable {
 		dateTXT.setTimeZone(TZ);
 		timeTXT.setTimeZone(TZ);
 
-		t = new Thread(this, "TxtProducer");
-		t.start();
+		start();
 	}
 
 	/* (non-Javadoc)
@@ -183,7 +181,7 @@ public class TxtProducer implements PositionConsumer, Runnable {
 //		}
 		if(event == EVENT_END_OF_TRACK){
 			// finish writing
-			t = null;
+			interrupt();
 		}
 	}
 
@@ -207,42 +205,22 @@ public class TxtProducer implements PositionConsumer, Runnable {
 	@Override
 	public void run() {
 		int last = 0;
-		try {
-			while(t!=null && Thread.currentThread()==t){
-				if(last != positions.size()){ // check if we have more data to write
-					last = positions.size();
-
-//					goodDop = false;
-					FileWriter out = writeHeader();
-					if(out!=null){
-						for(RoverPosition pos: (ArrayList<RoverPosition>) positions.clone()){
-							writeCoordinate(pos, out);
-						}
-					}
-
-				}
-
-				Thread.sleep(1000);
+    FileWriter out = writeHeader();
+		while(!isInterrupted() || last < positions.size() ){
+		  //	goodDop = false;
+      for( ; last<positions.size(); last++ ) {
+				writeCoordinate(positions.get(last), out);
 			}
-
-			//flush the last coordinates
-			if(last != positions.size()){ // check if we have more data to write
-				last = positions.size();
-
-//				goodDop = false;
-				FileWriter out = writeHeader();
-				if(out!=null){
-					for(RoverPosition pos: (ArrayList<RoverPosition>) positions.clone()){
-						writeCoordinate(pos, out);
-					}
-				}
-
+			try {
+				Thread.sleep(200);
 			}
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+			catch (InterruptedException e) {
+			  interrupt();
+			}
+	  }
 	}
+
 	public void cleanStop(){
-		t=null;
+    interrupt();
 	}
 }

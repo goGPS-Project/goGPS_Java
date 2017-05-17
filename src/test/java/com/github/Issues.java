@@ -83,15 +83,14 @@ public class Issues {
         roverIn.init();
 
         int dynamicModel = GoGPS.DYN_MODEL_STATIC; //may be also set to constant acceleration or static
-        GoGPS goGPS = new GoGPS(navigationIn, roverIn );
-        RoverPosition roverPos = goGPS
+        GoGPS goGPS = new GoGPS(navigationIn, roverIn )
                                      .addPositionConsumerListener(kml)
                                      .setDynamicModel(dynamicModel)
                                      .setCutoff(0)
-                                     .runCodeStandalone();
-        goGPS.runUntilFinished();
+                                     .runCodeStandalone()
+                                     .runUntilFinished();
 
-        assertTrue( roverPos.isValidXYZ() );
+        assertTrue( goGPS.getReceiverPosition().isValidXYZ() );
         
     } catch (Exception e) {
         e.printStackTrace();

@@ -247,7 +247,7 @@ public class KmlProducer extends Thread implements PositionConsumer {
 //		}
 		if(event == EVENT_END_OF_TRACK){
 			// finish writing
-		  this.interrupt();
+		  interrupt();
 		}
 	}
 
@@ -414,14 +414,14 @@ public class KmlProducer extends Thread implements PositionConsumer {
 			try {
         Thread.sleep(200);
       } catch (InterruptedException e) {
-        this.interrupt();
+        interrupt();
       }
 		}
     endOfTrack(out);
 	}
 	
 	public void cleanStop(){
-		this.interrupt();
+		interrupt();
 	}
 }
 

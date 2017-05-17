@@ -33,7 +33,6 @@ public class Core {
 //  return context;
 //}
 
-  /* Satellites */
   /** Absolute position of all visible satellites (ECEF) */
   SatellitePosition[] pos; 
 
@@ -61,11 +60,6 @@ public class Core {
   /** Covariance matrix of the position estimation error */
   SimpleMatrix positionCovariance; 
   
-  /**
-   * Float code ambiguities for modular case, should be between 0 and 1
-   */
-  double[] codeAmbiguities;
-
   public Core( GoGPS goGPS) {
     this.goGPS  = goGPS;
     this.rover  = goGPS.getReceiverPosition();
@@ -94,20 +88,6 @@ public class Core {
         GnssSys = GnssSys + satTypeAvail.get(i);
     }
     return GnssSys;
-  }
-
-  /**
-   * @return the positionCovariance
-   */
-  public SimpleMatrix getPositionCovariance() {
-    return positionCovariance;
-  }
-
-  /**
-   * @param positionCovariance the positionCovariance to set
-   */
-  public void setPositionCovariance(SimpleMatrix positionCovariance) {
-    this.positionCovariance = positionCovariance;
   }
 
   /**
@@ -195,7 +175,7 @@ public class Core {
    * @param height
    * @return troposphere correction value by Saastamoinen model
    */
-  private double computeTroposphereCorrection(double elevation, double height) {
+  double computeTroposphereCorrection(double elevation, double height) {
 
     double tropoCorr = 0;
 
@@ -268,7 +248,7 @@ public class Core {
    * @param time
    * @return ionosphere correction value by Klobuchar model
    */
-  private double computeIonosphereCorrection(NavigationProducer navigation,
+  double computeIonosphereCorrection(NavigationProducer navigation,
       Coordinates coord, double azimuth, double elevation, Time time) {
 
     double ionoCorr = 0;
@@ -417,155 +397,6 @@ public class Core {
         }
       }
       
-    }
-  }
-
-  /**
-   * Estimate full pseudorange and satellite position from a priori rover position
-   * @param roverObs
-   * @param cutoff
-   */
-  public void selectSatellitesStandaloneFractional( Observations roverObs, double cutoff, final double MODULO ) {
-    
-    NavigationProducer navigation = goGPS.getNavigation();
-
-    // Number of GPS observations
-    int nObs = roverObs.getNumSat();
-
-    // Allocate an array to store GPS satellite positions
-    pos = new SatellitePosition[nObs];
-
-    // Allocate an array to store receiver-satellite vectors
-    rover.diffSat = new SimpleMatrix[nObs];
-
-    // Allocate an array to store receiver-satellite approximate range
-    rover.satAppRange = new double[nObs];
-
-    // Allocate arrays to store receiver-satellite atmospheric corrections
-    rover.satTropoCorr = new double[nObs];
-    rover.satIonoCorr = new double[nObs];
-
-    // Create a list for available satellites after cutoff
-    satAvail = new ArrayList<Integer>(0);
-    satTypeAvail = new ArrayList<Character>(0);
-    gnssAvail = new ArrayList<String>(0);
-
-    // Create a list for available satellites with phase
-    satAvailPhase = new ArrayList<Integer>(0);
-    satTypeAvailPhase = new ArrayList<Character>(0);
-    gnssAvailPhase = new ArrayList<String>(0);
-    
-    // Allocate array of topocentric coordinates
-    rover.topo = new TopocentricCoordinates[nObs];
-
-    rover.satsInUse = 0;
-    // Satellite ID
-    int id = 0;
-
-    // Compute topocentric coordinates and
-    // select satellites above the cutoff level
-    for (int i = 0; i < nObs; i++) {
-      id = roverObs.getSatID(i);
-      ObservationSet os = roverObs.getSatByID(id);
-      char satType = roverObs.getGnssType(i);
-
-      pos[i] = goGPS.getNavigation()
-          .getGpsSatPosition( roverObs, id, 'G', rover.getReceiverClockError() );
-      
-      if(  pos[i] == SatellitePosition.UnhealthySat ) {
-        pos[i] = null;
-        continue;
-      }
-      
-      if( pos[i] == null  || Double.isNaN(pos[i].getX() )) {
-//        if(debug) System.out.println("Not useful sat "+roverObs.getSatID(i));
-        if( i == 0 || satAvail.size()> 0 )
-          continue;
-        else {
-          rover.status = Status.EphNotFound;
-          return;
-        }
-      }
-
-      // remember cph and restore it later
-      double code = os.getCodeC(0);
-
-      // Compute rover-satellite approximate pseudorange
-      rover.diffSat[i] = rover.minusXYZ(pos[i]); // negative, for LOS vectors
-
-      rover.satAppRange[i] = Math.sqrt(Math.pow(rover.diffSat[i].get(0), 2)
-                                    + Math.pow(rover.diffSat[i].get(1), 2)
-                                    + Math.pow(rover.diffSat[i].get(2), 2));
-
-      // recompute satpos now with estimatedPR
-      if( Double.isNaN(rover.satAppRange[i])){
-        if( goGPS.isDebug() ) System.out.println("Error NaN");
-      }
-      else {
-        os.setCodeC(0, rover.satAppRange[i]);
-  
-        // Compute GPS satellite positions getGpsByIdx(idx).getSatType()
-        pos[i] = goGPS.getNavigation().getGpsSatPosition(roverObs, id, 'G', rover.getReceiverClockError());
-        
-        // restore code observation
-        os.setCodeC(0, code);
-  
-        if( pos[i] == null  ) {
-  //        if(debug) System.out.println("Not useful sat "+roverObs.getSatID(i));
-          if( (i== 0) || satAvail.size()> 0 )
-            continue;
-          else {
-            rover.status = Status.EphNotFound;
-            continue;
-          }
-        }
-      }
-      // Compute rover-satellite approximate pseudorange
-      rover.diffSat[i] = rover.minusXYZ(pos[i]);
-      rover.satAppRange[i] = Math.sqrt(Math.pow(rover.diffSat[i].get(0), 2)
-                          + Math.pow(rover.diffSat[i].get(1), 2)
-                          + Math.pow(rover.diffSat[i].get(2), 2));
-
-      double R = rover.satAppRange[i]/Constants.SPEED_OF_LIGHT*1000;
-      double C = roverObs.getSatByID(id).getCodeC(0)/Constants.SPEED_OF_LIGHT*1000;
-      if( goGPS.isDebug() ) System.out.print( String.format( "%2d) SR:%8.5f C:%8.5f D:%9.5f ", 
-          id, 
-          R%(MODULO*1000/Constants.SPEED_OF_LIGHT), 
-          C,
-          C-(MODULO*1000/Constants.SPEED_OF_LIGHT)));
-
-      // Compute azimuth, elevation and distance for each satellite
-      rover.topo[i] = new TopocentricCoordinates();
-      rover.topo[i].computeTopocentric( rover, pos[i]);
-
-      // Correct approximate pseudorange for troposphere
-      rover.satTropoCorr[i] = computeTroposphereCorrection(rover.topo[i].getElevation(), rover.getGeodeticHeight());
-
-      // Correct approximate pseudorange for ionosphere
-      rover.satIonoCorr[i] = computeIonosphereCorrection(navigation, rover, rover.topo[i].getAzimuth(), rover.topo[i].getElevation(), roverObs.getRefTime());
-
-      if( goGPS.isDebug()) System.out.print( String.format( " El:%4.1f ", rover.topo[i].getElevation() ));
-
-//        System.out.println("getElevation: " + id + "::" + rover.topo[i].getElevation() ); 
-      // Check if satellite elevation is higher than cutoff
-      if( rover.topo[i].getElevation() >= cutoff ) {
-          
-        satAvail.add(id);
-        satTypeAvail.add(satType);
-        gnssAvail.add(String.valueOf(satType) + String.valueOf(id));
-  
-        // Check if also phase is available
-        if (!Double.isNaN(roverObs.getSatByIDType(id, 'G').getPhaseCycles(goGPS.getFreq()))) {
-          satAvailPhase.add(id);
-          satTypeAvailPhase.add('G');
-          gnssAvailPhase.add(String.valueOf('G') + String.valueOf(id));       
-         }
-      }
-      else{
-        os.el = rover.topo[i].getElevation();
-        if(goGPS.isDebug()) System.out.print( String.format( " Not useful sat %2d  for too low elevation %3.1f < %3.1f", roverObs.getSatID(i), rover.topo[i].getElevation(), cutoff ));
-      }
-      if( goGPS.isDebug()) System.out.println();
     }
   }
 

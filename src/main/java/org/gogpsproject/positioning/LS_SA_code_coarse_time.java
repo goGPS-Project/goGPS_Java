@@ -11,7 +11,10 @@ import org.gogpsproject.Observations;
 import org.gogpsproject.Status;
 import org.gogpsproject.Time;
 
-public class LS_SA_code_coarse_time extends Core {
+public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
+
+  /** Float code ambiguities for modular case, should be between 0 and 1 */
+  double[] codeAmbiguities;
 
   final int MINSV = 4;
 

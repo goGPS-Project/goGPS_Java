@@ -731,12 +731,12 @@ public class GoGPS implements Runnable{
 	/**
 	 * Run code standalone.
 	 */
-	public RoverPosition runCodeStandalone() {
+	public GoGPS runCodeStandalone() {
 		try {
 			return runCodeStandalone(-1);
 		} catch (Exception e) {
 			e.printStackTrace();
-			return null;
+			return this;
 		}
 	}
 
@@ -747,7 +747,7 @@ public class GoGPS implements Runnable{
 	 * @return the coordinates
 	 * @throws Exception
 	 */
-	public RoverPosition runCodeStandalone(double stopAtDopThreshold) throws Exception {
+	public GoGPS runCodeStandalone(double stopAtDopThreshold) throws Exception {
 
     running = true;
 		roverPos = new ReceiverPosition();
@@ -808,7 +808,7 @@ public class GoGPS implements Runnable{
 								if(debug)System.out.println("PDOP: "+roverPos.getpDop());
 								if(debug)System.out.println("------------------------------------------------------------");
 								if(stopAtDopThreshold>0.0 && roverPos.getpDop()<stopAtDopThreshold){
-									return coord;
+									return this;
 								}
 							}
 						}
@@ -825,7 +825,7 @@ public class GoGPS implements Runnable{
 		} finally {
 			notifyPositionConsumerEvent(PositionConsumer.EVENT_END_OF_TRACK);
 		}
-		return coord;
+    return this;
 	}
 
 	/**
@@ -1883,7 +1883,6 @@ public class GoGPS implements Runnable{
         try {
           ((Thread)pc).join();
         } catch (InterruptedException e) {
-          // FIXME Auto-generated catch block
           e.printStackTrace();
         }
       }

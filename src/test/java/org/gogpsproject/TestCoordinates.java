@@ -9,7 +9,7 @@ public class TestCoordinates {
   /**
   *  Test converting from lat/lon to ECEF and back
   */
- //@Test
+  @Test
   public void computeGeodTest(){
    final double lat0 = -39.664914;
    final double lon0 = 176.881899;

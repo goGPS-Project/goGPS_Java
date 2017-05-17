@@ -25,6 +25,8 @@ import static org.gogpsproject.positioning.LS_SA_code.*;
 import java.util.*;
 
 import org.gogpsproject.positioning.Core;
+import org.gogpsproject.positioning.KF_DD_code_phase;
+import org.gogpsproject.positioning.KF_SA_code_phase;
 import org.gogpsproject.positioning.KalmanFilter;
 import org.gogpsproject.positioning.LS_DD_code;
 import org.gogpsproject.positioning.LS_SA_code;
@@ -929,7 +931,7 @@ public class GoGPS implements Runnable{
 		long depProc = 0;
 
 		roverPos = new ReceiverPosition();
-		KalmanFilter kf = new KalmanFilter(this);
+		KalmanFilter kf = new KF_SA_code_phase(this);
 		
 		// Flag to check if Kalman filter has been initialized
 		boolean kalmanInitialized = false;
@@ -1043,7 +1045,7 @@ public class GoGPS implements Runnable{
 
 		// Create a new object for the rover position
 		roverPos = new ReceiverPosition();
-		KalmanFilter kf = new KalmanFilter(this);
+		KalmanFilter kf = new KF_DD_code_phase(this);
 		
 		// Flag to check if Kalman filter has been initialized
 		boolean kalmanInitialized = false;

@@ -44,30 +44,6 @@ public class Core {
   }
 
   /**
-   * @return the number of available satellites
-   */
-  public int getSatAvailNumber() {
-    return sats.avail.size();
-  }
-
-  /**
-   * @return the number of available satellites (with phase)
-   */
-  public int getSatAvailPhaseNumber() {
-    return sats.availPhase.size();
-  }
-  
-  public String getAvailGnssSystems(){
-    if(sats.typeAvail.isEmpty()) return "";
-    String GnssSys = "";
-    for(int i=0;i<sats.typeAvail.size();i++) {
-      if (GnssSys.indexOf((sats.typeAvail.get(i))) < 0)
-        GnssSys = GnssSys + sats.typeAvail.get(i);
-    }
-    return GnssSys;
-  }
-
-  /**
    * @param x
    * @param y
    * @return Lorentz inner product

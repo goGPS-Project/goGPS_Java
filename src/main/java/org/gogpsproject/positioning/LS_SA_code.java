@@ -21,7 +21,7 @@ public class LS_SA_code extends Core {
     int nUnknowns = 4;
     
     // Add one unknown for each constellation in addition to the first (to estimate Inter-System Biases - ISBs)
-    String sys = getAvailGnssSystems();
+    String sys = sats.getAvailGnssSystems();
     if (sys.length()>0) {
       sys = sys.substring(1);
       nUnknowns = nUnknowns + sys.length();

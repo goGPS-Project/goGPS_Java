@@ -272,7 +272,7 @@ public class LS_SA_code_snapshot extends Core {
       else
         selectSatellites( roverObs, -10, GoGPS.MODULO1MS );
         
-      nObsAvail = getSatAvailNumber();
+      nObsAvail = sats.getAvailNumber();
   
       if( nObsAvail<MINSV ){
         if( goGPS.isDebug()) System.out.println("\r\nNot enough satellites for " + roverObs.getRefTime() );
@@ -646,7 +646,7 @@ public class LS_SA_code_snapshot extends Core {
 //      System.out.println( pivotSatId + ") cbiasms " + cbiasms); 
     
     return new SnapshotPivotResult( savedIndex, pivotSatId, pivotElevation, 
-        rover, unixTime, rover.eRes, rover.hDop, getSatAvailNumber(), cbiasms );
+        rover, unixTime, rover.eRes, rover.hDop, sats.getAvailNumber(), cbiasms );
   }
   
   /**

@@ -30,4 +30,24 @@ public class Satellites {
   /** Index of the satellite with highest elevation in satAvail list */
   int pivot; 
   
+  /** @return the number of available satellites */
+  public int getAvailNumber() {
+    return avail.size();
+  }
+
+  /** @return the number of available satellites (with phase) */
+  public int getAvailPhaseNumber() {
+    return availPhase.size();
+  }
+  
+  public String getAvailGnssSystems(){
+    if( typeAvail.isEmpty()) return "";
+    String GnssSys = "";
+    for(int i=0;i< typeAvail.size();i++) {
+      if (GnssSys.indexOf(( typeAvail.get(i))) < 0)
+        GnssSys = GnssSys + typeAvail.get(i);
+    }
+    return GnssSys;
+  }
+  
 }

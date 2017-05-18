@@ -21,7 +21,7 @@ public class LS_SA_dopplerPos extends Core {
     final double DOPP_POS_TOL = 1.0;    
 
     // Number of available satellites (i.e. observations)
-    int nObsAvail = satAvail.size();
+    int nObsAvail = sats.avail.size();
     if( nObsAvail < MINSV ){
       if( goGPS.isDebug() ) System.out.println("dopplerPos, not enough satellites for " + obs.getRefTime() );
       if( rover.status == Status.None ){
@@ -46,8 +46,8 @@ public class LS_SA_dopplerPos extends Core {
 
       int satId = obs.getSatID(i);
 
-      if( pos[i] == null  || !satAvail.contains(satId) ) {//|| recpos.ecef==null || pos[i].ecef==null ){
-//              l.warning( "ERROR, pos[i]==null?" );
+      if( sats.pos[i] == null  || !sats.avail.contains(satId) ) {//|| recpos.ecef==null || sats.pos[i].ecef==null ){
+//              l.warning( "ERROR, sats.pos[i]==null?" );
 //              this.setXYZ(0, 0, 0);
 //              return null;
         continue;
@@ -69,13 +69,13 @@ public class LS_SA_dopplerPos extends Core {
       rodot[i] = doppler * Constants.SPEED_OF_LIGHT/Constants.FL1;
 
       // build A matrix
-      A.set(i, 0, pos[i].getSpeed().get(0) ); /* X */
-      A.set(i, 1, pos[i].getSpeed().get(1) ); /* Y */
-      A.set(i, 2, pos[i].getSpeed().get(2) ); /* Z */
+      A.set(i, 0, sats.pos[i].getSpeed().get(0) ); /* X */
+      A.set(i, 1, sats.pos[i].getSpeed().get(1) ); /* Y */
+      A.set(i, 2, sats.pos[i].getSpeed().get(2) ); /* Z */
       
-      double satpos_norm = Math.sqrt(Math.pow(pos[i].getX(), 2)
-                                   + Math.pow(pos[i].getY(), 2)
-                                   + Math.pow(pos[i].getZ(), 2));
+      double satpos_norm = Math.sqrt(Math.pow(sats.pos[i].getX(), 2)
+                                   + Math.pow(sats.pos[i].getY(), 2)
+                                   + Math.pow(sats.pos[i].getZ(), 2));
       A.set(i, 3, satpos_norm ); 
     }
     
@@ -87,28 +87,28 @@ public class LS_SA_dopplerPos extends Core {
 
       for (int i = 0; i<nObsAvail; i++) {
         int satId = obs.getSatID(i);
-        if( pos[i] == null  || !satAvail.contains(satId) ) {//|| recpos.ecef==null || pos[i].ecef==null ){
-        //        l.warning( "ERROR, pos[i]==null?" );
+        if( sats.pos[i] == null  || !sats.avail.contains(satId) ) {//|| recpos.ecef==null || sats.pos[i].ecef==null ){
+        //        l.warning( "ERROR, sats.pos[i]==null?" );
         //        this.setXYZ(0, 0, 0);
         //        return null;
           continue;
       }
         
-        SimpleMatrix tempv = rover.minusXYZ(pos[i]);
+        SimpleMatrix tempv = rover.minusXYZ(sats.pos[i]);
 
         double Ym = Math.sqrt(Math.pow(tempv.get(0), 2)
             + Math.pow(tempv.get(1), 2)
             + Math.pow(tempv.get(2), 2));
 
         SimpleMatrix satposxyz = new SimpleMatrix(1,3);
-        satposxyz.set(0, 0, pos[i].getX());
-        satposxyz.set(0, 1, pos[i].getY());
-        satposxyz.set(0, 2, pos[i].getZ());
+        satposxyz.set(0, 0, sats.pos[i].getX());
+        satposxyz.set(0, 1, sats.pos[i].getY());
+        satposxyz.set(0, 2, sats.pos[i].getZ());
 
         SimpleMatrix satvelxyz = new SimpleMatrix(1,3);
-        satvelxyz.set(0, 0, pos[i].getSpeed().get(0));
-        satvelxyz.set(0, 1, pos[i].getSpeed().get(1));
-        satvelxyz.set(0, 2, pos[i].getSpeed().get(2));
+        satvelxyz.set(0, 0, sats.pos[i].getSpeed().get(0));
+        satvelxyz.set(0, 1, sats.pos[i].getSpeed().get(1));
+        satvelxyz.set(0, 2, sats.pos[i].getSpeed().get(2));
 
         double tempd = satposxyz.mult(satvelxyz.transpose()).get(0,0);
 
@@ -121,7 +121,7 @@ public class LS_SA_dopplerPos extends Core {
 ///////////////
 //     b.normF()
      System.out.println( String.format( "Residuals -> Adjusted Residuals (ms) - Pivot = %7.4f (ms)",  pivot/Constants.SPEED_OF_LIGHT*1000));
-     for( int k=0; k<satAvail.size(); k++){
+     for( int k=0; k<sats.avail.size(); k++){
 //       int satId = obs.getSatID(k);
 //       ObservationSet os = obs.getSatByID(satId);
        double d = Math.abs(b.get(k))-pivot;

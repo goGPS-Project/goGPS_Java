@@ -25,67 +25,44 @@ public class Core {
   GoGPS goGPS;
   ReceiverPosition rover;
   MasterPosition master;
+  Satellites sats;
   
+  /** Covariance matrix of the position estimation error */
+  SimpleMatrix positionCovariance; 
+
 //static GeoApiContext context;
 //static GeoApiContext getContext(){
 //  if( context == null )
 //    context = new GeoApiContext().setApiKey("...Add your key here");
 //  return context;
 //}
-
-  /** Absolute position of all visible satellites (ECEF) */
-  SatellitePosition[] pos; 
-
-  /** Index of the satellite with highest elevation in satAvail list */
-  int pivot; 
-
-  /** List of satellites available for processing */
-  ArrayList<Integer> satAvail; 
-
-  /** List of satellite Types available for processing */
-  ArrayList<Character> satTypeAvail; 
-
-  /** List of satellite Types & Id available for processing */
-  ArrayList<String> gnssAvail;  
-  
-  /** List of satellites available for processing */
-  ArrayList<Integer> satAvailPhase; 
-
-  /** List of satellite Type available for processing */
-  ArrayList<Character> satTypeAvailPhase; 
-
-  /** List of satellite Types & Id available for processing */
-  ArrayList<String> gnssAvailPhase;  
-  
-  /** Covariance matrix of the position estimation error */
-  SimpleMatrix positionCovariance; 
-  
   public Core( GoGPS goGPS) {
     this.goGPS  = goGPS;
     this.rover  = goGPS.getReceiverPosition();
     this.master = goGPS.getMasterPosition();
+    this.sats   = goGPS.getSatellites();
   }
 
   /**
    * @return the number of available satellites
    */
   public int getSatAvailNumber() {
-    return satAvail.size();
+    return sats.avail.size();
   }
 
   /**
    * @return the number of available satellites (with phase)
    */
   public int getSatAvailPhaseNumber() {
-    return satAvailPhase.size();
+    return sats.availPhase.size();
   }
   
   public String getAvailGnssSystems(){
-    if(satTypeAvail.isEmpty()) return "";
+    if(sats.typeAvail.isEmpty()) return "";
     String GnssSys = "";
-    for(int i=0;i<satTypeAvail.size();i++) {
-      if (GnssSys.indexOf((satTypeAvail.get(i))) < 0)
-        GnssSys = GnssSys + satTypeAvail.get(i);
+    for(int i=0;i<sats.typeAvail.size();i++) {
+      if (GnssSys.indexOf((sats.typeAvail.get(i))) < 0)
+        GnssSys = GnssSys + sats.typeAvail.get(i);
     }
     return GnssSys;
   }
@@ -321,7 +298,7 @@ public class Core {
     int nObs = roverObs.getNumSat();
 
     // Allocate an array to store GPS satellite positions
-    pos = new SatellitePosition[nObs];
+    sats.pos = new SatellitePosition[nObs];
 
     // Allocate an array to store receiver-satellite vectors
     rover.diffSat = new SimpleMatrix[nObs];
@@ -334,14 +311,14 @@ public class Core {
     rover.satIonoCorr = new double[nObs];
 
     // Create a list for available satellites after cutoff
-    satAvail = new ArrayList<Integer>(0);
-    satTypeAvail = new ArrayList<Character>(0);
-    gnssAvail = new ArrayList<String>(0);
+    sats.avail = new ArrayList<Integer>(0);
+    sats.typeAvail = new ArrayList<Character>(0);
+    sats.gnssAvail = new ArrayList<String>(0);
 
     // Create a list for available satellites with phase
-    satAvailPhase = new ArrayList<Integer>(0);
-    satTypeAvailPhase = new ArrayList<Character>(0);
-    gnssAvailPhase = new ArrayList<String>(0);
+    sats.availPhase = new ArrayList<Integer>(0);
+    sats.typeAvailPhase = new ArrayList<Character>(0);
+    sats.gnssAvailPhase = new ArrayList<String>(0);
     
     // Allocate array of topocentric coordinates
     rover.topo = new TopocentricCoordinates[nObs];
@@ -357,19 +334,19 @@ public class Core {
       char satType = roverObs.getGnssType(i);
 
       // Compute GPS satellite positions getGpsByIdx(idx).getSatType()
-      pos[i] = navigation.getGpsSatPosition( roverObs, id, satType, rover.getReceiverClockError());
+      sats.pos[i] = navigation.getGpsSatPosition( roverObs, id, satType, rover.getReceiverClockError());
       
-      if(pos[i]!=null){
+      if(sats.pos[i]!=null){
 
         // Compute rover-satellite approximate pseudorange
-        rover.diffSat[i] = rover.minusXYZ(pos[i]);
+        rover.diffSat[i] = rover.minusXYZ(sats.pos[i]);
         rover.satAppRange[i] = Math.sqrt(Math.pow(rover.diffSat[i].get(0), 2)
             + Math.pow(rover.diffSat[i].get(1), 2)
             + Math.pow(rover.diffSat[i].get(2), 2));
 
         // Compute azimuth, elevation and distance for each satellite
         rover.topo[i] = new TopocentricCoordinates();
-        rover.topo[i].computeTopocentric(rover, pos[i]);
+        rover.topo[i].computeTopocentric(rover, sats.pos[i]);
 
         // Correct approximate pseudorange for troposphere
         rover.satTropoCorr[i] = computeTroposphereCorrection(rover.topo[i].getElevation(), rover.getGeodeticHeight());
@@ -381,15 +358,15 @@ public class Core {
         // Check if satellite elevation is higher than cutoff
         if (rover.topo[i].getElevation() > cutoff) {
           
-          satAvail.add(id);
-          satTypeAvail.add(satType);
-          gnssAvail.add(String.valueOf(satType) + String.valueOf(id));
+          sats.avail.add(id);
+          sats.typeAvail.add(satType);
+          sats.gnssAvail.add(String.valueOf(satType) + String.valueOf(id));
 
           // Check if also phase is available
           if (!Double.isNaN(roverObs.getSatByIDType(id, satType).getPhaseCycles(goGPS.getFreq()))) {
-            satAvailPhase.add(id);
-            satTypeAvailPhase.add(satType);
-            gnssAvailPhase.add(String.valueOf(satType) + String.valueOf(id));       
+            sats.availPhase.add(id);
+            sats.typeAvailPhase.add(satType);
+            sats.gnssAvailPhase.add(String.valueOf(satType) + String.valueOf(id));       
             
           }
         }else{
@@ -413,7 +390,7 @@ public class Core {
     int nObs = roverObs.getNumSat();
 
     // Allocate an array to store GPS satellite positions
-    pos = new SatellitePosition[nObs];
+    sats.pos = new SatellitePosition[nObs];
 
     // Allocate an array to store receiver-satellite vectors
     rover.diffSat = new SimpleMatrix[nObs];
@@ -426,14 +403,14 @@ public class Core {
     rover.satIonoCorr = new double[nObs];
 
     // Create a list for available satellites after cutoff
-    satAvail = new ArrayList<Integer>(0);
-    satTypeAvail = new ArrayList<Character>(0);
-    gnssAvail = new ArrayList<String>(0);
+    sats.avail = new ArrayList<Integer>(0);
+    sats.typeAvail = new ArrayList<Character>(0);
+    sats.gnssAvail = new ArrayList<String>(0);
 
     // Create a list for available satellites with phase
-    satAvailPhase = new ArrayList<Integer>(0);
-    satTypeAvailPhase = new ArrayList<Character>(0);
-    gnssAvailPhase = new ArrayList<String>(0);
+    sats.availPhase = new ArrayList<Integer>(0);
+    sats.typeAvailPhase = new ArrayList<Character>(0);
+    sats.gnssAvailPhase = new ArrayList<String>(0);
     
     // Allocate array of topocentric coordinates
     rover.topo = new TopocentricCoordinates[nObs];
@@ -456,15 +433,15 @@ public class Core {
       ObservationSet os = roverObs.getSatByID(id);
       char satType = roverObs.getGnssType(i);
 
-      pos[i] = goGPS.getNavigation().getGpsSatPosition( roverObs, id, 'G', 0 );
+      sats.pos[i] = goGPS.getNavigation().getGpsSatPosition( roverObs, id, 'G', 0 );
 
-      if( pos[i] == null  || Double.isNaN(pos[i].getX() )) {
+      if( sats.pos[i] == null  || Double.isNaN(sats.pos[i].getX() )) {
         rover.status = Status.EphNotFound;
         continue;
       }
 
       // Compute rover-satellite approximate pseudorange
-      rover.diffSat[i]     = rover.minusXYZ(pos[i]); // negative, for LOS vectors
+      rover.diffSat[i]     = rover.minusXYZ(sats.pos[i]); // negative, for LOS vectors
 
       rover.satAppRange[i] = Math.sqrt(Math.pow(rover.diffSat[i].get(0), 2)
                                     + Math.pow(rover.diffSat[i].get(1), 2)
@@ -472,7 +449,7 @@ public class Core {
 
       // Compute azimuth, elevation and distance for each satellite
       rover.topo[i] = new TopocentricCoordinates();
-      rover.topo[i].computeTopocentric(rover, pos[i]);
+      rover.topo[i].computeTopocentric(rover, sats.pos[i]);
 
       double el = rover.topo[i].getElevation();
       
@@ -482,12 +459,12 @@ public class Core {
       // Correct approximate pseudorange for ionosphere
       rover.satIonoCorr[i] = computeIonosphereCorrection(navigation, rover, rover.topo[i].getAzimuth(), rover.topo[i].getElevation(), roverObs.getRefTime());
 
-      satAvail.add(id);
-      satTypeAvail.add(satType);
-      gnssAvail.add(String.valueOf(satType) + String.valueOf(id));
+      sats.avail.add(id);
+      sats.typeAvail.add(satType);
+      sats.gnssAvail.add(String.valueOf(satType) + String.valueOf(id));
 
       SimpleMatrix R = Coordinates.rotationMatrix(rover);
-      SimpleMatrix enu = R.mult(pos[i].minusXYZ(rover));
+      SimpleMatrix enu = R.mult(sats.pos[i].minusXYZ(rover));
       
       double U = enu.get(2);
       System.out.println( String.format( "%2d) C:%12.3f %5.1f(dg) %9.0f(up)", 
@@ -573,7 +550,7 @@ public class Core {
     int nObs = roverObs.getNumSat();
 
     // Allocate an array to store GPS satellite positions
-    pos = new SatellitePosition[nObs];
+    sats.pos = new SatellitePosition[nObs];
 
     // Allocate arrays to store receiver-satellite vectors
     rover.diffSat = new SimpleMatrix[nObs];
@@ -590,14 +567,14 @@ public class Core {
     master.satIonoCorr = new double[nObs];
 
     // Create a list for available satellites
-    satAvail = new ArrayList<Integer>(0);
-    satTypeAvail = new ArrayList<Character>(0);
-    gnssAvail = new ArrayList<String>(0);
+    sats.avail = new ArrayList<Integer>(0);
+    sats.typeAvail = new ArrayList<Character>(0);
+    sats.gnssAvail = new ArrayList<String>(0);
 
     // Create a list for available satellites with phase
-    satAvailPhase = new ArrayList<Integer>(0);
-    satTypeAvailPhase = new ArrayList<Character>(0);
-    gnssAvailPhase = new ArrayList<String>(0);
+    sats.availPhase = new ArrayList<Integer>(0);
+    sats.typeAvailPhase = new ArrayList<Character>(0);
+    sats.gnssAvailPhase = new ArrayList<String>(0);
 
     // Allocate arrays of topocentric coordinates
     rover.topo = new TopocentricCoordinates[nObs];
@@ -622,18 +599,18 @@ public class Core {
       char satType = roverObs.getGnssType(i);
 
       // Compute GPS satellite positions
-      pos[i] = navigation.getGpsSatPosition(roverObs, id, satType, rover.getReceiverClockError());
+      sats.pos[i] = navigation.getGpsSatPosition(roverObs, id, satType, rover.getReceiverClockError());
 
-      if(pos[i]!=null){
+      if(sats.pos[i]!=null){
 
         // Compute rover-satellite approximate pseudorange
-        rover.diffSat[i] = rover.minusXYZ(pos[i]);
+        rover.diffSat[i] = rover.minusXYZ(sats.pos[i]);
         rover.satAppRange[i] = Math.sqrt(Math.pow(rover.diffSat[i].get(0), 2)
             + Math.pow(rover.diffSat[i].get(1), 2)
             + Math.pow(rover.diffSat[i].get(2), 2));
 
         // Compute master-satellite approximate pseudorange
-        master.diffSat[i] = masterPos.minusXYZ(pos[i]);
+        master.diffSat[i] = masterPos.minusXYZ(sats.pos[i]);
         master.satAppRange[i] = Math.sqrt(Math.pow(master.diffSat[i].get(0), 2)
             + Math.pow(master.diffSat[i].get(1), 2)
             + Math.pow(master.diffSat[i].get(2), 2));
@@ -641,12 +618,12 @@ public class Core {
         // Compute azimuth, elevation and distance for each satellite from
         // rover
         rover.topo[i] = new TopocentricCoordinates();
-        rover.topo[i].computeTopocentric(rover, pos[i]);
+        rover.topo[i].computeTopocentric(rover, sats.pos[i]);
 
         // Compute azimuth, elevation and distance for each satellite from
         // master
         master.topo[i] = new TopocentricCoordinates();
-        master.topo[i].computeTopocentric(masterPos, pos[i]);
+        master.topo[i].computeTopocentric(masterPos, sats.pos[i]);
 
         // Computation of rover-satellite troposphere correction
         rover.satTropoCorr[i] = computeTroposphereCorrection(rover.topo[i].getElevation(), rover.getGeodeticHeight());
@@ -673,9 +650,9 @@ public class Core {
             maxElevCode = rover.topo[i].getElevation();
           }
 
-          satAvail.add(id);
-          satTypeAvail.add(satType);
-          gnssAvail.add(String.valueOf(satType) + String.valueOf(id));  
+          sats.avail.add(id);
+          sats.typeAvail.add(satType);
+          sats.gnssAvail.add(String.valueOf(satType) + String.valueOf(id));  
 
           // Check if also phase is available for both rover and master
           if (!Double.isNaN(roverObs.getSatByIDType(id, satType).getPhaseCycles(goGPS.getFreq())) &&
@@ -687,9 +664,9 @@ public class Core {
               maxElevPhase = rover.topo[i].getElevation();
             }
 
-            satAvailPhase.add(id);
-            satTypeAvailPhase.add(satType);
-            gnssAvailPhase.add(String.valueOf(satType) + String.valueOf(id));
+            sats.availPhase.add(id);
+            sats.typeAvailPhase.add(satType);
+            sats.gnssAvailPhase.add(String.valueOf(satType) + String.valueOf(id));
             
           }
         }
@@ -698,11 +675,9 @@ public class Core {
 
     // Select best pivot satellite
     if (pivotPhase != -1){
-      pivot = pivotPhase;
+      sats.pivot = pivotPhase;
     }else{
-      pivot = pivotCode;
+      sats.pivot = pivotCode;
     }
   }
-  
-  
 }

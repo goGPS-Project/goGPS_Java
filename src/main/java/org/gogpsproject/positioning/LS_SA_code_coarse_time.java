@@ -57,7 +57,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
     covENU = new SimpleMatrix(3, 3);
 
     // Number of available satellites (i.e. observations)
-    int nObsAvail = satAvail.size();
+    int nObsAvail = sats.avail.size();
     
     nObsAvail++; // add DTM / height soft constraint
 
@@ -90,8 +90,8 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
     for (int i = 0; i < nObs; i++) {
       id = roverObs.getSatID(i);
 
-      if( pos[i] == null  || !satAvail.contains(id) ) {//|| recpos.ecef==null || pos[i].ecef==null ){
-//              l.warning( "ERROR, pos[i]==null?" );
+      if( sats.pos[i] == null  || !sats.avail.contains(id) ) {//|| recpos.ecef==null || sats.pos[i].ecef==null ){
+//              l.warning( "ERROR, sats.pos[i]==null?" );
 //              this.setXYZ(0, 0, 0);
 //              return null;
         int satId = roverObs.getSatID(k);
@@ -113,7 +113,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
       float doppler = roverObs.getSatByID(id).getDoppler(ObservationSet.L1);
       double rodot;
       if( Float.isNaN( doppler ))
-        rodot = -e.mult( pos[i].getSpeed() ).get(0);
+        rodot = -e.mult( sats.pos[i].getSpeed() ).get(0);
       else
         // scalar product of speed vector X unit vector
         rodot = -doppler * Constants.SPEED_OF_LIGHT/Constants.FL1;
@@ -127,8 +127,8 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
       A.set(k, 4, rodot );
 
       // Add the approximate pseudorange value to b
-//      b.set(k, 0, (rover.satAppRange[i] - pos[i].getSatelliteClockError() * Constants.SPEED_OF_LIGHT) % MODULO );
-      b.set(k, 0, (rover.satAppRange[i] - pos[i].getSatelliteClockError() * Constants.SPEED_OF_LIGHT) );
+//      b.set(k, 0, (rover.satAppRange[i] - sats.pos[i].getSatelliteClockError() * Constants.SPEED_OF_LIGHT) % MODULO );
+      b.set(k, 0, (rover.satAppRange[i] - sats.pos[i].getSatelliteClockError() * Constants.SPEED_OF_LIGHT) );
 
       ObservationSet os = roverObs.getSatByID(id);
       
@@ -238,11 +238,11 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
   int badSat;
   int maxGoodSat = 0;
   
-  // Find pivot satellite whose group has more 'valid' one at the end. The loop test is done at most half of 'satAvail.size' in idea case
+  // Find pivot satellite whose group has more 'valid' one at the end. The loop test is done at most half of 'sats.avail.size' in idea case
   do {
     pivot_test = Double.MAX_VALUE;
     int pivot_pos = 0;
-    for( k=0; k<satAvail.size(); k++){
+    for( k=0; k<sats.avail.size(); k++){
       if ((pivot_map & (1 << k)) == 0) {
         double d = resid.get(k);
         if( Math.abs(d)<Math.abs(pivot_test)) {
@@ -257,7 +257,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
 // use highest sat    
 //    double pivot = 0;
 //    double pivotEl = 0;
-//    for( k=0; k<satAvail.size(); k++){
+//    for( k=0; k<sats.avail.size(); k++){
 //      int satId = roverObs.getSatID(k);
 //      ObservationSet os = roverObs.getSatByID(satId);
 //      if( rover.topo[k].getElevation() > pivotEl ){
@@ -272,7 +272,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
     for (int i = 0; i < nObs; i++) {
       int satId = roverObs.getSatID(i);
 
-      if( pos[i] == null  || !satAvail.contains(satId) ) {//|| recpos.ecef==null || pos[i].ecef==null ){
+      if( sats.pos[i] == null  || !sats.avail.contains(satId) ) {//|| recpos.ecef==null || sats.pos[i].ecef==null ){
         continue;
       }
 
@@ -302,7 +302,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
       pivot = pivot_test;
     }
     
-  } while ((badSat > goodSat) && ((1 << satAvail.size()) > (pivot_map + 1)));
+  } while ((badSat > goodSat) && ((1 << sats.avail.size()) > (pivot_map + 1)));
     
     System.out.println( String.format( "* Residuals -> Adjusted Residuals (ms) - Pivot = %7.4f (ms)",  pivot/Constants.SPEED_OF_LIGHT*1000));
     
@@ -311,7 +311,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
     for (int i = 0; i < nObs; i++) {
       int satId = roverObs.getSatID(i);
 
-      if( pos[i] == null  || !satAvail.contains(satId) ) {//|| recpos.ecef==null || pos[i].ecef==null ){
+      if( sats.pos[i] == null  || !sats.avail.contains(satId) ) {//|| recpos.ecef==null || sats.pos[i].ecef==null ){
         continue;
       }
 
@@ -381,7 +381,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
 
      // compute eRes 
      rover.eRes = 0;
-     for( k=0; k<satAvail.size(); k++){
+     for( k=0; k<sats.avail.size(); k++){
        int satId = roverObs.getSatID(k);
        ObservationSet os = roverObs.getSatByID(satId);
        if( !os.isInUse() )
@@ -486,12 +486,12 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
     covENU = new SimpleMatrix(3, 3);
 
     // Number of available satellites (i.e. observations)
-    int nObsAvail = satAvail.size();
+    int nObsAvail = sats.avail.size();
     
     nObsAvail++; // add DTM / height soft constraint
 
     // Number of unknown parameters
-    int nUnknowns = satAvail.size();
+    int nUnknowns = sats.avail.size();
 
     // Least squares design matrix
     A = new SimpleMatrix( nObsAvail, nUnknowns );
@@ -529,8 +529,8 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
 
       id = roverObs.getSatID(i);
 
-      if( pos[i] == null  || !satAvail.contains(id) ) {//|| recpos.ecef==null || pos[i].ecef==null ){
-//              l.warning( "ERROR, pos[i]==null?" );
+      if( sats.pos[i] == null  || !sats.avail.contains(id) ) {//|| recpos.ecef==null || sats.pos[i].ecef==null ){
+//              l.warning( "ERROR, sats.pos[i]==null?" );
 //              this.setXYZ(0, 0, 0);
 //              return null;
         int satId = roverObs.getSatID(k);
@@ -542,7 +542,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
 
       A.set(k, k, -MODULO );
 
-      b.set(k, 0, (rover.satAppRange[i] - pos[i].getSatelliteClockError() * Constants.SPEED_OF_LIGHT) );
+      b.set(k, 0, (rover.satAppRange[i] - sats.pos[i].getSatelliteClockError() * Constants.SPEED_OF_LIGHT) );
 
       ObservationSet os = roverObs.getSatByID(id);
       
@@ -596,10 +596,10 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
     SimpleMatrix resid = y0.minus(b);
     
     double pivot = MODULO;
-    for( k=0; k<satAvail.size(); k++){
+    for( k=0; k<sats.avail.size(); k++){
       int satId = roverObs.getSatID(k);
       
-      if( !satAvail.contains(satId) || pos[k] == null || rover.topo[k] == null )
+      if( !sats.avail.contains(satId) || sats.pos[k] == null || rover.topo[k] == null )
         continue;
       
       if( Math.abs(resid.get(k)) < pivot ){
@@ -609,7 +609,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
 
     System.out.println( String.format( "* Residuals -> Adjusted Residuals (ms) - Pivot = %7.4f (ms)",  pivot/Constants.SPEED_OF_LIGHT*1000));
     
-    for( k=0; k<satAvail.size(); k++){
+    for( k=0; k<sats.avail.size(); k++){
       int satId = roverObs.getSatID(k);
       ObservationSet os = roverObs.getSatByID(satId);
       
@@ -760,7 +760,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
     covENU = new SimpleMatrix(3, 3);
 
     // Number of available satellites (i.e. observations)
-    int nObsAvail = satAvail.size();
+    int nObsAvail = sats.avail.size();
     
     nObsAvail++; // add DTM / height soft constraint
 
@@ -794,7 +794,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
 
       id = roverObs.getSatID(i);
 
-      if( pos[i] == null  || !satAvail.contains(id) ) {//|| recpos.ecef==null || pos[i].ecef==null ){
+      if( sats.pos[i] == null  || !sats.avail.contains(id) ) {//|| recpos.ecef==null || sats.pos[i].ecef==null ){
         int satId = roverObs.getSatID(k);
         ObservationSet os = roverObs.getSatByID(satId);
         os.inUse(false);
@@ -814,7 +814,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
       float doppler = roverObs.getSatByID(id).getDoppler(ObservationSet.L1);
       double rodot;
       if( Float.isNaN( doppler ))
-        rodot = -e.mult( pos[i].getSpeed() ).get(0);
+        rodot = -e.mult( sats.pos[i].getSpeed() ).get(0);
       else
         // scalar product of speed vector X unit vector
         rodot = -doppler * Constants.SPEED_OF_LIGHT/Constants.FL1;
@@ -828,8 +828,8 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
      // A.set(k, 4, rodot );
 
       // Add the approximate pseudorange value to b
-//      b.set(k, 0, (rover.satAppRange[i] - pos[i].getSatelliteClockError() * Constants.SPEED_OF_LIGHT) % MODULO );
-      b.set(k, 0, (rover.satAppRange[i] - pos[i].getSatelliteClockError() * Constants.SPEED_OF_LIGHT) );
+//      b.set(k, 0, (rover.satAppRange[i] - sats.pos[i].getSatelliteClockError() * Constants.SPEED_OF_LIGHT) % MODULO );
+      b.set(k, 0, (rover.satAppRange[i] - sats.pos[i].getSatelliteClockError() * Constants.SPEED_OF_LIGHT) );
 
       ObservationSet os = roverObs.getSatByID(id);
       
@@ -932,7 +932,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
     
 // use smallest resid
     double pivot = MODULO;
-    for( k=0; k<satAvail.size(); k++){
+    for( k=0; k<sats.avail.size(); k++){
       double d = resid.get(k);
       if( Math.abs(d)<Math.abs(pivot))
         pivot = d;
@@ -941,7 +941,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
 // use highest sat    
 //    double pivot = 0;
 //    double pivotEl = 0;
-//    for( k=0; k<satAvail.size(); k++){
+//    for( k=0; k<sats.avail.size(); k++){
 //      int satId = roverObs.getSatID(k);
 //      ObservationSet os = roverObs.getSatByID(satId);
 //      if( rover.topo[k] == null )
@@ -955,7 +955,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
     
     System.out.println( String.format( "* Residuals -> Adjusted Residuals (ms) - Pivot = %7.4f (ms)",  pivot/Constants.SPEED_OF_LIGHT*1000));
     
-    for( k=0; k<satAvail.size(); k++){
+    for( k=0; k<sats.avail.size(); k++){
       int satId = roverObs.getSatID(k);
       ObservationSet os = roverObs.getSatByID(satId);
       

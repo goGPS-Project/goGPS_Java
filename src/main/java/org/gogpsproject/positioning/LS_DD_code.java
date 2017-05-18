@@ -43,7 +43,7 @@ public class LS_DD_code extends Core {
     covENU = new SimpleMatrix(3, 3);
 
     // Number of available satellites (i.e. observations)
-    int nObsAvail = satAvail.size();
+    int nObsAvail = sats.avail.size();
 
     // Full design matrix for DOP computation
     Adop = new SimpleMatrix(nObsAvail, 3);
@@ -81,36 +81,36 @@ public class LS_DD_code extends Core {
     int d = 0;
 
     // Pivot satellite index
-    int pivotId = roverObs.getSatID(pivot);
-    char satType = roverObs.getGnssType(pivot);      
+    int pivotId = roverObs.getSatID(sats.pivot);
+    char satType = roverObs.getGnssType(sats.pivot);      
     
     // Store rover-pivot and master-pivot observed pseudoranges
     double roverPivotObs = roverObs.getSatByIDType(pivotId, satType).getPseudorange(goGPS.getFreq());
     double masterPivotObs = masterObs.getSatByIDType(pivotId, satType).getPseudorange(goGPS.getFreq());
 
     // Rover-pivot approximate pseudoranges
-    SimpleMatrix diffRoverPivot = rover.diffSat[pivot];
-    double roverPivotAppRange   = rover.satAppRange[pivot];
+    SimpleMatrix diffRoverPivot = rover.diffSat[sats.pivot];
+    double roverPivotAppRange   = rover.satAppRange[sats.pivot];
 
     // Master-pivot approximate pseudoranges
-    double masterPivotAppRange = master.satAppRange[pivot];
+    double masterPivotAppRange = master.satAppRange[sats.pivot];
 
     // Computation of rover-pivot troposphere correction
-    double roverPivotTropoCorr = rover.satTropoCorr[pivot];
+    double roverPivotTropoCorr = rover.satTropoCorr[sats.pivot];
 
     // Computation of master-pivot troposphere correction
-    double masterPivotTropoCorr = master.satTropoCorr[pivot];;
+    double masterPivotTropoCorr = master.satTropoCorr[sats.pivot];;
 
     // Computation of rover-pivot ionosphere correction
-    double roverPivotIonoCorr = rover.satIonoCorr[pivot];
+    double roverPivotIonoCorr = rover.satIonoCorr[sats.pivot];
 
     // Computation of master-pivot ionosphere correction
-    double masterPivotIonoCorr = master.satIonoCorr[pivot];
+    double masterPivotIonoCorr = master.satIonoCorr[sats.pivot];
 
     // Compute rover-pivot and master-pivot weights
-    double roverPivotWeight = computeWeight(rover.topo[pivot].getElevation(),
+    double roverPivotWeight = computeWeight(rover.topo[sats.pivot].getElevation(),
         roverObs.getSatByIDType(pivotId, satType).getSignalStrength(goGPS.getFreq()));
-    double masterPivotWeight = computeWeight(master.topo[pivot].getElevation(),
+    double masterPivotWeight = computeWeight(master.topo[sats.pivot].getElevation(),
         masterObs.getSatByIDType(pivotId, satType).getSignalStrength(goGPS.getFreq()));
     Q.set(roverPivotWeight + masterPivotWeight);
 
@@ -124,8 +124,8 @@ public class LS_DD_code extends Core {
       satType = roverObs.getGnssType(i);
       String checkAvailGnss = String.valueOf(satType) + String.valueOf(id);
 
-      if (pos[i] !=null && gnssAvail.contains(checkAvailGnss) && i != pivot) {
-//      if (pos[i] !=null && satAvail.contains(id) && satTypeAvail.contains(satType) && i != pivot) {
+      if (sats.pos[i] !=null && sats.gnssAvail.contains(checkAvailGnss) && i != sats.pivot) {
+//      if (sats.pos[i] !=null && sats.avail.contains(id) && satTypeAvail.contains(satType) && i != pivot) {
 
         // Fill in one row in the design matrix
         A.set(k, 0, rover.diffSat[i].get(0) / rover.satAppRange[i]
@@ -164,8 +164,8 @@ public class LS_DD_code extends Core {
       }
 
       // Design matrix for DOP computation
-      if (pos[i] !=null && gnssAvail.contains(checkAvailGnss)) {
-//      if (pos[i] != null && satAvail.contains(id) && satTypeAvail.contains(satType)) {
+      if (sats.pos[i] !=null && sats.gnssAvail.contains(checkAvailGnss)) {
+//      if (sats.pos[i] != null && sats.avail.contains(id) && satTypeAvail.contains(satType)) {
         // Fill in one row in the design matrix (complete one, for DOP)
         Adop.set(d, 0, rover.diffSat[i].get(0) / rover.satAppRange[i]); /* X */
         Adop.set(d, 1, rover.diffSat[i].get(1) / rover.satAppRange[i]); /* Y */

@@ -21,7 +21,7 @@ public class KF_SA_code_phase extends KalmanFilter {
     int nObs = roverObs.getNumSat();
 
     // Number of available satellites (i.e. observations)
-    int nObsAvail = satAvail.size();
+    int nObsAvail = sats.avail.size();
 
     // Matrix containing parameters obtained from the linearization of the observation equations
     SimpleMatrix A = new SimpleMatrix(nObsAvail, 3);
@@ -47,7 +47,7 @@ public class KF_SA_code_phase extends KalmanFilter {
       char satType = roverObs.getGnssType(i);
       String checkAvailGnss = String.valueOf(satType) + String.valueOf(id);
 
-      if (pos[i]!=null && gnssAvail.contains(checkAvailGnss)) {
+      if (sats.pos[i]!=null && sats.gnssAvail.contains(checkAvailGnss)) {
 
         // Compute parameters obtained from linearization of observation equations
         double alphaX = rover.diffSat[i].get(0) / rover.satAppRange[i];
@@ -69,11 +69,11 @@ public class KF_SA_code_phase extends KalmanFilter {
         double appRangeCode;
         double appRangePhase;
         if( goGPS.getFreq() == 0) {
-          appRangeCode = rover.satAppRange[i] + Constants.SPEED_OF_LIGHT*(rover.receiverClockError - pos[i].getSatelliteClockError()) + rover.satTropoCorr[i] + rover.satIonoCorr[i];
-          appRangePhase = rover.satAppRange[i] + Constants.SPEED_OF_LIGHT*(rover.receiverClockError - pos[i].getSatelliteClockError()) + rover.satTropoCorr[i] - rover.satIonoCorr[i];
+          appRangeCode = rover.satAppRange[i] + Constants.SPEED_OF_LIGHT*(rover.receiverClockError - sats.pos[i].getSatelliteClockError()) + rover.satTropoCorr[i] + rover.satIonoCorr[i];
+          appRangePhase = rover.satAppRange[i] + Constants.SPEED_OF_LIGHT*(rover.receiverClockError - sats.pos[i].getSatelliteClockError()) + rover.satTropoCorr[i] - rover.satIonoCorr[i];
         } else {
-          appRangeCode = rover.satAppRange[i] + Constants.SPEED_OF_LIGHT*(rover.receiverClockError - pos[i].getSatelliteClockError()) + rover.satTropoCorr[i] + rover.satIonoCorr[i] * Math.pow(roverObs.getSatByIDType(id, satType).getWavelength(1)/roverObs.getSatByIDType(id, satType).getWavelength(0), 2);
-          appRangePhase = rover.satAppRange[i] + Constants.SPEED_OF_LIGHT*(rover.receiverClockError - pos[i].getSatelliteClockError()) + rover.satTropoCorr[i] - rover.satIonoCorr[i] * Math.pow(roverObs.getSatByIDType(id, satType).getWavelength(1)/roverObs.getSatByIDType(id, satType).getWavelength(0), 2);
+          appRangeCode = rover.satAppRange[i] + Constants.SPEED_OF_LIGHT*(rover.receiverClockError - sats.pos[i].getSatelliteClockError()) + rover.satTropoCorr[i] + rover.satIonoCorr[i] * Math.pow(roverObs.getSatByIDType(id, satType).getWavelength(1)/roverObs.getSatByIDType(id, satType).getWavelength(0), 2);
+          appRangePhase = rover.satAppRange[i] + Constants.SPEED_OF_LIGHT*(rover.receiverClockError - sats.pos[i].getSatelliteClockError()) + rover.satTropoCorr[i] - rover.satIonoCorr[i] * Math.pow(roverObs.getSatByIDType(id, satType).getWavelength(1)/roverObs.getSatByIDType(id, satType).getWavelength(0), 2);
         }
 
         // Fill in one row in the design matrix (for code)
@@ -89,8 +89,8 @@ public class KF_SA_code_phase extends KalmanFilter {
         double CnnBase = Cnn.get(k, k);
         Cnn.set(k, k, CnnBase + Math.pow(goGPS.getStDevCode(roverObs.getSatByIDType(id, satType), goGPS.getFreq()), 2) * roverSatWeight);
 
-        if (gnssAvail.contains(checkAvailGnss)){
-//        if (satAvailPhase.contains(id) && satTypeAvailPhase.contains(satType)) {
+        if (sats.gnssAvail.contains(checkAvailGnss)){
+//        if (sats.availPhase.contains(id) && sats.typeAvailPhase.contains(satType)) {
 
           // Fill in one row in the design matrix (for phase)
           H.set(nObsAvail + p, 0, alphaX);
@@ -139,10 +139,10 @@ public class KF_SA_code_phase extends KalmanFilter {
     int nObs = roverObs.getNumSat();
   
     // Number of available satellites (i.e. observations)
-    int nObsAvail = satAvail.size();
+    int nObsAvail = sats.avail.size();
   
     // Number of available satellites (i.e. observations) with phase
-    int nObsAvailPhase = satAvailPhase.size();
+    int nObsAvailPhase = sats.availPhase.size();
   
     // Number of unknown parameters
     int nUnknowns = 4 + satAmb.size();
@@ -212,7 +212,7 @@ public class KF_SA_code_phase extends KalmanFilter {
       char satType = roverObs.getGnssType(i);
       String checkAvailGnss = String.valueOf(satType) + String.valueOf(id);
   
-      if (pos[i] !=null && gnssAvail.contains(checkAvailGnss)) {
+      if (sats.pos[i] !=null && sats.gnssAvail.contains(checkAvailGnss)) {
   
         // Fill in one row in the design matrix
         A.set(k, 0, rover.diffSat[i].get(0) / rover.satAppRange[i]); /* X */
@@ -222,7 +222,7 @@ public class KF_SA_code_phase extends KalmanFilter {
         A.set(k, 3, 1); /* clock error */
   
         // Add the approximate pseudorange value to b
-        b.set(k, 0, rover.satAppRange[i] - pos[i].getSatelliteClockError() * Constants.SPEED_OF_LIGHT);
+        b.set(k, 0, rover.satAppRange[i] - sats.pos[i].getSatelliteClockError() * Constants.SPEED_OF_LIGHT);
   
         // Add the observed pseudorange value to y0
         y0.set(k, 0, roverObs.getSatByIDType(id, satType).getPseudorange(goGPS.getFreq()));
@@ -247,7 +247,7 @@ public class KF_SA_code_phase extends KalmanFilter {
       char satType = roverObs.getGnssType(i);
       String checkAvailGnss = String.valueOf(satType) + String.valueOf(id);
   
-      if (pos[i] !=null && gnssAvail.contains(checkAvailGnss)) {
+      if (sats.pos[i] !=null && sats.gnssAvail.contains(checkAvailGnss)) {
   
         // Fill in one row in the design matrix
         A.set(k, 0, rover.diffSat[i].get(0) / rover.satAppRange[i]); /* X */
@@ -266,7 +266,7 @@ public class KF_SA_code_phase extends KalmanFilter {
         }
   
         // Add the approximate pseudorange value to b
-        b.set(k, 0, rover.satAppRange[i] - pos[i].getSatelliteClockError() * Constants.SPEED_OF_LIGHT);
+        b.set(k, 0, rover.satAppRange[i] - sats.pos[i].getSatelliteClockError() * Constants.SPEED_OF_LIGHT);
   
         // Fill in troposphere and ionosphere corrections
         tropoCorr.set(k, 0, rover.satTropoCorr[i]);
@@ -277,7 +277,7 @@ public class KF_SA_code_phase extends KalmanFilter {
         Qphase.set(p, p, Qphase.get(p, p) + Math.pow(goGPS.getStDevPhase(), 2) * roverSatWeight);
         int r = 1;
         for (int m = i+1; m < nObs; m++) {
-          if (pos[m] !=null && satAvailPhase.contains(pos[m].getSatID())) {
+          if (sats.pos[m] !=null && sats.availPhase.contains(sats.pos[m].getSatID())) {
             Qphase.set(p, p+r, 0);
             Qphase.set(p+r, p, 0);
             r++;
@@ -349,8 +349,8 @@ public class KF_SA_code_phase extends KalmanFilter {
     for (int i = 0; i < satOld.size(); i++) {
 
       // Set ambiguity of lost satellites to zero
-//      if (!gnssAvailPhase.contains(satOld.get(i))) {
-      if (!satAvailPhase.contains(satOld.get(i)) && satTypeAvailPhase.contains(satOld.get(i))) {
+//      if (!sats.gnssAvailPhase.contains(satOld.get(i))) {
+      if (!sats.availPhase.contains(satOld.get(i)) && sats.typeAvailPhase.contains(satOld.get(i))) {
 
         if(goGPS.isDebug()) System.out.println("Lost satellite "+satOld.get(i));
 
@@ -359,13 +359,13 @@ public class KF_SA_code_phase extends KalmanFilter {
     }
 
     // Check if new satellites are available since the previous epoch
-    for (int i = 0; i < pos.length; i++) {
+    for (int i = 0; i < sats.pos.length; i++) {
 
-      if (pos[i] != null && satAvailPhase.contains(pos[i].getSatID()) && satTypeAvailPhase.contains(pos[i].getSatType())
-          && !satOld.contains(pos[i].getSatID()) && satTypeOld.contains(pos[i].getSatType())) {
+      if (sats.pos[i] != null && sats.availPhase.contains(sats.pos[i].getSatID()) && sats.typeAvailPhase.contains(sats.pos[i].getSatType())
+          && !satOld.contains(sats.pos[i].getSatID()) && satTypeOld.contains(sats.pos[i].getSatType())) {
 
-        newSatellites.add(pos[i].getSatID());
-        if(goGPS.isDebug()) System.out.println("New satellite "+pos[i].getSatID());
+        newSatellites.add(sats.pos[i].getSatID());
+        if(goGPS.isDebug()) System.out.println("New satellite "+sats.pos[i].getSatID());
       }
     }
 
@@ -381,7 +381,7 @@ public class KF_SA_code_phase extends KalmanFilter {
       char satType = roverObs.getGnssType(i);
       String checkAvailGnss = String.valueOf(satType) + String.valueOf(satID);
 
-      if (gnssAvailPhase.contains(checkAvailGnss)) {
+      if (sats.gnssAvailPhase.contains(checkAvailGnss)) {
 
         // cycle slip detected by loss of lock indicator (disabled)
         lossOfLockCycleSlipRover = roverObs.getSatByIDType(satID, satType).isPossibleCycleSlip(goGPS.getFreq());

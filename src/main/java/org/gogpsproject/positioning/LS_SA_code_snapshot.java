@@ -84,7 +84,7 @@ public class LS_SA_code_snapshot extends Core {
     int nObs = roverObs.getNumSat();
 
     // Allocate an array to store GPS satellite positions
-    pos = new SatellitePosition[nObs];
+    sats.pos = new SatellitePosition[nObs];
 
     // Allocate an array to store receiver-satellite vectors
     rover.diffSat = new SimpleMatrix[nObs];
@@ -97,14 +97,14 @@ public class LS_SA_code_snapshot extends Core {
     rover.satIonoCorr = new double[nObs];
 
     // Create a list for available satellites after cutoff
-    satAvail = new ArrayList<Integer>(0);
-    satTypeAvail = new ArrayList<Character>(0);
-    gnssAvail = new ArrayList<String>(0);
+    sats.avail = new ArrayList<Integer>(0);
+    sats.typeAvail = new ArrayList<Character>(0);
+    sats.gnssAvail = new ArrayList<String>(0);
 
     // Create a list for available satellites with phase
-    satAvailPhase = new ArrayList<Integer>(0);
-    satTypeAvailPhase = new ArrayList<Character>(0);
-    gnssAvailPhase = new ArrayList<String>(0);
+    sats.availPhase = new ArrayList<Integer>(0);
+    sats.typeAvailPhase = new ArrayList<Character>(0);
+    sats.gnssAvailPhase = new ArrayList<String>(0);
     
     // Allocate array of topocentric coordinates
     rover.topo = new TopocentricCoordinates[nObs];
@@ -120,17 +120,17 @@ public class LS_SA_code_snapshot extends Core {
       ObservationSet os = roverObs.getSatByID(id);
       char satType = roverObs.getGnssType(i);
 
-      pos[i] = goGPS.getNavigation()
+      sats.pos[i] = goGPS.getNavigation()
           .getGpsSatPosition( roverObs, id, 'G', rover.getReceiverClockError() );
       
-      if(  pos[i] == SatellitePosition.UnhealthySat ) {
-        pos[i] = null;
+      if(  sats.pos[i] == SatellitePosition.UnhealthySat ) {
+        sats.pos[i] = null;
         continue;
       }
       
-      if( pos[i] == null  || Double.isNaN(pos[i].getX() )) {
+      if( sats.pos[i] == null  || Double.isNaN(sats.pos[i].getX() )) {
 //        if(goGPS.isDebug()) System.out.println("Not useful sat "+roverObs.getSatID(i));
-        if( i == 0 || satAvail.size()> 0 )
+        if( i == 0 || sats.avail.size()> 0 )
           continue;
         else {
           rover.status = Status.EphNotFound;
@@ -142,7 +142,7 @@ public class LS_SA_code_snapshot extends Core {
       double code = os.getCodeC(0);
 
       // Compute rover-satellite approximate pseudorange
-      rover.diffSat[i] = rover.minusXYZ(pos[i]); // negative, for LOS vectors
+      rover.diffSat[i] = rover.minusXYZ(sats.pos[i]); // negative, for LOS vectors
 
       rover.satAppRange[i] = Math.sqrt(Math.pow(rover.diffSat[i].get(0), 2)
                                     + Math.pow(rover.diffSat[i].get(1), 2)
@@ -156,14 +156,14 @@ public class LS_SA_code_snapshot extends Core {
         os.setCodeC(0, rover.satAppRange[i]);
   
         // Compute GPS satellite positions getGpsByIdx(idx).getSatType()
-        pos[i] = goGPS.getNavigation().getGpsSatPosition(roverObs, id, 'G', rover.getReceiverClockError());
+        sats.pos[i] = goGPS.getNavigation().getGpsSatPosition(roverObs, id, 'G', rover.getReceiverClockError());
         
         // restore code observation
         os.setCodeC(0, code);
   
-        if( pos[i] == null  ) {
+        if( sats.pos[i] == null  ) {
   //        if(debug) System.out.println("Not useful sat "+roverObs.getSatID(i));
-          if( (i== 0) || satAvail.size()> 0 )
+          if( (i== 0) || sats.avail.size()> 0 )
             continue;
           else {
             rover.status = Status.EphNotFound;
@@ -172,7 +172,7 @@ public class LS_SA_code_snapshot extends Core {
         }
       }
       // Compute rover-satellite approximate pseudorange
-      rover.diffSat[i] = rover.minusXYZ(pos[i]);
+      rover.diffSat[i] = rover.minusXYZ(sats.pos[i]);
       rover.satAppRange[i] = Math.sqrt(Math.pow(rover.diffSat[i].get(0), 2)
                           + Math.pow(rover.diffSat[i].get(1), 2)
                           + Math.pow(rover.diffSat[i].get(2), 2));
@@ -187,7 +187,7 @@ public class LS_SA_code_snapshot extends Core {
 
       // Compute azimuth, elevation and distance for each satellite
       rover.topo[i] = new TopocentricCoordinates();
-      rover.topo[i].computeTopocentric( rover, pos[i]);
+      rover.topo[i].computeTopocentric( rover, sats.pos[i]);
 
       // Correct approximate pseudorange for troposphere
       rover.satTropoCorr[i] = computeTroposphereCorrection(rover.topo[i].getElevation(), rover.getGeodeticHeight());
@@ -201,15 +201,15 @@ public class LS_SA_code_snapshot extends Core {
       // Check if satellite elevation is higher than cutoff
       if( rover.topo[i].getElevation() >= cutoff ) {
           
-        satAvail.add(id);
-        satTypeAvail.add(satType);
-        gnssAvail.add(String.valueOf(satType) + String.valueOf(id));
+        sats.avail.add(id);
+        sats.typeAvail.add(satType);
+        sats.gnssAvail.add(String.valueOf(satType) + String.valueOf(id));
   
         // Check if also phase is available
         if (!Double.isNaN(roverObs.getSatByIDType(id, 'G').getPhaseCycles(goGPS.getFreq()))) {
-          satAvailPhase.add(id);
-          satTypeAvailPhase.add('G');
-          gnssAvailPhase.add(String.valueOf('G') + String.valueOf(id));       
+          sats.availPhase.add(id);
+          sats.typeAvailPhase.add('G');
+          sats.gnssAvailPhase.add(String.valueOf('G') + String.valueOf(id));       
          }
       }
       else{
@@ -284,7 +284,7 @@ public class LS_SA_code_snapshot extends Core {
         return null;
       }
     
-      if( pos[savedIndex]==null || rover.topo[savedIndex] == null  || !satAvail.contains(pivotSatId)) {
+      if( sats.pos[savedIndex]==null || rover.topo[savedIndex] == null  || !sats.avail.contains(pivotSatId)) {
         if( goGPS.isDebug()) System.out.println("\r\nCan't use pivot with satId " + pivotSatId );
         return null; 
       }
@@ -321,7 +321,7 @@ public class LS_SA_code_snapshot extends Core {
       for (int i = 0; i < nObs; i++) {
         int satId = roverObs.getSatID(i);
 
-        if (pos[i]==null || !satAvail.contains(satId)) 
+        if (sats.pos[i]==null || !sats.avail.contains(satId)) 
           continue; // i loop
       
         ObservationSet os = roverObs.getSatByID(satId);
@@ -341,7 +341,7 @@ public class LS_SA_code_snapshot extends Core {
         // scalar product of speed vector X unit vector
         float doppler = roverObs.getSatByID(satId).getDoppler(ObservationSet.L1);
         double rodot;
-        double rodotSatSpeed   = -e.mult( pos[i].getSpeed() ).get(0);
+        double rodotSatSpeed   = -e.mult( sats.pos[i].getSpeed() ).get(0);
         double dopplerSatSpeed = -rodotSatSpeed*Constants.FL1/Constants.SPEED_OF_LIGHT;
 
         if( Float.isNaN( doppler )){
@@ -371,7 +371,7 @@ public class LS_SA_code_snapshot extends Core {
         A.set(k, 4, rodot );
   
         // Add the approximate pseudorange value to b
-        b.set(k, 0, (rover.satAppRange[i] - pos[i].getSatelliteClockError() * Constants.SPEED_OF_LIGHT) % GoGPS.MODULO1MS );
+        b.set(k, 0, (rover.satAppRange[i] - sats.pos[i].getSatelliteClockError() * Constants.SPEED_OF_LIGHT) % GoGPS.MODULO1MS );
   
         // Add the clock-corrected observed pseudorange value to y0
   //      y0.set(k, 0, roverObs.getSatByIDType(id, satType).getPseudorange(goGPS.getFreq()));
@@ -469,7 +469,7 @@ public class LS_SA_code_snapshot extends Core {
             Integer satId = roverObs.getSatID(k);
             os = roverObs.getSatByID(satId);
       
-            if( !satAvail.contains(satId) || pos[k] == null || rover.topo[k] == null )
+            if( !sats.avail.contains(satId) || sats.pos[k] == null || rover.topo[k] == null )
               continue;
       
             os.el = rover.topo[k].getElevation();
@@ -565,7 +565,7 @@ public class LS_SA_code_snapshot extends Core {
        // average eRes 
        SimpleMatrix eResM = A.mult(x).minus(resid);
        rover.eRes = 0;
-       for( k=0; k<satAvail.size(); k++){
+       for( k=0; k<sats.avail.size(); k++){
          int satId = roverObs.getSatID(k);
          ObservationSet os = roverObs.getSatByID(satId);
          os.eRes = Math.abs( eResM.get(k));

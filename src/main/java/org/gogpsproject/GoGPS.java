@@ -20,8 +20,6 @@
  */
 package org.gogpsproject;
 
-import static org.gogpsproject.positioning.LS_SA_code.*;
-
 import java.util.*;
 
 import org.gogpsproject.positioning.Core;
@@ -35,6 +33,7 @@ import org.gogpsproject.positioning.LS_SA_code_snapshot;
 import org.gogpsproject.positioning.LS_SA_dopplerPos;
 import org.gogpsproject.positioning.MasterPosition;
 import org.gogpsproject.positioning.ReceiverPosition;
+import org.gogpsproject.positioning.Satellites;
 
 /**
  * The Class GoGPS.
@@ -171,6 +170,9 @@ public class GoGPS implements Runnable{
 	 /** The master position */
   private final MasterPosition masterPos;
 
+  /** Satellite State Information */
+  private final Satellites satellites;
+  
 	/** The rover calculated position is valid */
 	private boolean validPosition = false;
 
@@ -225,6 +227,10 @@ public class GoGPS implements Runnable{
     masterPos.cloneInto(masterPos);
   }
 
+  public Satellites getSatellites(){
+    return satellites;
+  }
+  
   /**
    * Gets the freq.
    *
@@ -695,7 +701,7 @@ public class GoGPS implements Runnable{
   }
 
   /**
-	 * Instantiates a new go gps.
+	 * Instantiates a new GoGPS.
 	 *
 	 * @param navigation the navigation
 	 * @param roverIn the rover in
@@ -715,6 +721,7 @@ public class GoGPS implements Runnable{
 		
     roverPos = new ReceiverPosition();
     masterPos = new MasterPosition();
+    satellites = new Satellites();
 	}
 	
 	public GoGPS(NavigationProducer navigation, ObservationsProducer roverIn){
@@ -1360,12 +1367,6 @@ public class GoGPS implements Runnable{
   }
   
   public RoverPosition runCodeStandaloneCoarseTime( final double MODULO ) throws Exception {
-    //java.util.logging.Logger l = java.util.logging.Logger.getLogger(GoGPS.class.getName());
-    final double POS_TOL = 1.0;    // meters
-    final double TG_TOL = 1;  // milliseconds
-//    final int MINSV = 5;
-//    long MAX_DIST_UPDATE = 10000; // m
-//    long MAX_TIME_UPDATE = 35; // s
     long index = 0;
     Observations obsR = null;
     Time refTime;

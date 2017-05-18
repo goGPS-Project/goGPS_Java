@@ -46,21 +46,21 @@ public abstract class KalmanFilter extends Core {
     if (masterObs != null)
       master.dopplerPredPhase = new double[32];
 
-    for (int i = 0; i < satAvailPhase.size(); i++) {
+    for (int i = 0; i < sats.availPhase.size(); i++) {
 
-      int satID = satAvailPhase.get(i);
-      char satType = satTypeAvailPhase.get(i);
+      int satID = sats.availPhase.get(i);
+      char satType = sats.typeAvailPhase.get(i);
       
       double roverPhase = roverObs.getSatByIDType(satID, satType).getPhaseCycles(goGPS.getFreq());
       float roverDoppler = roverObs.getSatByIDType(satID, satType).getDoppler(goGPS.getFreq());
       if (!Double.isNaN(roverPhase) && !Float.isNaN(roverDoppler))
-        rover.setDopplerPredictedPhase(satAvailPhase.get(i), roverPhase - roverDoppler);
+        rover.setDopplerPredictedPhase(sats.availPhase.get(i), roverPhase - roverDoppler);
       
       if (masterObs != null) {
         double masterPhase = masterObs.getSatByIDType(satID, satType).getPhaseCycles(goGPS.getFreq());
         float masterDoppler = masterObs.getSatByIDType(satID, satType).getDoppler(goGPS.getFreq());
         if (!Double.isNaN(masterPhase) && !Float.isNaN(masterDoppler))
-          master.setDopplerPredictedPhase(satAvailPhase.get(i), masterPhase - masterDoppler);
+          master.setDopplerPredictedPhase(sats.availPhase.get(i), masterPhase - masterDoppler);
       }
     }
   }
@@ -115,7 +115,7 @@ public abstract class KalmanFilter extends Core {
       else
         selectSatellitesStandalone(roverObs);
   
-      if (satAvail.size() >= 4) {
+      if (sats.avail.size() >= 4) {
         if (masterObs != null)
           new LS_DD_code(goGPS).codeDoubleDifferences( roverObs, masterObs, masterPos);
         else
@@ -128,9 +128,9 @@ public abstract class KalmanFilter extends Core {
   
     // Estimate phase ambiguities
     ArrayList<Integer> newSatellites = new ArrayList<Integer>(0);
-    newSatellites.addAll(satAvailPhase);
+    newSatellites.addAll(sats.availPhase);
     
-    estimateAmbiguities( roverObs, masterObs, masterPos, newSatellites, pivot, true);
+    estimateAmbiguities( roverObs, masterObs, masterPos, newSatellites, sats.pivot, true);
   
     // Compute predicted phase ranges based on Doppler observations
     computeDopplerPredictedPhase(roverObs, masterObs);
@@ -144,7 +144,7 @@ public abstract class KalmanFilter extends Core {
     KFprediction = T.mult(KFstate);
   
     // Covariance matrix of the initial state
-    if (positionCovariance != null) {
+    if(positionCovariance != null) {
       Cee.set(0, 0, positionCovariance.get(0, 0));
       Cee.set(i1 + 1, i1 + 1, positionCovariance.get(1, 1));
       Cee.set(i2 + 1, i2 + 1, positionCovariance.get(2, 2));
@@ -177,13 +177,13 @@ public abstract class KalmanFilter extends Core {
     rover.setXYZ(KFprediction.get(0), KFprediction.get(i1 + 1), KFprediction.get(i2 + 1));
 
     // Save previous list of available satellites with phase
-    satOld = satAvailPhase;
-    satTypeOld = satTypeAvailPhase;
+    satOld = sats.availPhase;
+    satTypeOld = sats.typeAvailPhase;
 
-    // Save the ID and index of the previous pivot satellite
+    // Save the ID and index of the previous sats.pivot satellite
     try {
-      oldPivotId   = pos[pivot].getSatID();
-      oldPivotType = pos[pivot].getSatType();
+      oldPivotId   = sats.pos[sats.pivot].getSatID();
+      oldPivotType = sats.pos[sats.pivot].getSatType();
     } catch(ArrayIndexOutOfBoundsException e) {
       oldPivotId = 0;
     }
@@ -191,7 +191,7 @@ public abstract class KalmanFilter extends Core {
     // Select satellites for standalone
     selectSatellitesStandalone(roverObs);
 
-    if( satAvail.size() >= 4)
+    if( sats.avail.size() >= 4)
       // Estimate receiver clock error by code stand-alone
       new LS_SA_code(goGPS).codeStandalone( roverObs, true, false);
 
@@ -204,17 +204,17 @@ public abstract class KalmanFilter extends Core {
     }
 
     // Number of observations (code and phase)
-    int nObs = satAvail.size();
+    int nObs = sats.avail.size();
 
     // Double differences with respect to pivot satellite reduce number of observations by 1
     nObs = nObs - obsReduction;
 
-    if( satAvailPhase.size() != 0) {
+    if( sats.availPhase.size() != 0) {
       // Add number of satellites with phase (minus 1 for double diff)
-      nObs = nObs + satAvailPhase.size() - obsReduction;
+      nObs = nObs + sats.availPhase.size() - obsReduction;
     }
 
-    if( satAvail.size() >= goGPS.getMinNumSat()) {
+    if( sats.avail.size() >= goGPS.getMinNumSat()) {
       // Allocate transformation matrix
       H = new SimpleMatrix(nObs, o3 + nN);
 

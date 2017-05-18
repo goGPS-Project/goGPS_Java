@@ -34,7 +34,7 @@ public class LS_SA_code extends Core {
     SimpleMatrix covENU = new SimpleMatrix(3, 3);
 
     // Number of available satellites (i.e. observations)
-    int nObsAvail = satAvail.size();
+    int nObsAvail = sats.avail.size();
 
     // Least squares design matrix
     SimpleMatrix A = new SimpleMatrix(nObsAvail, nUnknowns);
@@ -72,8 +72,8 @@ public class LS_SA_code extends Core {
       char satType = roverObs.getGnssType(i);   
       String checkAvailGnss = String.valueOf(satType) + String.valueOf(id);
       
-      if( pos[i]!=null && gnssAvail.contains(checkAvailGnss)) {
-//      if (pos[i]!=null && satAvail.contains(id)  && satTypeAvail.contains(satType)) {
+      if( sats.pos[i]!=null && sats.gnssAvail.contains(checkAvailGnss)) {
+//      if (sats.pos[i]!=null && sats.avail.contains(id)  && satTypeAvail.contains(satType)) {
 //        System.out.println("####" + checkAvailGnss  + "####");
 
         // Fill in one row in the design matrix
@@ -86,7 +86,7 @@ public class LS_SA_code extends Core {
         }
 
         // Add the approximate pseudorange value to b
-        b.set(k, 0, rover.satAppRange[i] - pos[i].getSatelliteClockError() * Constants.SPEED_OF_LIGHT);
+        b.set(k, 0, rover.satAppRange[i] - sats.pos[i].getSatelliteClockError() * Constants.SPEED_OF_LIGHT);
 
         // Add the clock-corrected observed pseudorange value to y0
         y0.set(k, 0, roverObs.getSatByIDType(id, satType).getPseudorange(goGPS.getFreq()));

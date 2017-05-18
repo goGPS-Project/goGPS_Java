@@ -44,7 +44,7 @@ public class Bancroft extends Core {
     int nObs = obs.getNumSat();
 
     // Allocate an array to store GPS satellite positions
-    pos = new SatellitePosition[nObs];
+    sats.pos = new SatellitePosition[nObs];
 
     // Allocate a 2D array to store Bancroft matrix data
     double[][] dataB = new double[nObs][4];
@@ -58,23 +58,23 @@ public class Bancroft extends Core {
       char satType = obs.getGnssType(i);
       
       // Create new satellite position object
-      //pos[i] = new SatellitePosition(obs.getRefTime().getGpsTime(), obs.getGpsSatID(i), obs.getGpsByID(id).getPseudorange(goGPS.getFreq()));
+      //sats.pos[i] = new SatellitePosition(obs.getRefTime().getGpsTime(), obs.getGpsSatID(i), obs.getGpsByID(id).getPseudorange(goGPS.getFreq()));
 
       // Compute clock-corrected satellite position
-      //pos[i].computePositionGps(goGPS.getNavigation());
+      //sats.pos[i].computePositionGps(goGPS.getNavigation());
     
       double obsPseudorange = obs.getSatByIDType(id, satType).getPseudorange(goGPS.getFreq());
-      pos[i] = goGPS.getNavigation().getGpsSatPosition(obs, id, satType, rover.getReceiverClockError());
+      sats.pos[i] = goGPS.getNavigation().getGpsSatPosition(obs, id, satType, rover.getReceiverClockError());
     
       try {
-//      System.out.println("SatPos "+obs.getGpsSatID(i)+" x:"+pos[i].getX()+" y:"+pos[i].getY()+" z:"+pos[i].getZ());
+//      System.out.println("SatPos "+obs.getGpsSatID(i)+" x:"+sats.pos[i].getX()+" y:"+sats.pos[i].getY()+" z:"+sats.pos[i].getZ());
         // Store Bancroft matrix data (X, Y, Z and clock-corrected
         // range)
-        if(pos[i]!=null){
-          dataB[p][0] = pos[i].getX();
-          dataB[p][1] = pos[i].getY();
-          dataB[p][2] = pos[i].getZ();
-          dataB[p][3] = obsPseudorange + Constants.SPEED_OF_LIGHT * pos[i].getSatelliteClockError();
+        if(sats.pos[i]!=null){
+          dataB[p][0] = sats.pos[i].getX();
+          dataB[p][1] = sats.pos[i].getY();
+          dataB[p][2] = sats.pos[i].getZ();
+          dataB[p][3] = obsPseudorange + Constants.SPEED_OF_LIGHT * sats.pos[i].getSatelliteClockError();
           p++;
         }else{
           if(goGPS.isDebug()) System.out.println("Error: satellite positions not computed for satID:"+obs.getSatID(i));

@@ -29,7 +29,7 @@ public class KF_DD_code_phase extends KalmanFilter {
     int nObs = roverObs.getNumSat();
 
     // Number of available satellites (i.e. observations)
-    int nObsAvail = satAvail.size();
+    int nObsAvail = sats.avail.size();
 
     // Double differences with respect to pivot satellite reduce observations by 1
     nObsAvail--;
@@ -50,8 +50,8 @@ public class KF_DD_code_phase extends KalmanFilter {
     int p = 0;
 
     // Pivot satellite ID
-    int pivotId = roverObs.getSatID(pivot);
-    char satType = roverObs.getGnssType(pivot);
+    int pivotId = roverObs.getSatID(sats.pivot);
+    char satType = roverObs.getGnssType(sats.pivot);
 
     // Store rover-pivot and master-pivot observed pseudoranges
     double roverPivotCodeObs = roverObs.getSatByIDType(pivotId, satType).getPseudorange(goGPS.getFreq());
@@ -62,23 +62,23 @@ public class KF_DD_code_phase extends KalmanFilter {
     double masterPivotPhaseObs = masterObs.getSatByIDType(pivotId, satType).getPhaserange(goGPS.getFreq());
 
     // Rover-pivot approximate pseudoranges
-    SimpleMatrix diffRoverPivot = rover.diffSat[pivot];
-    double roverPivotAppRange = rover.satAppRange[pivot];
+    SimpleMatrix diffRoverPivot = rover.diffSat[sats.pivot];
+    double roverPivotAppRange = rover.satAppRange[sats.pivot];
 
     // Master-pivot approximate pseudoranges
-    double masterPivotAppRange = master.satAppRange[pivot];
+    double masterPivotAppRange = master.satAppRange[sats.pivot];
 
     // Rover-pivot and master-pivot troposphere correction
-    double roverPivotTropoCorr = rover.satTropoCorr[pivot];
-    double masterPivotTropoCorr = master.satTropoCorr[pivot];;
+    double roverPivotTropoCorr = rover.satTropoCorr[sats.pivot];
+    double masterPivotTropoCorr = master.satTropoCorr[sats.pivot];;
 
     // Rover-pivot and master-pivot ionosphere correction
-    double roverPivotIonoCorr = rover.satIonoCorr[pivot];
-    double masterPivotIonoCorr = master.satIonoCorr[pivot];
+    double roverPivotIonoCorr = rover.satIonoCorr[sats.pivot];
+    double masterPivotIonoCorr = master.satIonoCorr[sats.pivot];
 
     // Compute rover-pivot and master-pivot weights
-    double roverElevation = rover.topo[pivot].getElevation();
-    double masterElevation = master.topo[pivot].getElevation();
+    double roverElevation = rover.topo[sats.pivot].getElevation();
+    double masterElevation = master.topo[sats.pivot].getElevation();
     double roverPivotWeight = computeWeight(roverElevation,
         roverObs.getSatByIDType(pivotId, satType).getSignalStrength(goGPS.getFreq()));
     double masterPivotWeight = computeWeight(masterElevation,
@@ -86,8 +86,8 @@ public class KF_DD_code_phase extends KalmanFilter {
 
     // Start filling in the observation error covariance matrix
     Cnn.zero();
-    int nSatAvail = satAvail.size() - 1;
-    int nSatAvailPhase = satAvailPhase.size() - 1;
+    int nSatAvail = sats.avail.size() - 1;
+    int nSatAvailPhase = sats.availPhase.size() - 1;
     for (int i = 0; i < nSatAvail + nSatAvailPhase; i++) {
       for (int j = 0; j < nSatAvail + nSatAvailPhase; j++) {
 
@@ -110,8 +110,8 @@ public class KF_DD_code_phase extends KalmanFilter {
       satType = roverObs.getGnssType(i);
       String checkAvailGnss = String.valueOf(satType) + String.valueOf(id);
 
-      if (pos[i]!=null && gnssAvail.contains(checkAvailGnss)
-          && i != pivot) {
+      if (sats.pos[i]!=null && sats.gnssAvail.contains(checkAvailGnss)
+          && i != sats.pivot) {
 
         // Compute parameters obtained from linearization of observation equations
         double alphaX = rover.diffSat[i].get(0) / rover.satAppRange[i]
@@ -173,8 +173,8 @@ public class KF_DD_code_phase extends KalmanFilter {
             * goGPS.getStDevCode(masterObs.getSatByIDType(id, satType), goGPS.getFreq())
             * (roverSatWeight + masterSatWeight));
 
-        if (gnssAvail.contains(checkAvailGnss)){
-//        if (satAvailPhase.contains(id) && satTypeAvailPhase.contains(satType)) {
+        if (sats.gnssAvail.contains(checkAvailGnss)){
+//        if (sats.availPhase.contains(id) && sats.typeAvailPhase.contains(satType)) {
 
           // Fill in one row in the design matrix (for phase)
           H.set(nObsAvail + p, 0, alphaX);
@@ -228,17 +228,17 @@ public class KF_DD_code_phase extends KalmanFilter {
   void estimateAmbiguities( Observations roverObs, Observations masterObs, Coordinates masterPos, ArrayList<Integer> satAmb, int pivotIndex, boolean init) {
 
     // Check if pivot is in satAmb, in case remove it
-    if (satAmb.contains(pos[pivotIndex].getSatID()))
-      satAmb.remove(satAmb.indexOf(pos[pivotIndex].getSatID()));
+    if (satAmb.contains(sats.pos[pivotIndex].getSatID()))
+      satAmb.remove(satAmb.indexOf(sats.pos[pivotIndex].getSatID()));
 
     // Number of GPS observations
     int nObs = roverObs.getNumSat();
 
     // Number of available satellites (i.e. observations)
-    int nObsAvail = satAvail.size();
+    int nObsAvail = sats.avail.size();
 
     // Number of available satellites (i.e. observations) with phase
-    int nObsAvailPhase = satAvailPhase.size();
+    int nObsAvailPhase = sats.availPhase.size();
 
     // Double differences with respect to pivot satellite reduce
     // observations by 1
@@ -302,7 +302,7 @@ public class KF_DD_code_phase extends KalmanFilter {
         id = roverObs.getSatID(i);
         satType = roverObs.getGnssType(i);
 
-        if (pos[i]!=null && satAmb.contains(id) && id != pivotId) {
+        if (sats.pos[i]!=null && satAmb.contains(id) && id != pivotId) {
 
           // Rover-satellite and master-satellite observed code
           roverSatCodeObs = roverObs.getSatByIDType(id, satType).getPseudorange(goGPS.getFreq());
@@ -332,7 +332,7 @@ public class KF_DD_code_phase extends KalmanFilter {
         id = roverObs.getSatID(i);
         satType = roverObs.getGnssType(i);
 
-        if( pos[i]!=null && satAmb.contains(id) && id != pivotId) {
+        if( sats.pos[i]!=null && satAmb.contains(id) && id != pivotId) {
 
           // Rover-satellite and master-satellite approximate pseudorange
                   roverSatCodeAppRange  = rover.satAppRange[i];
@@ -432,7 +432,7 @@ public class KF_DD_code_phase extends KalmanFilter {
         satType = roverObs.getGnssType(i);
         String checkAvailGnss = String.valueOf(satType) + String.valueOf(id);
         
-        if (pos[i] !=null && gnssAvail.contains(checkAvailGnss)
+        if (sats.pos[i] !=null && sats.gnssAvail.contains(checkAvailGnss)
             && i != pivotIndex) {
 
           // Fill in one row in the design matrix
@@ -478,7 +478,7 @@ public class KF_DD_code_phase extends KalmanFilter {
         satType = roverObs.getGnssType(i);
         String checkAvailGnss = String.valueOf(satType) + String.valueOf(id);
 
-        if( pos[i] !=null && gnssAvail.contains(checkAvailGnss)
+        if( sats.pos[i] !=null && sats.gnssAvail.contains(checkAvailGnss)
             && i != pivotIndex) {
 
           // Fill in one row in the design matrix
@@ -520,7 +520,7 @@ public class KF_DD_code_phase extends KalmanFilter {
               * (roverSatWeight + masterSatWeight));
           int r = 1;
           for (int m = i+1; m < nObs; m++) {
-            if (pos[m] !=null && satAvailPhase.contains(pos[m].getSatID()) && m != pivotIndex) {
+            if (sats.pos[m] !=null && sats.availPhase.contains(sats.pos[m].getSatID()) && m != pivotIndex) {
               Qphase.set(p, p+r, 0);
               Qphase.set(p+r, p, 0);
               r++;
@@ -528,9 +528,9 @@ public class KF_DD_code_phase extends KalmanFilter {
           }
           //          int r = 1;
           //          for (int j = i+1; j < nObs; j++) {
-          //            if (pos[j] !=null && satAvailPhase.contains(pos[j].getSatID()) && j != pivotIndex) {
+          //            if (sats.pos[j] !=null && sats.availPhase.contains(sats.pos[j].getSatID()) && j != pivotIndex) {
           //              Qphase.set(p, p+r, Qphase.get(p, p+r)
-          //                  + (Math.pow(lambda, 2) * Cee.get(i3 + pos[i].getSatID(), i3 + pos[j].getSatID()))
+          //                  + (Math.pow(lambda, 2) * Cee.get(i3 + sats.pos[i].getSatID(), i3 + sats.pos[j].getSatID()))
           //                  * (roverPivotWeight + masterPivotWeight));
           //              Qphase.set(p+r, p, Qphase.get(p, p+r));
           //              r++;
@@ -609,8 +609,8 @@ public class KF_DD_code_phase extends KalmanFilter {
     for (int i = 0; i < satOld.size(); i++) {
 
       // Set ambiguity of lost satellites to zero
-//      if (!gnssAvailPhase.contains(satOld.get(i))) {
-      if (!satAvailPhase.contains(satOld.get(i)) && satTypeAvailPhase.contains(satOld.get(i))) {
+//      if (!sats.gnssAvailPhase.contains(satOld.get(i))) {
+      if (!sats.availPhase.contains(satOld.get(i)) && sats.typeAvailPhase.contains(satOld.get(i))) {
 
         if(goGPS.isDebug()) System.out.println("Lost satellite "+satOld.get(i));
 
@@ -621,18 +621,18 @@ public class KF_DD_code_phase extends KalmanFilter {
     // Check if new satellites are available since the previous epoch
     int temporaryPivot = 0;
     boolean newPivot = false;
-    for (int i = 0; i < pos.length; i++) {
+    for (int i = 0; i < sats.pos.length; i++) {
 
-      if (pos[i] != null && satAvailPhase.contains(pos[i].getSatID()) && satTypeAvailPhase.contains(pos[i].getSatType())
-          && !satOld.contains(pos[i].getSatID()) && satTypeOld.contains(pos[i].getSatType())) {
+      if (sats.pos[i] != null && sats.availPhase.contains(sats.pos[i].getSatID()) && sats.typeAvailPhase.contains(sats.pos[i].getSatType())
+          && !satOld.contains(sats.pos[i].getSatID()) && satTypeOld.contains(sats.pos[i].getSatType())) {
 
-        newSatellites.add(pos[i].getSatID());
+        newSatellites.add(sats.pos[i].getSatID());
 
-        if (pos[i].getSatID() == pos[pivot].getSatID() && pos[i].getSatType() == pos[pivot].getSatType()) {
+        if (sats.pos[i].getSatID() == sats.pos[sats.pivot].getSatID() && sats.pos[i].getSatType() == sats.pos[sats.pivot].getSatType()) {
           newPivot = true;
-          if(goGPS.isDebug()) System.out.println("New satellite "+pos[i].getSatID()+" (new pivot)");
+          if(goGPS.isDebug()) System.out.println("New satellite "+sats.pos[i].getSatID()+" (new pivot)");
         } else {
-          if(goGPS.isDebug()) System.out.println("New satellite "+pos[i].getSatID());
+          if(goGPS.isDebug()) System.out.println("New satellite "+sats.pos[i].getSatID());
         }
       }
     }
@@ -640,21 +640,21 @@ public class KF_DD_code_phase extends KalmanFilter {
     // If a new satellite is going to be the pivot, its ambiguity needs to be estimated before switching pivot
     if (newPivot) {
       // If it is not the only satellite with phase
-      if (satAvailPhase.size() > 1) {
+      if (sats.availPhase.size() > 1) {
         // If the former pivot is still among satellites with phase
-        if (satAvailPhase.contains(oldPivotId) && satTypeAvailPhase.contains(oldPivotType)) {
+        if (sats.availPhase.contains(oldPivotId) && sats.typeAvailPhase.contains(oldPivotType)) {
           // Find the index of the old pivot
-          for (int j = 0; j < pos.length; j ++) {
-            if (pos[j] != null && pos[j].getSatID() == oldPivotId && pos[j].getSatType() == oldPivotType) {
+          for (int j = 0; j < sats.pos.length; j ++) {
+            if (sats.pos[j] != null && sats.pos[j].getSatID() == oldPivotId && sats.pos[j].getSatType() == oldPivotType) {
               temporaryPivot = j;
             }
           }
         } else {
           double maxEl = 0;
           // Find a temporary pivot with phase
-          for (int j = 0; j < pos.length; j ++) {
-            if (pos[j] != null && satAvailPhase.contains(pos[j].getSatID()) && satTypeAvailPhase.contains(pos[j].getSatType())
-                && j != pivot
+          for (int j = 0; j < sats.pos.length; j ++) {
+            if (sats.pos[j] != null && sats.availPhase.contains(sats.pos[j].getSatID()) && sats.typeAvailPhase.contains(sats.pos[j].getSatType())
+                && j != sats.pivot
                 && rover.topo[j].getElevation() > maxEl) {
               temporaryPivot = j;
               maxEl = rover.topo[j].getElevation();
@@ -662,9 +662,9 @@ public class KF_DD_code_phase extends KalmanFilter {
           }
           // Reset the ambiguities of other satellites according to the temporary pivot
           newSatellites.clear();
-          newSatellites.addAll(satAvailPhase);
-          oldPivotId = pos[temporaryPivot].getSatID();
-          oldPivotType = pos[temporaryPivot].getSatType();
+          newSatellites.addAll(sats.availPhase);
+          oldPivotId = sats.pos[temporaryPivot].getSatID();
+          oldPivotType = sats.pos[temporaryPivot].getSatType();
           
         }
         // Estimate the ambiguity of the new pivot and other (new) satellites, using the temporary pivot
@@ -674,15 +674,15 @@ public class KF_DD_code_phase extends KalmanFilter {
     }
 
     // Check if pivot satellite changed since the previous epoch
-    if (oldPivotId != pos[pivot].getSatID() && oldPivotType == pos[pivot].getSatType()  && satAvailPhase.size() > 1) {
+    if (oldPivotId != sats.pos[sats.pivot].getSatID() && oldPivotType == sats.pos[sats.pivot].getSatType()  && sats.availPhase.size() > 1) {
 
-      if(goGPS.isDebug()) System.out.println("Pivot change from satellite "+oldPivotId+" to satellite "+pos[pivot].getSatID());
+      if(goGPS.isDebug()) System.out.println("Pivot change from satellite "+oldPivotId+" to satellite "+sats.pos[sats.pivot].getSatID());
 
       // Matrix construction to manage the change of pivot satellite
       SimpleMatrix A = new SimpleMatrix(o3 + nN, o3 + nN);
 
       //TODO: need to check below
-      int pivotIndex = i3 + pos[pivot].getSatID();
+      int pivotIndex = i3 + sats.pos[sats.pivot].getSatID();
       int pivotOldIndex = i3 + oldPivotId;
       for (int i = 0; i < o3; i++) {
         for (int j = 0; j < o3; j++) {
@@ -690,9 +690,9 @@ public class KF_DD_code_phase extends KalmanFilter {
             A.set(i, j, 1);
         }
       }
-      for (int i = 0; i < satAvailPhase.size(); i++) {
-        for (int j = 0; j < satAvailPhase.size(); j++) {
-          int satIndex = i3 + satAvailPhase.get(i);
+      for (int i = 0; i < sats.availPhase.size(); i++) {
+        for (int j = 0; j < sats.availPhase.size(); j++) {
+          int satIndex = i3 + sats.availPhase.get(i);
           if (i == j) {
             A.set(satIndex, satIndex, 1);
           }
@@ -719,7 +719,7 @@ public class KF_DD_code_phase extends KalmanFilter {
     //boolean slippedPivot = false;
     
     // Pivot satellite ID
-    int pivotId = pos[pivot].getSatID();
+    int pivotId = sats.pos[sats.pivot].getSatID();
     
     // Rover-pivot and master-pivot observed phase
     char satType = roverObs.getGnssType(0);
@@ -727,8 +727,8 @@ public class KF_DD_code_phase extends KalmanFilter {
     double masterPivotPhaseObs = masterObs.getSatByIDType(pivotId, satType).getPhaserange(goGPS.getFreq());
     
     // Rover-pivot and master-pivot approximate pseudoranges
-    double roverPivotAppRange = rover.satAppRange[pivot];
-    double masterPivotAppRange = master.satAppRange[pivot];
+    double roverPivotAppRange = rover.satAppRange[sats.pivot];
+    double masterPivotAppRange = master.satAppRange[sats.pivot];
     
     for (int i = 0; i < roverObs.getNumSat(); i++) {
 
@@ -736,7 +736,7 @@ public class KF_DD_code_phase extends KalmanFilter {
       satType = roverObs.getGnssType(i);
       String checkAvailGnss = String.valueOf(satType) + String.valueOf(satID);
 
-      if (gnssAvailPhase.contains(checkAvailGnss)) {
+      if (sats.gnssAvailPhase.contains(checkAvailGnss)) {
 
         // cycle slip detected by loss of lock indicator (disabled)
         lossOfLockCycleSlipRover = roverObs.getSatByIDType(satID, satType).isPossibleCycleSlip(goGPS.getFreq());
@@ -784,11 +784,11 @@ public class KF_DD_code_phase extends KalmanFilter {
 
         cycleSlip = (lossOfLockCycleSlipRover || lossOfLockCycleSlipMaster || dopplerCycleSlipRover || dopplerCycleSlipMaster || approxRangeCycleSlip);
 
-        if (satID != pos[pivot].getSatID() && !newSatellites.contains(satID) && cycleSlip) {
+        if (satID != sats.pos[sats.pivot].getSatID() && !newSatellites.contains(satID) && cycleSlip) {
 
           slippedSatellites.add(satID);
 
-          //        if (satID != pos[pivot].getSatID()) {
+          //        if (satID != sats.pos[sats.pivot].getSatID()) {
           if (dopplerCycleSlipRover)
             if(goGPS.isDebug()) System.out.println("[ROVER] Cycle slip on satellite "+satID+" (range diff = "+Math.abs(roverObs.getSatByIDType(satID, satType).getPhaseCycles(goGPS.getFreq())
                 - rover.getDopplerPredictedPhase(satID))+")");
@@ -811,11 +811,11 @@ public class KF_DD_code_phase extends KalmanFilter {
 //    // If the pivot satellites slipped, the ambiguities of all the other satellites must be re-estimated
 //    if (slippedPivot) {
 //      // If it is not the only satellite with phase
-//      if (satAvailPhase.size() > 1) {
+//      if (sats.availPhase.size() > 1) {
 //        // Reset the ambiguities of other satellites
 //        newSatellites.clear();
 //        slippedSatellites.clear();
-//        slippedSatellites.addAll(satAvailPhase);
+//        slippedSatellites.addAll(sats.availPhase);
 //      }
 //    }
 
@@ -824,7 +824,7 @@ public class KF_DD_code_phase extends KalmanFilter {
       // List of satellites that need ambiguity estimation
       ArrayList<Integer> satAmb = newSatellites;
       satAmb.addAll(slippedSatellites);
-      estimateAmbiguities(roverObs, masterObs, masterPos, satAmb, pivot, false);
+      estimateAmbiguities(roverObs, masterObs, masterPos, satAmb, sats.pivot, false);
     }
   }
 

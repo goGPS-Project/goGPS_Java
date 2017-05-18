@@ -111,9 +111,9 @@ public abstract class KalmanFilter extends Core {
     for (int i = 0; i < 2; i++) {
       // Select satellites available for double differences
       if (masterObs != null)
-        selectSatellitesDoubleDiff(roverObs, masterObs, masterPos);
+        sats.selectDoubleDiff(roverObs, masterObs, masterPos);
       else
-        selectSatellitesStandalone(roverObs);
+        sats.selectStandalone(roverObs);
   
       if (sats.avail.size() >= 4) {
         if (masterObs != null)
@@ -189,7 +189,7 @@ public abstract class KalmanFilter extends Core {
     }
 
     // Select satellites for standalone
-    selectSatellitesStandalone(roverObs);
+    sats.selectStandalone(roverObs);
 
     if( sats.avail.size() >= 4)
       // Estimate receiver clock error by code stand-alone
@@ -199,7 +199,7 @@ public abstract class KalmanFilter extends Core {
     
     if (masterObs != null) {
       // Select satellites for double differences
-      selectSatellitesDoubleDiff(roverObs, masterObs, masterPos);
+      sats.selectDoubleDiff(roverObs, masterObs, masterPos);
       obsReduction = 1;
     }
 

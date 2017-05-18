@@ -721,7 +721,7 @@ public class GoGPS implements Runnable{
 		
     roverPos = new ReceiverPosition();
     masterPos = new MasterPosition();
-    satellites = new Satellites();
+    satellites = new Satellites(this);
 	}
 	
 	public GoGPS(NavigationProducer navigation, ObservationsProducer roverIn){
@@ -767,7 +767,7 @@ public class GoGPS implements Runnable{
             if (!roverPos.isValidXYZ()) {
 						for (int iter = 0; iter < 3; iter++) {
 							// Select all satellites
-							sa.selectSatellitesStandalone( obsR, -100);
+							satellites.selectStandalone( obsR, -100);
 							if (satellites.getAvailNumber() >= 4) {
 								sa.codeStandalone( obsR, false, true);
 							}
@@ -778,7 +778,7 @@ public class GoGPS implements Runnable{
             }
 						if (roverPos.isValidXYZ()) {
 							// Select available satellites
-							sa.selectSatellitesStandalone(obsR);
+							satellites.selectStandalone( obsR);
 							
 							if (satellites.getAvailNumber() >= 4){
 								if(debug) System.out.println("Number of selected satellites: " + satellites.getAvailNumber());
@@ -861,7 +861,7 @@ public class GoGPS implements Runnable{
 						for (int iter = 0; iter < 3; iter++) {
 							// Select all satellites
 						  LS_SA_code sa = new LS_SA_code(this);
-							sa.selectSatellitesStandalone(obsR, -100);
+							satellites.selectStandalone( obsR, -100);
 							if (satellites.getAvailNumber() >= 4) {
 								sa.codeStandalone( obsR, false, true);
 							}
@@ -872,7 +872,7 @@ public class GoGPS implements Runnable{
 
 							// Select satellites available for double differences
 							LS_DD_code dd = new LS_DD_code(this);
-						  dd.selectSatellitesDoubleDiff(obsR,
+						  satellites.selectDoubleDiff(obsR,
 									obsM, masterIn.getDefinedPosition());
 
 							if (satellites.getAvailNumber() >= 4)
@@ -952,7 +952,7 @@ public class GoGPS implements Runnable{
 					for (int iter = 0; iter < 3; iter++) {
 						// Select all satellites
 					  LS_SA_code sa = new LS_SA_code(this);
-					  sa.selectSatellitesStandalone(obsR, -100);
+					  satellites.selectStandalone( obsR, -100);
 						if (satellites.getAvailNumber() >= 4) {
 							sa.codeStandalone( obsR, false, true);
 						}
@@ -1105,7 +1105,7 @@ public class GoGPS implements Runnable{
 						for (int iter = 0; iter < 3; iter++) {
 							// Select all satellites
 						  LS_SA_code sa = new LS_SA_code(this);
-							sa.selectSatellitesStandalone(obsR, -100);
+							satellites.selectStandalone( obsR, -100);
 							if (satellites.getAvailNumber() >= 4) {
 								sa.codeStandalone( obsR, false, true );
 							}
@@ -1191,7 +1191,7 @@ public class GoGPS implements Runnable{
         System.out.println("////// Itr = " + iter);
         
         Core cp = new Core(this);
-        double correctionMag = cp.selectSatellitesStandalonePositionUpdate(obsR);
+        double correctionMag = satellites.selectPositionUpdate(obsR);
         if (satellites.getAvailNumber() < 6) {
           roverPos.status = Status.NoAprioriPos;
           break;

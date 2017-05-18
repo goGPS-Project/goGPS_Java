@@ -190,10 +190,10 @@ public class LS_SA_code_snapshot extends Core {
       rover.topo[i].computeTopocentric( rover, sats.pos[i]);
 
       // Correct approximate pseudorange for troposphere
-      rover.satTropoCorr[i] = computeTroposphereCorrection(rover.topo[i].getElevation(), rover.getGeodeticHeight());
+      rover.satTropoCorr[i] = sats.computeTroposphereCorrection(rover.topo[i].getElevation(), rover.getGeodeticHeight());
 
       // Correct approximate pseudorange for ionosphere
-      rover.satIonoCorr[i] = computeIonosphereCorrection(navigation, rover, rover.topo[i].getAzimuth(), rover.topo[i].getElevation(), roverObs.getRefTime());
+      rover.satIonoCorr[i] = sats.computeIonosphereCorrection(navigation, rover, rover.topo[i].getAzimuth(), rover.topo[i].getElevation(), roverObs.getRefTime());
 
       if( goGPS.isDebug()) System.out.print( String.format( " El:%4.1f ", rover.topo[i].getElevation() ));
 

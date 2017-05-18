@@ -20,7 +20,8 @@ public class Satellites {
   GoGPS goGPS;
   ReceiverPosition rover;
   MasterPosition master; 
-  
+  NavigationProducer navigation;
+
   /** Absolute position of all visible satellites (ECEF) */
   SatellitePosition[] pos; 
 
@@ -49,6 +50,7 @@ public class Satellites {
     this.goGPS = goGPS;
     this.rover = goGPS.getReceiverPosition();
     this.master = goGPS.getMasterPosition();
+    this.navigation = goGPS.getNavigation();
   }
 
   /** @return the number of available satellites */
@@ -149,7 +151,7 @@ public class Satellites {
    * @param time
    * @return ionosphere correction value by Klobuchar model
    */
-  static double computeIonosphereCorrection(NavigationProducer navigation,
+  static double computeIonosphereCorrection( NavigationProducer navigation,
       Coordinates coord, double azimuth, double elevation, Time time) {
 
     double ionoCorr = 0;
@@ -210,6 +212,43 @@ public class Satellites {
     return ionoCorr;
   }
   
+  void init( Observations roverObs ) {
+
+    int nObs = roverObs.getNumSat();
+
+    // Allocate an array to store GPS satellite positions
+    pos = new SatellitePosition[nObs];
+
+    // Allocate arrays to store receiver-satellite vectors
+    rover.diffSat = new SimpleMatrix[nObs];
+    master.diffSat = new SimpleMatrix[nObs];
+
+    // Allocate arrays to store receiver-satellite approximate range
+    rover.satAppRange = new double[nObs];
+    master.satAppRange = new double[nObs];
+
+    // Allocate arrays to store receiver-satellite atmospheric corrections
+    rover.satTropoCorr = new double[nObs];
+    rover.satIonoCorr = new double[nObs];
+    master.satTropoCorr = new double[nObs];
+    master.satIonoCorr = new double[nObs];
+
+    // Create a list for available satellites
+    avail = new ArrayList<Integer>(0);
+    typeAvail = new ArrayList<Character>(0);
+    gnssAvail = new ArrayList<String>(0);
+
+    // Create a list for available satellites with phase
+    availPhase = new ArrayList<Integer>(0);
+    typeAvailPhase = new ArrayList<Character>(0);
+    gnssAvailPhase = new ArrayList<String>(0);
+
+    // Allocate arrays of topocentric coordinates
+    rover.topo = new TopocentricCoordinates[nObs];
+    master.topo = new TopocentricCoordinates[nObs];
+    
+    rover.satsInUse = 0;
+  }
   
   /**
    * @param roverObs
@@ -227,45 +266,13 @@ public class Satellites {
    */
   public void selectStandalone( Observations roverObs, double cutoff) {
 
-    NavigationProducer navigation = goGPS.getNavigation();
-
-    // Number of GPS observations
-    int nObs = roverObs.getNumSat();
-
-    // Allocate an array to store GPS satellite positions
-    pos = new SatellitePosition[nObs];
-
-    // Allocate an array to store receiver-satellite vectors
-    rover.diffSat = new SimpleMatrix[nObs];
-
-    // Allocate an array to store receiver-satellite approximate range
-    rover.satAppRange = new double[nObs];
-
-    // Allocate arrays to store receiver-satellite atmospheric corrections
-    rover.satTropoCorr = new double[nObs];
-    rover.satIonoCorr = new double[nObs];
-
-    // Create a list for available satellites after cutoff
-    avail = new ArrayList<Integer>(0);
-    typeAvail = new ArrayList<Character>(0);
-    gnssAvail = new ArrayList<String>(0);
-
-    // Create a list for available satellites with phase
-    availPhase = new ArrayList<Integer>(0);
-    typeAvailPhase = new ArrayList<Character>(0);
-    gnssAvailPhase = new ArrayList<String>(0);
+    init( roverObs );
     
-    // Allocate array of topocentric coordinates
-    rover.topo = new TopocentricCoordinates[nObs];
-
-    // Satellite ID
-    int id = 0;
-
     // Compute topocentric coordinates and
     // select satellites above the cutoff level
-    for (int i = 0; i < nObs; i++) {
+    for( int i = 0; i < roverObs.getNumSat(); i++) {
 
-      id = roverObs.getSatID(i);
+      int id = roverObs.getSatID(i);
       char satType = roverObs.getGnssType(i);
 
       // Compute GPS satellite positions getGpsByIdx(idx).getSatType()
@@ -316,47 +323,19 @@ public class Satellites {
    * @param roverObs
    * @return 
    */
-  public double selectPositionUpdate(Observations roverObs) {
+  public double selectPositionUpdate( Observations roverObs ) {
     
-    NavigationProducer navigation = goGPS.getNavigation();
+    init( roverObs );
 
-    // Number of GPS observations
-    int nObs = roverObs.getNumSat();
-
-    // Allocate an array to store GPS satellite positions
-    pos = new SatellitePosition[nObs];
-
-    // Allocate an array to store receiver-satellite vectors
-    rover.diffSat = new SimpleMatrix[nObs];
-
-    // Allocate an array to store receiver-satellite approximate range
-    rover.satAppRange = new double[nObs];
-
-    // Allocate arrays to store receiver-satellite atmospheric corrections
-    rover.satTropoCorr = new double[nObs];
-    rover.satIonoCorr = new double[nObs];
-
-    // Create a list for available satellites after cutoff
-    avail = new ArrayList<Integer>(0);
-    typeAvail = new ArrayList<Character>(0);
-    gnssAvail = new ArrayList<String>(0);
-
-    // Create a list for available satellites with phase
-    availPhase = new ArrayList<Integer>(0);
-    typeAvailPhase = new ArrayList<Character>(0);
-    gnssAvailPhase = new ArrayList<String>(0);
-    
-    // Allocate array of topocentric coordinates
-    rover.topo = new TopocentricCoordinates[nObs];
-
-    rover.satsInUse = 0;
     // Satellite ID
     int id = 0;
-
+    
+    int nObs = roverObs.getNumSat();
+    
     // Least squares design matrix
-    SimpleMatrix A = new SimpleMatrix( nObs+1, 3 );
+    SimpleMatrix A  = new SimpleMatrix( nObs+1, 3 );
     SimpleMatrix y0 = new SimpleMatrix( nObs+1, 1 );
-    SimpleMatrix x = new SimpleMatrix(3, 1);
+    SimpleMatrix x  = new SimpleMatrix(3, 1);
 
     // Compute topocentric coordinates and
     // select satellites above the cutoff level
@@ -473,47 +452,13 @@ public class Satellites {
    * @param masterObs
    * @param masterPos
    */
-  public void selectDoubleDiff(Observations roverObs, Observations masterObs, Coordinates masterPos) {
-
-    NavigationProducer navigation = goGPS.getNavigation();
+  public void selectDoubleDiff( Observations roverObs, Observations masterObs, Coordinates masterPos ) {
 
     // Retrieve options from goGPS class
     double cutoff = goGPS.getCutoff();
 
-    // Number of GPS observations
-    int nObs = roverObs.getNumSat();
-
-    // Allocate an array to store GPS satellite positions
-    pos = new SatellitePosition[nObs];
-
-    // Allocate arrays to store receiver-satellite vectors
-    rover.diffSat = new SimpleMatrix[nObs];
-    master.diffSat = new SimpleMatrix[nObs];
-
-    // Allocate arrays to store receiver-satellite approximate range
-    rover.satAppRange = new double[nObs];
-    master.satAppRange = new double[nObs];
-
-    // Allocate arrays to store receiver-satellite atmospheric corrections
-    rover.satTropoCorr = new double[nObs];
-    rover.satIonoCorr = new double[nObs];
-    master.satTropoCorr = new double[nObs];
-    master.satIonoCorr = new double[nObs];
-
-    // Create a list for available satellites
-    avail = new ArrayList<Integer>(0);
-    typeAvail = new ArrayList<Character>(0);
-    gnssAvail = new ArrayList<String>(0);
-
-    // Create a list for available satellites with phase
-    availPhase = new ArrayList<Integer>(0);
-    typeAvailPhase = new ArrayList<Character>(0);
-    gnssAvailPhase = new ArrayList<String>(0);
-
-    // Allocate arrays of topocentric coordinates
-    rover.topo = new TopocentricCoordinates[nObs];
-    master.topo = new TopocentricCoordinates[nObs];
-
+    init( roverObs );
+    
     // Variables to store highest elevation
     double maxElevCode = 0;
     double maxElevPhase = 0;
@@ -527,7 +472,7 @@ public class Satellites {
 
     // Compute topocentric coordinates and
     // select satellites above the cutoff level
-    for (int i = 0; i < nObs; i++) {
+    for (int i = 0; i < roverObs.getNumSat(); i++) {
 
       id = roverObs.getSatID(i);
       char satType = roverObs.getGnssType(i);
@@ -560,14 +505,13 @@ public class Satellites {
         master.topo[i].computeTopocentric(masterPos, pos[i]);
 
         // Computation of rover-satellite troposphere correction
-        rover.satTropoCorr[i] = computeTroposphereCorrection(rover.topo[i].getElevation(), rover.getGeodeticHeight());
+        rover.satTropoCorr[i] = computeTroposphereCorrection( rover.topo[i].getElevation(), rover.getGeodeticHeight());
 
         // Computation of master-satellite troposphere correction
-        master.satTropoCorr[i] = computeTroposphereCorrection(master.topo[i].getElevation(), masterPos.getGeodeticHeight());
+        master.satTropoCorr[i] = computeTroposphereCorrection( master.topo[i].getElevation(), masterPos.getGeodeticHeight());
 
         // Computation of rover-satellite ionosphere correction
-        rover.satIonoCorr[i] = computeIonosphereCorrection(navigation,
-            rover, rover.topo[i].getAzimuth(), rover.topo[i].getElevation(), roverObs.getRefTime());
+        rover.satIonoCorr[i] = computeIonosphereCorrection( navigation, rover, rover.topo[i].getAzimuth(), rover.topo[i].getElevation(), roverObs.getRefTime());
 
         // Computation of master-satellite ionosphere correction
         master.satIonoCorr[i] = computeIonosphereCorrection(navigation,
@@ -614,5 +558,4 @@ public class Satellites {
       pivot = pivotCode;
     }
   }
-  
 }

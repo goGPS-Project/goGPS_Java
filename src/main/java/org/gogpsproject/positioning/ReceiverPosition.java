@@ -19,7 +19,9 @@
  *
  */
 package org.gogpsproject.positioning;
+import org.ejml.simple.SimpleMatrix;
 import org.gogpsproject.Coordinates;
+import org.gogpsproject.SatellitePosition;
 import org.gogpsproject.Status;
 
 /**

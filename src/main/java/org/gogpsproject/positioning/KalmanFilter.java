@@ -117,9 +117,9 @@ public abstract class KalmanFilter extends LS_DD_code {
   
       if (sats.avail.size() >= 4) {
         if (masterObs != null)
-          new LS_DD_code(goGPS).codeDoubleDifferences( roverObs, masterObs, masterPos);
+          codeDoubleDifferences( roverObs, masterObs, masterPos);
         else
-          new LS_SA_code(goGPS).codeStandalone( roverObs, false, false);
+          codeStandalone( roverObs, false, false);
       } else {
         rover.setXYZ(0, 0, 0);
         return;
@@ -193,7 +193,7 @@ public abstract class KalmanFilter extends LS_DD_code {
 
     if( sats.avail.size() >= 4)
       // Estimate receiver clock error by code stand-alone
-      new LS_SA_code(goGPS).codeStandalone( roverObs, true, false);
+      codeStandalone( roverObs, true, false);
 
     int obsReduction = 0;
     

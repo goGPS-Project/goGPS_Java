@@ -7,7 +7,7 @@ import org.gogpsproject.Coordinates;
 import org.gogpsproject.GoGPS;
 import org.gogpsproject.Observations;
 
-public abstract class KalmanFilter extends Core {
+public abstract class KalmanFilter extends LS_DD_code {
 
   int o1, o2, o3;
   int i1, i2, i3;

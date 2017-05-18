@@ -765,20 +765,21 @@ public class GoGPS implements Runnable{
 
 						// Compute approximate positioning by iterative least-squares
             if (!roverPos.isValidXYZ()) {
-						for (int iter = 0; iter < 3; iter++) {
-							// Select all satellites
-							satellites.selectStandalone( obsR, -100);
-							if (satellites.getAvailNumber() >= 4) {
-								sa.codeStandalone( obsR, false, true);
-							}
-						}
+  						for (int iter = 0; iter < 3; iter++) {
+  							// Select all satellites
+  							satellites.selectStandalone( obsR, -100);
+  							
+  							if (satellites.getAvailNumber() >= 4) {
+  								sa.codeStandalone( obsR, false, true);
+  							}
+  						}
 
 						// If an approximate position was computed
   						if(debug) System.out.println("Valid approximate position? "+roverPos.isValidXYZ()+ " " + roverPos.toString());
             }
 						if (roverPos.isValidXYZ()) {
 							// Select available satellites
-							satellites.selectStandalone( obsR);
+							satellites.selectStandalone( obsR );
 							
 							if (satellites.getAvailNumber() >= 4){
 								if(debug) System.out.println("Number of selected satellites: " + satellites.getAvailNumber());
@@ -833,7 +834,9 @@ public class GoGPS implements Runnable{
 	public GoGPS runCodeDoubleDifferences() {
 
 		try {
-			Observations obsR = roverIn.getNextObservations();
+	    LS_DD_code dd = new LS_DD_code(this);
+
+	    Observations obsR = roverIn.getNextObservations();
 			Observations obsM = masterIn.getNextObservations();
 
 			while (obsR != null && obsM != null) {
@@ -860,10 +863,10 @@ public class GoGPS implements Runnable{
 						// Compute approximate positioning by iterative least-squares
 						for (int iter = 0; iter < 3; iter++) {
 							// Select all satellites
-						  LS_SA_code sa = new LS_SA_code(this);
 							satellites.selectStandalone( obsR, -100);
+							
 							if (satellites.getAvailNumber() >= 4) {
-								sa.codeStandalone( obsR, false, true);
+								dd.codeStandalone( obsR, false, true);
 							}
 						}
 
@@ -871,15 +874,12 @@ public class GoGPS implements Runnable{
 						if (roverPos.isValidXYZ()) {
 
 							// Select satellites available for double differences
-							LS_DD_code dd = new LS_DD_code(this);
-						  satellites.selectDoubleDiff(obsR,
-									obsM, masterIn.getDefinedPosition());
+						  satellites.selectDoubleDiff( obsR, obsM, masterIn.getDefinedPosition());
 
 							if (satellites.getAvailNumber() >= 4)
 								// Compute code double differences positioning
 								// (epoch-by-epoch solution)
-								dd.codeDoubleDifferences(obsR,
-										obsM, masterIn.getDefinedPosition());
+								dd.codeDoubleDifferences( obsR, obsM, masterIn.getDefinedPosition());
 							else
 								// Discard approximate positioning
 								roverPos.setXYZ(0, 0, 0);
@@ -924,7 +924,7 @@ public class GoGPS implements Runnable{
 		long timeProc = 0;
 		long depProc = 0;
 
-		KalmanFilter kf = new KF_SA_code_phase(this);
+		KF_SA_code_phase kf = new KF_SA_code_phase(this);
 		
 		// Flag to check if Kalman filter has been initialized
 		boolean kalmanInitialized = false;
@@ -949,12 +949,12 @@ public class GoGPS implements Runnable{
 				if (!kalmanInitialized && obsR.getNumSat() >= 4) {
 
 					// Compute approximate positioning by iterative least-squares
-					for (int iter = 0; iter < 3; iter++) {
+          for (int iter = 0; iter < 3; iter++) {
 						// Select all satellites
-					  LS_SA_code sa = new LS_SA_code(this);
 					  satellites.selectStandalone( obsR, -100);
-						if (satellites.getAvailNumber() >= 4) {
-							sa.codeStandalone( obsR, false, true);
+						
+					  if (satellites.getAvailNumber() >= 4) {
+							kf.codeStandalone( obsR, false, true);
 						}
 					}
 
@@ -1102,12 +1102,13 @@ public class GoGPS implements Runnable{
 					if (!kalmanInitialized && obsR.getNumSat() >= 4) {
 
 						// Compute approximate positioning by iterative least-squares
-						for (int iter = 0; iter < 3; iter++) {
+						
+            for (int iter = 0; iter < 3; iter++) {
 							// Select all satellites
-						  LS_SA_code sa = new LS_SA_code(this);
 							satellites.selectStandalone( obsR, -100);
+							
 							if (satellites.getAvailNumber() >= 4) {
-								sa.codeStandalone( obsR, false, true );
+								kf.codeStandalone( obsR, false, true );
 							}
 						}
 

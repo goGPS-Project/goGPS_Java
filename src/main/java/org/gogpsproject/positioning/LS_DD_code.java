@@ -5,7 +5,7 @@ import org.gogpsproject.Coordinates;
 import org.gogpsproject.GoGPS;
 import org.gogpsproject.Observations;
 
-public class LS_DD_code extends Core {
+public class LS_DD_code extends LS_SA_code {
 
   public LS_DD_code(GoGPS goGPS) {
     super(goGPS);

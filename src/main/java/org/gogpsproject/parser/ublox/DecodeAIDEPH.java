@@ -28,10 +28,10 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 
-import org.gogpsproject.EphGps;
 import org.gogpsproject.ObservationSet;
 import org.gogpsproject.Observations;
 import org.gogpsproject.Time;
+import org.gogpsproject.ephemeris.EphGps;
 import org.gogpsproject.util.Bits;
 import org.gogpsproject.util.UnsignedOperation;
 

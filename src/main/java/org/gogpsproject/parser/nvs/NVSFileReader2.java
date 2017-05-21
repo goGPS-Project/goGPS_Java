@@ -42,14 +42,14 @@ import java.io.OutputStreamWriter;
 import org.ejml.simple.SimpleMatrix;
 import org.gogpsproject.Constants;
 import org.gogpsproject.Coordinates;
-import org.gogpsproject.EphGps;
-import org.gogpsproject.EphemerisSystem;
 import org.gogpsproject.IonoGps;
 import org.gogpsproject.NavigationProducer;
 import org.gogpsproject.Observations;
 import org.gogpsproject.ObservationsProducer;
 import org.gogpsproject.SatellitePosition;
 import org.gogpsproject.StreamResource;
+import org.gogpsproject.ephemeris.EphGps;
+import org.gogpsproject.ephemeris.EphemerisSystem;
 
 /**
  * <p>

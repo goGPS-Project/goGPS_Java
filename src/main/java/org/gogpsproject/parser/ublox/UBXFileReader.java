@@ -27,8 +27,6 @@ import java.util.HashMap;
 import java.util.Vector;
 
 import org.gogpsproject.Coordinates;
-import org.gogpsproject.EphGps;
-import org.gogpsproject.EphemerisSystem;
 import org.gogpsproject.IonoGps;
 import org.gogpsproject.NavigationProducer;
 import org.gogpsproject.Observations;
@@ -37,6 +35,8 @@ import org.gogpsproject.SatellitePosition;
 import org.gogpsproject.StreamEventListener;
 import org.gogpsproject.StreamEventProducer;
 import org.gogpsproject.StreamResource;
+import org.gogpsproject.ephemeris.EphGps;
+import org.gogpsproject.ephemeris.EphemerisSystem;
 
 /**
  * <p>

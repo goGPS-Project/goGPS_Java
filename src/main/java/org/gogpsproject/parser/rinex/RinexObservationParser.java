@@ -28,13 +28,13 @@ import java.io.InputStreamReader;
 import java.text.ParseException;
 
 import org.gogpsproject.Coordinates;
-import org.gogpsproject.EphGps;
 import org.gogpsproject.NavigationProducer;
 import org.gogpsproject.ObservationSet;
 import org.gogpsproject.Observations;
 import org.gogpsproject.ObservationsProducer;
 import org.gogpsproject.StreamResource;
 import org.gogpsproject.Time;
+import org.gogpsproject.ephemeris.EphGps;
 
 import java.math.BigDecimal;
 

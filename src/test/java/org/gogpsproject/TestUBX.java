@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Vector;
 
+import org.gogpsproject.ephemeris.EphGps;
 import org.gogpsproject.parser.ublox.UBXSerialConnection;
 
 @SuppressWarnings("restriction")

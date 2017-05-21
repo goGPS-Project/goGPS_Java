@@ -35,7 +35,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import org.gogpsproject.Coordinates;
-import org.gogpsproject.EphGps;
 import org.gogpsproject.IonoGps;
 import org.gogpsproject.ObservationSet;
 import org.gogpsproject.Observations;
@@ -48,6 +47,7 @@ import org.gogpsproject.StreamEventListener;
  * @author Lorenzo Patocchi cryms.com
  */
 import org.gogpsproject.Time;
+import org.gogpsproject.ephemeris.EphGps;
 
 /**
  * @author Lorenzo

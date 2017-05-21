@@ -35,12 +35,12 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import org.gogpsproject.Coordinates;
-import org.gogpsproject.EphGps;
 import org.gogpsproject.IonoGps;
 import org.gogpsproject.ObservationSet;
 import org.gogpsproject.Observations;
 import org.gogpsproject.StreamEventListener;
 import org.gogpsproject.Time;
+import org.gogpsproject.ephemeris.EphGps;
 /**
  * <p>
  * Produces Rinex 3 as StreamEventListener

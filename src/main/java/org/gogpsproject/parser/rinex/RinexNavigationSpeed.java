@@ -1,8 +1,8 @@
 package org.gogpsproject.parser.rinex;
 
-import org.gogpsproject.EphGps;
 import org.gogpsproject.Observations;
 import org.gogpsproject.SatellitePosition;
+import org.gogpsproject.ephemeris.EphGps;
 
 public class RinexNavigationSpeed extends RinexNavigation  {
   

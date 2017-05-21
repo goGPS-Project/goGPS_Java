@@ -17,13 +17,16 @@
  * License along with goGPS.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-package org.gogpsproject;
+package org.gogpsproject.ephemeris;
 
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.TimeZone;
 
+import org.gogpsproject.Constants;
+import org.gogpsproject.Observations;
+import org.gogpsproject.SatellitePosition;
 import org.gogpsproject.Time;
 import org.ejml.simple.SimpleMatrix; 
 

@@ -2,6 +2,8 @@ package org.gogpsproject;
 
 import java.io.FileNotFoundException;
 
+import org.gogpsproject.ephemeris.EphGps;
+
 public class ObservationsSpeedBuffer extends ObservationsBuffer {
 
   public ObservationsSpeedBuffer() {

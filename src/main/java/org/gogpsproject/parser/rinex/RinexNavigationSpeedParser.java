@@ -3,9 +3,9 @@ package org.gogpsproject.parser.rinex;
 import java.io.File;
 import java.io.InputStream;
 
-import org.gogpsproject.EphGps;
 import org.gogpsproject.Observations;
 import org.gogpsproject.SatellitePosition;
+import org.gogpsproject.ephemeris.EphGps;
 
 public class RinexNavigationSpeedParser extends RinexNavigationParser {
 

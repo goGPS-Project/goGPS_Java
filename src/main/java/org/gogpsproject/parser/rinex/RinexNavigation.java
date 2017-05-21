@@ -37,12 +37,12 @@ import java.util.zip.GZIPInputStream;
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPReply;
-import org.gogpsproject.EphGps;
 import org.gogpsproject.IonoGps;
 import org.gogpsproject.NavigationProducer;
 import org.gogpsproject.Observations;
 import org.gogpsproject.StreamResource;
 import org.gogpsproject.Time;
+import org.gogpsproject.ephemeris.EphGps;
 import org.gogpsproject.SatellitePosition;
 import org.gogpsproject.util.UncompressInputStream;
 

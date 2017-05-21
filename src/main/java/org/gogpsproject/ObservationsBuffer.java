@@ -29,6 +29,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Vector;
 
+import org.gogpsproject.ephemeris.EphGps;
+import org.gogpsproject.ephemeris.EphemerisSystem;
+
 /**
  * <p>
  * This class receive data from streaming source and keep it buffered for navigation and observation consumer.

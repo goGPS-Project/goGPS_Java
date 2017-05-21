@@ -31,13 +31,13 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Date;
 
-import org.gogpsproject.EphGps;
-import org.gogpsproject.EphemerisSystem;
 import org.gogpsproject.IonoGps;
 import org.gogpsproject.NavigationProducer;
 import org.gogpsproject.Observations;
 import org.gogpsproject.SatellitePosition;
 import org.gogpsproject.StreamResource;
+import org.gogpsproject.ephemeris.EphGps;
+import org.gogpsproject.ephemeris.EphemerisSystem;
 
 /**
  * <p>

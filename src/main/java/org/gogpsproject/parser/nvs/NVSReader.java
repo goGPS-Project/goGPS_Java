@@ -28,11 +28,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 
-import org.gogpsproject.EphGps;
 import org.gogpsproject.IonoGps;
 import org.gogpsproject.Observations;
 import org.gogpsproject.StreamEventListener;
 import org.gogpsproject.StreamEventProducer;
+import org.gogpsproject.ephemeris.EphGps;
 /**
  * <p>
  * Read and parse NVS messages

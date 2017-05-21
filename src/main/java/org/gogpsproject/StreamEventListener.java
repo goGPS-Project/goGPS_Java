@@ -19,7 +19,7 @@
  */
 package org.gogpsproject;
 
-
+import org.gogpsproject.ephemeris.EphGps;
 
 /**
  * @author Cryms.com

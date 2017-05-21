@@ -18,11 +18,14 @@
  *
  *
  */
-package org.gogpsproject;
+package org.gogpsproject.ephemeris;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+
+import org.gogpsproject.Streamable;
+import org.gogpsproject.Time;
 
 /**
  * <p>

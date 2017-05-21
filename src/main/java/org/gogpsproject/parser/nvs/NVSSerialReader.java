@@ -30,10 +30,10 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Vector;
 
-import org.gogpsproject.EphGps;
 import org.gogpsproject.Observations;
 import org.gogpsproject.StreamEventListener;
 import org.gogpsproject.StreamEventProducer;
+import org.gogpsproject.ephemeris.EphGps;
 import org.gogpsproject.util.BufferedInputStreamCounter;
 
 /**

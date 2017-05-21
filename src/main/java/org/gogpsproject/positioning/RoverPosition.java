@@ -32,7 +32,7 @@ import org.gogpsproject.Time;
  *
  * @author Eugenio Realini, Cryms.com, Daisuke Yoshida, Emanuele Ziglioli (Sirtrack Ltd)
  */
-public class RoverPosition extends Position {
+public class RoverPosition extends ReceiverPosition {
 
   public long index;
   public Time sampleTime;

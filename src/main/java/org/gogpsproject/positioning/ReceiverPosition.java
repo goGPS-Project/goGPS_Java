@@ -4,7 +4,7 @@ import org.ejml.simple.SimpleMatrix;
 import org.gogpsproject.Coordinates;
 import org.gogpsproject.TopocentricCoordinates;
 
-public abstract class Position extends Coordinates {
+public abstract class ReceiverPosition extends Coordinates {
 
   // Fields related to receiver-satellite geometry
   

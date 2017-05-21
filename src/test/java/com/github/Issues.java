@@ -6,13 +6,13 @@ import org.gogpsproject.GoGPS;
 import org.gogpsproject.NavigationProducer;
 import org.gogpsproject.Observations;
 import org.gogpsproject.ObservationsProducer;
-import org.gogpsproject.RoverPosition;
 import org.gogpsproject.parser.rinex.RinexNavigation;
 import org.gogpsproject.parser.rinex.RinexNavigationParser;
 import org.gogpsproject.parser.rinex.RinexObservationParser;
 import org.gogpsproject.parser.ublox.DecodeRXMRAWX;
 import org.gogpsproject.parser.ublox.UBXException;
 import org.gogpsproject.parser.ublox.UBXFileReader;
+import org.gogpsproject.positioning.ReceiverPosition;
 import org.gogpsproject.producer.KmlProducer;
 
 import static org.junit.Assert.*;
@@ -32,7 +32,7 @@ public class Issues {
 //    NavigationProducer navigationIn = new RinexNavigationParser(new File("./src/test/resources/i27/vrs.17n"));
     NavigationProducer navigationIn = new RinexNavigation( RinexNavigation.NASA_NAVIGATION_DAILY ); 
 
-    double goodDopThreshold = 3.0; // Threshold - próg graniczny
+    double goodDopThreshold = 3.0; // Threshold - prï¿½g graniczny
     int TimeSampleDelaySec = 30;
     String outPath = "./src/test/resources/i27/out.kml";
     // should be tuned according to the dataset;

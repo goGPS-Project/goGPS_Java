@@ -40,7 +40,7 @@ import org.gogpsproject.ObservationSet;
 import org.gogpsproject.Observations;
 import org.gogpsproject.PositionConsumer;
 import org.gogpsproject.Status;
-import org.gogpsproject.positioning.RoverPosition;
+import org.gogpsproject.positioning.ReceiverPosition;
 
 import com.sun.xml.txw2.output.IndentingXMLStreamWriter;
 
@@ -94,7 +94,7 @@ public class JakKmlProducer implements PositionConsumer, Runnable {
 
 	private Thread t = null;
 
-	private ArrayList<RoverPosition> positions = new ArrayList<RoverPosition>();
+	private ArrayList<ReceiverPosition> positions = new ArrayList<ReceiverPosition>();
 	
 	private final static TimeZone TZ = TimeZone.getTimeZone("GMT");
 
@@ -286,7 +286,7 @@ public class JakKmlProducer implements PositionConsumer, Runnable {
    * @see org.gogpsproject.producer.PositionConsumer#addCoordinate(org.gogpsproject.Coordinates)
    */
   @Override
-  public void addCoordinate(RoverPosition coord) {
+  public void addCoordinate(ReceiverPosition coord) {
   	if(debug) System.out.println("Lon:"+cf.format(coord.getGeodeticLongitude()) + " " // geod.get(0)
   			+"Lat:"+ cf.format(coord.getGeodeticLatitude()) + " " // geod.get(1)
   			+"H:"+ cf.format(coord.getGeodeticHeight()) + "\t" // geod.get(2)
@@ -300,7 +300,7 @@ public class JakKmlProducer implements PositionConsumer, Runnable {
   /* (non-Javadoc)
    * @see org.gogpsproject.producer.PositionConsumer#addCoordinate(org.gogpsproject.Coordinates)
    */
-  public void writeCoordinate( RoverPosition c ) {
+  public void writeCoordinate( ReceiverPosition c ) {
       
       if( c.status != Status.Valid )
         return;
@@ -379,7 +379,7 @@ public class JakKmlProducer implements PositionConsumer, Runnable {
 
 				String circle = null;
 //				if(positions.size()>0){
-//					RoverPosition last = positions.get(positions.size()-1);
+//					ReceiverPosition last = positions.get(positions.size()-1);
 //					circle = generateCircle(last.getGeodeticLatitude(), last.getGeodeticLongitude(), last.getGeodeticHeight(), 90, last.getpDop());
 //				}
 //				out.write("</coordinates></LineString></Placemark></Folder>"+(timeline==null?"":timeline+"</Folder>")+(circle!=null?circle:"")+"</Document>\n");
@@ -549,7 +549,7 @@ public class JakKmlProducer implements PositionConsumer, Runnable {
 ////				goodDop = false;
 //				XMLStreamWriter out = startOfTrack();
 //				if(out!=null){
-//					for(RoverPosition pos: (ArrayList<RoverPosition>) positions.clone()){
+//					for(ReceiverPosition pos: (ArrayList<ReceiverPosition>) positions.clone()){
 //						writeCoordinate(pos);
 //					}
 //					endOfTrack();

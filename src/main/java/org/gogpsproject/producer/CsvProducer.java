@@ -30,7 +30,7 @@ import java.util.TimeZone;
 
 import org.gogpsproject.PositionConsumer;
 import org.gogpsproject.Status;
-import org.gogpsproject.positioning.RoverPosition;
+import org.gogpsproject.positioning.ReceiverPosition;
 
 /**
  * <p>
@@ -56,7 +56,7 @@ public class CsvProducer implements PositionConsumer, Runnable {
 
   public Thread t = null;
 
-  private ArrayList<RoverPosition> positions = new ArrayList<RoverPosition>();
+  private ArrayList<ReceiverPosition> positions = new ArrayList<ReceiverPosition>();
 
   public CsvProducer(String filename) throws IOException{
     TimeZone gmttz = TimeZone.getTimeZone("GMT");
@@ -74,7 +74,7 @@ public class CsvProducer implements PositionConsumer, Runnable {
    * @see org.gogpsproject.producer.PositionConsumer#addCoordinate(org.gogpsproject.Coordinates)
    */
   @Override
-  public void addCoordinate(RoverPosition coord) {
+  public void addCoordinate(ReceiverPosition coord) {
     if(debug) System.out.println("Lon:"+g.format(coord.getGeodeticLongitude()) + " " // geod.get(0)
         +"Lat:"+ g.format(coord.getGeodeticLatitude()) + " " // geod.get(1)
         +"H:"+ f.format(coord.getGeodeticHeight()) + "\t" // geod.get(2)
@@ -88,7 +88,7 @@ public class CsvProducer implements PositionConsumer, Runnable {
   /* (non-Javadoc)
    * @see org.gogpsproject.producer.PositionConsumer#addCoordinate(org.gogpsproject.Coordinates)
    */
-  public void writeCoordinate(int index, RoverPosition c, FileWriter out) {
+  public void writeCoordinate(int index, ReceiverPosition c, FileWriter out) {
     try {
 //      out.write( "Index,Status,Date,UTC,Latitude [DD], Longitude [DD],HDOP,SVs in Use,SVs in View,SNR Avg [dB],Residual Error,Clock Error,Clock Error Total,\r\n" );
       PrintWriter pw = new PrintWriter(out);
@@ -183,7 +183,7 @@ public class CsvProducer implements PositionConsumer, Runnable {
           FileWriter out = writeHeader();
           if(out!=null){
             int index = 0;
-            for(RoverPosition pos: (ArrayList<RoverPosition>) positions.clone()){
+            for(ReceiverPosition pos: (ArrayList<ReceiverPosition>) positions.clone()){
               writeCoordinate(index, pos, out);
               index++;
             }
@@ -202,7 +202,7 @@ public class CsvProducer implements PositionConsumer, Runnable {
         FileWriter out = writeHeader();
         if(out!=null){
           int index = 0;
-          for(RoverPosition pos: (ArrayList<RoverPosition>) positions.clone()){
+          for(ReceiverPosition pos: (ArrayList<ReceiverPosition>) positions.clone()){
             writeCoordinate(index, pos, out);
             index++;
           }

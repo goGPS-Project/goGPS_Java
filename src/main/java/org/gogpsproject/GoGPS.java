@@ -33,7 +33,7 @@ import org.gogpsproject.positioning.LS_SA_code_snapshot;
 import org.gogpsproject.positioning.LS_SA_dopplerPos;
 import org.gogpsproject.positioning.MasterPosition;
 import org.gogpsproject.positioning.ReceiverPosition;
-import org.gogpsproject.positioning.RoverPosition;
+import org.gogpsproject.positioning.ReceiverPosition;
 import org.gogpsproject.positioning.Satellites;
 
 /**
@@ -753,7 +753,7 @@ public class GoGPS implements Runnable{
     running = true;
 		LS_SA_code sa = new LS_SA_code(this);
 		
-		RoverPosition coord = null;
+		ReceiverPosition coord = null;
 		try {
 			Observations obsR = roverIn.getNextObservations();
 			while( obsR!=null && running ) { // buffStreamObs.ready()
@@ -800,7 +800,7 @@ public class GoGPS implements Runnable{
 							}
 //							else 
 							{
-								coord = new RoverPosition(roverPos, RoverPosition.DOP_TYPE_STANDARD, roverPos.getpDop(), roverPos.gethDop(), roverPos.getvDop());
+								coord = new ReceiverPosition(roverPos, ReceiverPosition.DOP_TYPE_STANDARD, roverPos.getpDop(), roverPos.gethDop(), roverPos.getvDop());
 
 								if(positionConsumers.size()>0){
 									coord.setRefTime(new Time(obsR.getRefTime().getMsec()));
@@ -891,7 +891,7 @@ public class GoGPS implements Runnable{
 								notifyPositionConsumerEvent(PositionConsumer.EVENT_START_OF_TRACK);
 								validPosition = true;
 							}else{
-								RoverPosition coord = new RoverPosition(roverPos, RoverPosition.DOP_TYPE_STANDARD, roverPos.getpDop(), roverPos.gethDop(), roverPos.getvDop());
+								ReceiverPosition coord = new ReceiverPosition(roverPos, ReceiverPosition.DOP_TYPE_STANDARD, roverPos.getpDop(), roverPos.gethDop(), roverPos.getvDop());
 
 								if(positionConsumers.size()>0){
 									coord.setRefTime(new Time(obsR.getRefTime().getMsec()));
@@ -994,7 +994,7 @@ public class GoGPS implements Runnable{
 						validPosition = true;
 					}else
 						if(positionConsumers.size()>0){
-							RoverPosition coord = new RoverPosition(roverPos, RoverPosition.DOP_TYPE_KALMAN, roverPos.getKpDop(), roverPos.getKhDop(), roverPos.getKvDop());
+							ReceiverPosition coord = new ReceiverPosition(roverPos, ReceiverPosition.DOP_TYPE_KALMAN, roverPos.getKpDop(), roverPos.getKhDop(), roverPos.getKvDop());
 							coord.setRefTime(new Time(obsR.getRefTime().getMsec()));
 							notifyPositionConsumerAddCoordinate(coord);
 						}
@@ -1148,7 +1148,7 @@ public class GoGPS implements Runnable{
 							validPosition = true;
 						}else
 						if(positionConsumers.size()>0){
-							RoverPosition coord = new RoverPosition(roverPos, RoverPosition.DOP_TYPE_KALMAN, roverPos.getKpDop(), roverPos.getKhDop(), roverPos.getKvDop());
+							ReceiverPosition coord = new ReceiverPosition(roverPos, ReceiverPosition.DOP_TYPE_KALMAN, roverPos.getKpDop(), roverPos.getKhDop(), roverPos.getKvDop());
 							coord.setRefTime(new Time(obsR.getRefTime().getMsec()));
 							notifyPositionConsumerAddCoordinate(coord);
 						}
@@ -1209,7 +1209,7 @@ public class GoGPS implements Runnable{
     public GoGPS runCodeStandaloneSnapshot() {
       
       Observations obsR = null;
-      RoverPosition roverObs;
+      ReceiverPosition roverObs;
       Coordinates aPrioriPos = (Coordinates) roverPos.clone();
 
       Time refTime;
@@ -1261,7 +1261,7 @@ public class GoGPS implements Runnable{
          if(debug) System.out.println("Valid position? "+roverPos.isValidXYZ()+" x:"+roverPos.getX()+" y:"+roverPos.getY()+" z:"+roverPos.getZ());
          if(debug) System.out.println(" lat:"+roverPos.getGeodeticLatitude()+" lon:"+roverPos.getGeodeticLongitude() );
 
-         roverObs = new RoverPosition( roverPos, RoverPosition.DOP_TYPE_STANDARD, roverPos.getpDop(), roverPos.gethDop(), roverPos.getvDop());
+         roverObs = new ReceiverPosition( roverPos, ReceiverPosition.DOP_TYPE_STANDARD, roverPos.getpDop(), roverPos.gethDop(), roverPos.getvDop());
          roverObs.index = obsR.index;
          roverObs.sampleTime = refTime;
          roverObs.obs = obsR;
@@ -1301,7 +1301,7 @@ public class GoGPS implements Runnable{
       return this;
   }
 
-  public RoverPosition runCodeStandaloneCoarseTime() {
+  public ReceiverPosition runCodeStandaloneCoarseTime() {
     try {
       return runCodeStandaloneCoarseTime( MODULO20MS );
     } catch (Exception e) {
@@ -1368,7 +1368,7 @@ public class GoGPS implements Runnable{
     return this;
   }
   
-  public RoverPosition runCodeStandaloneCoarseTime( final double MODULO ) throws Exception {
+  public ReceiverPosition runCodeStandaloneCoarseTime( final double MODULO ) throws Exception {
     long index = 0;
     Observations obsR = null;
     Time refTime;
@@ -1484,10 +1484,10 @@ public class GoGPS implements Runnable{
           
           runCoarseTime(obsR, MODULO);
         }
-        RoverPosition roverObs = null;
+        ReceiverPosition roverObs = null;
             
         if( !roverPos.isValidXYZ() || roverPos.gethDop()>this.hdopLimit ){
-          roverObs = new RoverPosition( roverPos, RoverPosition.DOP_TYPE_STANDARD, roverPos.getpDop(), roverPos.gethDop(), roverPos.getvDop());
+          roverObs = new ReceiverPosition( roverPos, ReceiverPosition.DOP_TYPE_STANDARD, roverPos.getpDop(), roverPos.gethDop(), roverPos.getvDop());
           roverObs.index = index;
           roverObs.sampleTime = refTime;
           roverObs.obs = obsR;
@@ -1518,7 +1518,7 @@ public class GoGPS implements Runnable{
           if(debug) System.out.println(" lat:"+roverPos.getGeodeticLatitude()+" lon:"+roverPos.getGeodeticLongitude() );
           if(debug) System.out.println(" time offset update (ms): " +  offsetUpdate + "; Total time offset (ms): " + offsetms );  
         
-          roverObs = new RoverPosition( roverPos, RoverPosition.DOP_TYPE_STANDARD, roverPos.getpDop(), roverPos.gethDop(), roverPos.getvDop());
+          roverObs = new ReceiverPosition( roverPos, ReceiverPosition.DOP_TYPE_STANDARD, roverPos.getpDop(), roverPos.gethDop(), roverPos.getvDop());
           roverObs.index = index;
           roverObs.sampleTime = refTime;
           roverObs.obs = obsR;
@@ -1539,7 +1539,7 @@ public class GoGPS implements Runnable{
     } finally {
       notifyPositionConsumerEvent(PositionConsumer.EVENT_END_OF_TRACK);
     }
-    return new RoverPosition( roverPos, RoverPosition.DOP_TYPE_STANDARD, roverPos.getpDop(), roverPos.gethDop(), roverPos.getvDop());
+    return new ReceiverPosition( roverPos, ReceiverPosition.DOP_TYPE_STANDARD, roverPos.getpDop(), roverPos.gethDop(), roverPos.getvDop());
   }
 
   /**
@@ -1547,7 +1547,7 @@ public class GoGPS implements Runnable{
    * @return
    * @throws Exception
    */
-  public RoverPosition runDopplerPos( final int interval ) throws Exception {
+  public ReceiverPosition runDopplerPos( final int interval ) throws Exception {
     
     long index = 0;
     Observations obsR = null;
@@ -1573,10 +1573,10 @@ public class GoGPS implements Runnable{
             // If an approximate position was computed
             if(debug) System.out.println("Valid position? "+roverPos.isValidXYZ());
             
-            RoverPosition coord2 = null;
+            ReceiverPosition coord2 = null;
             
             if( !roverPos.isValidXYZ() ){
-//              coord2 = new RoverPosition( Coordinates.globalXYZInstance(0, 0, 0), RoverPosition.DOP_TYPE_NONE,0.0,0.0,0.0 );
+//              coord2 = new ReceiverPosition( Coordinates.globalXYZInstance(0, 0, 0), ReceiverPosition.DOP_TYPE_NONE,0.0,0.0,0.0 );
 //              coord2.status = false;
 //              coord2.satsInView = obsR.getNumSat();
 //              coord2.satsInUse = 0;
@@ -1587,7 +1587,7 @@ public class GoGPS implements Runnable{
               if(debug) System.out.println("Valid position? "+roverPos.isValidXYZ()+" x:"+roverPos.getX()+" y:"+roverPos.getY()+" z:"+roverPos.getZ());
               if(debug) System.out.println(" lat:"+roverPos.getGeodeticLatitude()+" lon:"+roverPos.getGeodeticLongitude() );
                 
-                coord2 = new RoverPosition( roverPos, RoverPosition.DOP_TYPE_STANDARD, roverPos.getpDop(), roverPos.gethDop(), roverPos.getvDop());
+                coord2 = new ReceiverPosition( roverPos, ReceiverPosition.DOP_TYPE_STANDARD, roverPos.getpDop(), roverPos.gethDop(), roverPos.getvDop());
 //                coord2.status = true;
 //                coord2.satsInView = obsR.getNumSat();
 //                coord2.satsInUse = ((SnapshotReceiverPosition)roverPos).satsInUse;
@@ -1620,7 +1620,7 @@ public class GoGPS implements Runnable{
     } finally {
       notifyPositionConsumerEvent(PositionConsumer.EVENT_END_OF_TRACK);
     }
-    return new RoverPosition( roverPos, RoverPosition.DOP_TYPE_STANDARD, roverPos.getpDop(), roverPos.gethDop(), roverPos.getvDop());
+    return new ReceiverPosition( roverPos, ReceiverPosition.DOP_TYPE_STANDARD, roverPos.getpDop(), roverPos.gethDop(), roverPos.getvDop());
   }
 	
   /**
@@ -1649,7 +1649,7 @@ public class GoGPS implements Runnable{
 			}
 		}
 	}
-	private void notifyPositionConsumerAddCoordinate(RoverPosition coord){
+	private void notifyPositionConsumerAddCoordinate(ReceiverPosition coord){
 		for(PositionConsumer pc:positionConsumers){
 			try{
 				pc.addCoordinate(coord);

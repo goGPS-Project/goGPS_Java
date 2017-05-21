@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2010, Eugenio Realini, Mirko Reguzzoni, Cryms sagl - Switzerland, Daisuke Yoshida. All Rights Reserved.
+ * Copyright (c) 2011 Eugenio Realini, Mirko Reguzzoni, Cryms sagl - Switzerland. 
+ * All Rights Reserved.
  *
  * This file is part of goGPS Project (goGPS).
  *
@@ -19,10 +20,10 @@
  *
  */
 package org.gogpsproject.positioning;
-import org.ejml.simple.SimpleMatrix;
 import org.gogpsproject.Coordinates;
-import org.gogpsproject.SatellitePosition;
+import org.gogpsproject.Observations;
 import org.gogpsproject.Status;
+import org.gogpsproject.Time;
 
 /**
  * <p>
@@ -33,11 +34,26 @@ import org.gogpsproject.Status;
  */
 public class ReceiverPosition extends Position {
 
+  public long index;
+  public Time sampleTime;
+  public Observations obs;
+  public Status status = Status.None;
+  public long satsInView = 0;
+
+  /** Sats in use from an observation set */
+  public long satsInUse = 0;
+
+  /** clock error in ms */
+  public long cErrMS = 0;
+  
   /** Clock error */
-	double receiverClockError; 
+  double receiverClockError; 
 
   /** Clock error rate */
 	double receiverClockErrorRate; 
+	
+  /** Average residual error for least-squares computation */
+  public double eRes;
 	
   /** Position dilution of precision (PDOP) */
 	double pDop; 
@@ -57,20 +73,30 @@ public class ReceiverPosition extends Position {
 	/** Kalman-derived vertical dilution of precision (KVDOP) */
 	double kvDop; 
 	
-  /** Sats in use from an observation set */
-	public long satsInUse = 0;
+  private int dopType = DOP_TYPE_NONE;
+  public final static int DOP_TYPE_NONE = 0;
+  public final static int DOP_TYPE_STANDARD = 1; /* Standard DOP values (satellite geometry only) */
+  public final static int DOP_TYPE_KALMAN = 2; /* Kalman DOP values (KDOP), based on the Kalman filter error covariance matrix */
   
-	/** Average residual error for least-squares computation */
-  public double eRes;
-
-  public Status status = Status.None;
-
 	public ReceiverPosition(){
 		super();
 		this.setXYZ(0.0, 0.0, 0.0);
 		this.receiverClockError = 0.0;
 	}
 
+  public ReceiverPosition(Coordinates c) {
+    this(c,DOP_TYPE_NONE,0.0,0.0,0.0);
+  }
+
+  public ReceiverPosition(Coordinates c, int dopType, double pDop, double hDop, double vDop) {
+    super();
+    c.cloneInto(this);
+    this.dopType = dopType;
+    this.pDop = pDop;
+    this.hDop = hDop;
+    this.vDop = vDop;
+  }
+  
 	public double getReceiverClockError() {
 		return receiverClockError;
 	}
@@ -134,4 +160,19 @@ public class ReceiverPosition extends Position {
 	public void setKvDop(double kvDop) {
 		this.kvDop = kvDop;
 	}
+
+  /**
+   * @return the dopType
+   */
+  public int getDopType() {
+    return dopType;
+  }
+
+  /**
+   * @param dopType the dopType to set
+   */
+  public void setDopType(int dopType) {
+    this.dopType = dopType;
+  }
+  
 }

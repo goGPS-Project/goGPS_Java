@@ -32,7 +32,7 @@ import org.gogpsproject.Time;
  *
  * @author Eugenio Realini, Cryms.com, Daisuke Yoshida, Emanuele Ziglioli (Sirtrack Ltd)
  */
-public class ReceiverPosition extends Position {
+public class RoverPosition extends Position {
 
   public long index;
   public Time sampleTime;
@@ -78,17 +78,17 @@ public class ReceiverPosition extends Position {
   public final static int DOP_TYPE_STANDARD = 1; /* Standard DOP values (satellite geometry only) */
   public final static int DOP_TYPE_KALMAN = 2; /* Kalman DOP values (KDOP), based on the Kalman filter error covariance matrix */
   
-	public ReceiverPosition(){
+	public RoverPosition(){
 		super();
 		this.setXYZ(0.0, 0.0, 0.0);
 		this.receiverClockError = 0.0;
 	}
 
-  public ReceiverPosition(Coordinates c) {
+  public RoverPosition(Coordinates c) {
     this(c,DOP_TYPE_NONE,0.0,0.0,0.0);
   }
 
-  public ReceiverPosition(Coordinates c, int dopType, double pDop, double hDop, double vDop) {
+  public RoverPosition(Coordinates c, int dopType, double pDop, double hDop, double vDop) {
     super();
     c.cloneInto(this);
     this.dopType = dopType;

@@ -12,7 +12,7 @@ import org.gogpsproject.parser.rinex.RinexObservationParser;
 import org.gogpsproject.parser.ublox.DecodeRXMRAWX;
 import org.gogpsproject.parser.ublox.UBXException;
 import org.gogpsproject.parser.ublox.UBXFileReader;
-import org.gogpsproject.positioning.ReceiverPosition;
+import org.gogpsproject.positioning.RoverPosition;
 import org.gogpsproject.producer.KmlProducer;
 
 import static org.junit.Assert.*;

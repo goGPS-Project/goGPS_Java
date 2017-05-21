@@ -29,7 +29,7 @@ import java.util.TimeZone;
 
 import org.gogpsproject.PositionConsumer;
 import org.gogpsproject.Status;
-import org.gogpsproject.positioning.ReceiverPosition;
+import org.gogpsproject.positioning.RoverPosition;
 
 /**
  * <p>
@@ -66,7 +66,7 @@ public class KmlProducer extends Thread implements PositionConsumer {
 	private int worstLinePixelWidth = 3;
 	private boolean debug=false;
 
-	private ArrayList<ReceiverPosition> positions = new ArrayList<ReceiverPosition>();
+	private ArrayList<RoverPosition> positions = new ArrayList<RoverPosition>();
 	
 	private final static TimeZone TZ = TimeZone.getTimeZone("GMT");
 
@@ -111,7 +111,7 @@ public class KmlProducer extends Thread implements PositionConsumer {
 	 * @see org.gogpsproject.producer.PositionConsumer#addCoordinate(org.gogpsproject.Coordinates)
 	 */
 	@Override
-	public void addCoordinate(ReceiverPosition coord) {
+	public void addCoordinate(RoverPosition coord) {
 		if(debug) System.out.println("Lon:"+g.format(coord.getGeodeticLongitude()) + " " // geod.get(0)
 				+"Lat:"+ g.format(coord.getGeodeticLatitude()) + " " // geod.get(1)
 				+"H:"+ f.format(coord.getGeodeticHeight()) + "\t" // geod.get(2)
@@ -126,7 +126,7 @@ public class KmlProducer extends Thread implements PositionConsumer {
 	/* (non-Javadoc)
 	 * @see org.gogpsproject.producer.PositionConsumer#addCoordinate(org.gogpsproject.Coordinates)
 	 */
-	public void writeCoordinate(ReceiverPosition coord,FileWriter out) {
+	public void writeCoordinate(RoverPosition coord,FileWriter out) {
 		try {
 //      ReceiverPositionObs c = (ReceiverPositionObs)coord;
 //      if( c.status != Status.Valid )
@@ -159,7 +159,7 @@ public class KmlProducer extends Thread implements PositionConsumer {
 //			System.out.print(" Lon:" + lon);//geod.get(0)
 //			System.out.print(" Lat:" + lat);//geod.get(1)
 			String dopLabel = "DOP";
-			if (coord.getDopType() == ReceiverPosition.DOP_TYPE_KALMAN)
+			if (coord.getDopType() == RoverPosition.DOP_TYPE_KALMAN)
 				dopLabel = "KDOP";
 
 			if(timeSampleDelaySec>0 && (num++)%timeSampleDelaySec==0){

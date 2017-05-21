@@ -30,7 +30,7 @@ import java.util.TimeZone;
 
 import org.gogpsproject.PositionConsumer;
 import org.gogpsproject.Status;
-import org.gogpsproject.positioning.ReceiverPosition;
+import org.gogpsproject.positioning.RoverPosition;
 /**
  * <p>
  * Produces TXT file
@@ -52,7 +52,7 @@ public class TxtProducerCoarseTime implements PositionConsumer, Runnable {
 
 	private Thread t = null;
 
-	private ArrayList<ReceiverPosition> positions = new ArrayList<ReceiverPosition>();
+	private ArrayList<RoverPosition> positions = new ArrayList<RoverPosition>();
 	
 	private final static TimeZone TZ = TimeZone.getTimeZone("GMT");
 
@@ -72,7 +72,7 @@ public class TxtProducerCoarseTime implements PositionConsumer, Runnable {
 	 * @see org.gogpsproject.producer.PositionConsumer#addCoordinate(org.gogpsproject.Coordinates)
 	 */
 	@Override
-	public void addCoordinate(ReceiverPosition coord) {
+	public void addCoordinate(RoverPosition coord) {
 		if(debug) System.out.println("Lon:"+g.format(coord.getGeodeticLongitude()) + " " // geod.get(0)
 				+"Lat:"+ g.format(coord.getGeodeticLatitude()) + " " // geod.get(1)
 				+"H:"+ f.format(coord.getGeodeticHeight()) + "\t" // geod.get(2)
@@ -105,7 +105,7 @@ public class TxtProducerCoarseTime implements PositionConsumer, Runnable {
 	/* (non-Javadoc)
 	 * @see org.gogpsproject.producer.PositionConsumer#addCoordinate(org.gogpsproject.Coordinates)
 	 */
-	public void writeCoordinate(ReceiverPosition c, FileWriter out ) {
+	public void writeCoordinate(RoverPosition c, FileWriter out ) {
 		try {
 			PrintWriter pw = new PrintWriter(out);
 
@@ -203,7 +203,7 @@ public class TxtProducerCoarseTime implements PositionConsumer, Runnable {
 //					goodDop = false;
 					FileWriter out = writeHeader();
 					if(out!=null){
-						for(ReceiverPosition pos: (ArrayList<ReceiverPosition>) positions.clone()){
+						for(RoverPosition pos: (ArrayList<RoverPosition>) positions.clone()){
 							writeCoordinate(pos, out);
 						}
 					}
@@ -220,7 +220,7 @@ public class TxtProducerCoarseTime implements PositionConsumer, Runnable {
 //				goodDop = false;
 				FileWriter out = writeHeader();
 				if(out!=null){
-					for(ReceiverPosition pos: (ArrayList<ReceiverPosition>) positions.clone()){
+					for(RoverPosition pos: (ArrayList<RoverPosition>) positions.clone()){
 						writeCoordinate(pos, out);
 					}
 				}

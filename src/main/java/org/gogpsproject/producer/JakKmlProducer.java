@@ -40,7 +40,7 @@ import org.gogpsproject.ObservationSet;
 import org.gogpsproject.Observations;
 import org.gogpsproject.PositionConsumer;
 import org.gogpsproject.Status;
-import org.gogpsproject.positioning.ReceiverPosition;
+import org.gogpsproject.positioning.RoverPosition;
 
 import com.sun.xml.txw2.output.IndentingXMLStreamWriter;
 
@@ -94,7 +94,7 @@ public class JakKmlProducer implements PositionConsumer, Runnable {
 
 	private Thread t = null;
 
-	private ArrayList<ReceiverPosition> positions = new ArrayList<ReceiverPosition>();
+	private ArrayList<RoverPosition> positions = new ArrayList<RoverPosition>();
 	
 	private final static TimeZone TZ = TimeZone.getTimeZone("GMT");
 
@@ -286,7 +286,7 @@ public class JakKmlProducer implements PositionConsumer, Runnable {
    * @see org.gogpsproject.producer.PositionConsumer#addCoordinate(org.gogpsproject.Coordinates)
    */
   @Override
-  public void addCoordinate(ReceiverPosition coord) {
+  public void addCoordinate(RoverPosition coord) {
   	if(debug) System.out.println("Lon:"+cf.format(coord.getGeodeticLongitude()) + " " // geod.get(0)
   			+"Lat:"+ cf.format(coord.getGeodeticLatitude()) + " " // geod.get(1)
   			+"H:"+ cf.format(coord.getGeodeticHeight()) + "\t" // geod.get(2)
@@ -300,7 +300,7 @@ public class JakKmlProducer implements PositionConsumer, Runnable {
   /* (non-Javadoc)
    * @see org.gogpsproject.producer.PositionConsumer#addCoordinate(org.gogpsproject.Coordinates)
    */
-  public void writeCoordinate( ReceiverPosition c ) {
+  public void writeCoordinate( RoverPosition c ) {
       
       if( c.status != Status.Valid )
         return;

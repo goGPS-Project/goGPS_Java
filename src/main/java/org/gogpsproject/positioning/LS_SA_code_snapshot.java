@@ -669,7 +669,7 @@ public class LS_SA_code_snapshot extends Core {
     }
 
     SnapshotPivotResult result = null;
-    ReceiverPosition refPos = new ReceiverPosition();
+    RoverPosition refPos = new RoverPosition();
 
     // save this position before trying
     rover.cloneInto(refPos);

@@ -19,7 +19,7 @@
  */
 package org.gogpsproject;
 
-import org.gogpsproject.positioning.ReceiverPosition;
+import org.gogpsproject.positioning.RoverPosition;
 
 /**
  * @author Lorenzo Patocchi, cryms.com
@@ -30,7 +30,7 @@ public interface PositionConsumer {
 	public final static int EVENT_END_OF_TRACK = 1;
 	public final static int EVENT_GOGPS_THREAD_ENDED = 2;
 
-	public void addCoordinate(ReceiverPosition coord);
+	public void addCoordinate(RoverPosition coord);
 	public void event(int event);
 
 }

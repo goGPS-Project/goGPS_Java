@@ -18,7 +18,7 @@ import org.gogpsproject.TopocentricCoordinates;
 public class Satellites {
   
   GoGPS goGPS;
-  ReceiverPosition rover;
+  RoverPosition rover;
   MasterPosition master; 
   NavigationProducer navigation;
 

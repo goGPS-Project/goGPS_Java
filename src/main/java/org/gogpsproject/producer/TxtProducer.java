@@ -29,7 +29,7 @@ import java.util.Date;
 import java.util.TimeZone;
 
 import org.gogpsproject.PositionConsumer;
-import org.gogpsproject.positioning.ReceiverPosition;
+import org.gogpsproject.positioning.RoverPosition;
 /**
  * <p>
  * Produces TXT file
@@ -49,7 +49,7 @@ public class TxtProducer extends Thread implements PositionConsumer {
 	private String filename = null;
 	private boolean debug=false;
 
-	private ArrayList<ReceiverPosition> positions = new ArrayList<ReceiverPosition>();
+	private ArrayList<RoverPosition> positions = new ArrayList<RoverPosition>();
 	
 	private final static TimeZone TZ = TimeZone.getTimeZone("GMT");
 
@@ -69,7 +69,7 @@ public class TxtProducer extends Thread implements PositionConsumer {
 	 * @see org.gogpsproject.producer.PositionConsumer#addCoordinate(org.gogpsproject.Coordinates)
 	 */
 	@Override
-	public void addCoordinate(ReceiverPosition coord) {
+	public void addCoordinate(RoverPosition coord) {
 		if(debug) System.out.println("Lon:"+g.format(coord.getGeodeticLongitude()) + " " // geod.get(0)
 				+"Lat:"+ g.format(coord.getGeodeticLatitude()) + " " // geod.get(1)
 				+"H:"+ f.format(coord.getGeodeticHeight()) + "\t" // geod.get(2)
@@ -83,7 +83,7 @@ public class TxtProducer extends Thread implements PositionConsumer {
 	/* (non-Javadoc)
 	 * @see org.gogpsproject.producer.PositionConsumer#addCoordinate(org.gogpsproject.Coordinates)
 	 */
-	public void writeCoordinate(ReceiverPosition coord,FileWriter out) {
+	public void writeCoordinate(RoverPosition coord,FileWriter out) {
 		try {
 			
 			PrintWriter pw = new PrintWriter(out);
@@ -130,7 +130,7 @@ public class TxtProducer extends Thread implements PositionConsumer {
 			//HDOP, KHDOP
 			double hdop = noData;
 			double khdop = noData;
-			if (coord.getDopType() == ReceiverPosition.DOP_TYPE_KALMAN) {
+			if (coord.getDopType() == RoverPosition.DOP_TYPE_KALMAN) {
 				khdop = coord.gethDop();
 			} else {
 				hdop = coord.gethDop();

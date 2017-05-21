@@ -12,7 +12,7 @@ import org.gogpsproject.GoGPS;
 public class Core {
 
   GoGPS goGPS;
-  ReceiverPosition rover;
+  RoverPosition rover;
   MasterPosition master;
   Satellites sats;
   

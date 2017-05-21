@@ -31,7 +31,6 @@ import java.util.TimeZone;
 import org.gogpsproject.PositionConsumer;
 import org.gogpsproject.Status;
 import org.gogpsproject.positioning.RoverPosition;
-import org.gogpsproject.positioning.RoverPositionObs;
 /**
  * <p>
  * Produces TXT file
@@ -106,10 +105,9 @@ public class TxtProducerCoarseTime implements PositionConsumer, Runnable {
 	/* (non-Javadoc)
 	 * @see org.gogpsproject.producer.PositionConsumer#addCoordinate(org.gogpsproject.Coordinates)
 	 */
-	public void writeCoordinate(RoverPosition coord1, FileWriter out ) {
+	public void writeCoordinate(RoverPosition c, FileWriter out ) {
 		try {
 			PrintWriter pw = new PrintWriter(out);
-      RoverPositionObs c = (RoverPositionObs)coord1;
 
       pw.printf("%5d  ", c.index);
       pw.printf("%13s  ", c.status.toString() );

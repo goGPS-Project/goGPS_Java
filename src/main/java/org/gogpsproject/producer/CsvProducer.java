@@ -31,7 +31,6 @@ import java.util.TimeZone;
 import org.gogpsproject.PositionConsumer;
 import org.gogpsproject.Status;
 import org.gogpsproject.positioning.RoverPosition;
-import org.gogpsproject.positioning.RoverPositionObs;
 
 /**
  * <p>
@@ -89,11 +88,9 @@ public class CsvProducer implements PositionConsumer, Runnable {
   /* (non-Javadoc)
    * @see org.gogpsproject.producer.PositionConsumer#addCoordinate(org.gogpsproject.Coordinates)
    */
-  public void writeCoordinate(int index, RoverPosition coord, FileWriter out) {
+  public void writeCoordinate(int index, RoverPosition c, FileWriter out) {
     try {
 //      out.write( "Index,Status,Date,UTC,Latitude [DD], Longitude [DD],HDOP,SVs in Use,SVs in View,SNR Avg [dB],Residual Error,Clock Error,Clock Error Total,\r\n" );
-      RoverPositionObs c = (RoverPositionObs)coord;
-
       PrintWriter pw = new PrintWriter(out);
 
       pw.printf("%d,%s,", c.index, c.status.toString() );

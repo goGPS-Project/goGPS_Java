@@ -30,7 +30,6 @@ import java.util.TimeZone;
 import org.gogpsproject.PositionConsumer;
 import org.gogpsproject.Status;
 import org.gogpsproject.positioning.RoverPosition;
-import org.gogpsproject.positioning.RoverPositionObs;
 
 /**
  * <p>

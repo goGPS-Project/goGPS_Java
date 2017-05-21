@@ -41,7 +41,6 @@ import org.gogpsproject.Observations;
 import org.gogpsproject.PositionConsumer;
 import org.gogpsproject.Status;
 import org.gogpsproject.positioning.RoverPosition;
-import org.gogpsproject.positioning.RoverPositionObs;
 
 import com.sun.xml.txw2.output.IndentingXMLStreamWriter;
 
@@ -301,8 +300,7 @@ public class JakKmlProducer implements PositionConsumer, Runnable {
   /* (non-Javadoc)
    * @see org.gogpsproject.producer.PositionConsumer#addCoordinate(org.gogpsproject.Coordinates)
    */
-  public void writeCoordinate( RoverPosition coord ) {
-      RoverPositionObs c = (RoverPositionObs)coord;
+  public void writeCoordinate( RoverPosition c ) {
       
       if( c.status != Status.Valid )
         return;
@@ -358,7 +356,7 @@ public class JakKmlProducer implements PositionConsumer, Runnable {
   
       if( c.getpDop()<goodDopThreshold ){
         track.addToWhen( t );
-        track.addToCoord( cf.format( coord.getGeodeticLongitude() ) + " " + cf.format(coord.getGeodeticLatitude()) + " " + cf.format(coord.getGeodeticHeight()) );
+        track.addToCoord( cf.format( c.getGeodeticLongitude() ) + " " + cf.format(c.getGeodeticLatitude()) + " " + cf.format(c.getGeodeticHeight()) );
       }
       
       try {

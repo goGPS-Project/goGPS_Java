@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2011 Eugenio Realini, Mirko Reguzzoni, Cryms sagl - Switzerland. All Rights Reserved.
+ * Copyright (c) 2011 Eugenio Realini, Mirko Reguzzoni, Cryms sagl - Switzerland. 
+ * All Rights Reserved.
  *
  * This file is part of goGPS Project (goGPS).
  *
@@ -23,6 +24,9 @@ package org.gogpsproject.positioning;
  */
 
 import org.gogpsproject.Coordinates;
+import org.gogpsproject.Observations;
+import org.gogpsproject.Status;
+import org.gogpsproject.Time;
 
 /**
  * @author Cryms.com
@@ -30,6 +34,19 @@ import org.gogpsproject.Coordinates;
  */
 public class RoverPosition extends Coordinates {
 
+  public long index;
+  public Time sampleTime;
+  public Observations obs;
+  public Status status;
+  public long satsInView = 0;
+  public long satsInUse = 0;
+
+  /** clock error in ms */
+  public long cErrMS = 0;
+  
+  /** average residual error */
+  public double eRes;
+  
 	/* Position dilution of precision (PDOP) */
 	private double pDop;
 

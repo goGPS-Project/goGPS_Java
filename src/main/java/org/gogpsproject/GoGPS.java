@@ -34,7 +34,6 @@ import org.gogpsproject.positioning.LS_SA_dopplerPos;
 import org.gogpsproject.positioning.MasterPosition;
 import org.gogpsproject.positioning.ReceiverPosition;
 import org.gogpsproject.positioning.RoverPosition;
-import org.gogpsproject.positioning.RoverPositionObs;
 import org.gogpsproject.positioning.Satellites;
 
 /**
@@ -1210,7 +1209,7 @@ public class GoGPS implements Runnable{
     public GoGPS runCodeStandaloneSnapshot() {
       
       Observations obsR = null;
-      RoverPositionObs roverObs;
+      RoverPosition roverObs;
       Coordinates aPrioriPos = (Coordinates) roverPos.clone();
 
       Time refTime;
@@ -1262,7 +1261,7 @@ public class GoGPS implements Runnable{
          if(debug) System.out.println("Valid position? "+roverPos.isValidXYZ()+" x:"+roverPos.getX()+" y:"+roverPos.getY()+" z:"+roverPos.getZ());
          if(debug) System.out.println(" lat:"+roverPos.getGeodeticLatitude()+" lon:"+roverPos.getGeodeticLongitude() );
 
-         roverObs = new RoverPositionObs( roverPos, RoverPosition.DOP_TYPE_STANDARD, roverPos.getpDop(), roverPos.gethDop(), roverPos.getvDop());
+         roverObs = new RoverPosition( roverPos, RoverPosition.DOP_TYPE_STANDARD, roverPos.getpDop(), roverPos.gethDop(), roverPos.getvDop());
          roverObs.index = obsR.index;
          roverObs.sampleTime = refTime;
          roverObs.obs = obsR;
@@ -1485,10 +1484,10 @@ public class GoGPS implements Runnable{
           
           runCoarseTime(obsR, MODULO);
         }
-        RoverPositionObs roverObs = null;
+        RoverPosition roverObs = null;
             
         if( !roverPos.isValidXYZ() || roverPos.gethDop()>this.hdopLimit ){
-          roverObs = new RoverPositionObs( roverPos, RoverPosition.DOP_TYPE_STANDARD, roverPos.getpDop(), roverPos.gethDop(), roverPos.getvDop());
+          roverObs = new RoverPosition( roverPos, RoverPosition.DOP_TYPE_STANDARD, roverPos.getpDop(), roverPos.gethDop(), roverPos.getvDop());
           roverObs.index = index;
           roverObs.sampleTime = refTime;
           roverObs.obs = obsR;
@@ -1519,7 +1518,7 @@ public class GoGPS implements Runnable{
           if(debug) System.out.println(" lat:"+roverPos.getGeodeticLatitude()+" lon:"+roverPos.getGeodeticLongitude() );
           if(debug) System.out.println(" time offset update (ms): " +  offsetUpdate + "; Total time offset (ms): " + offsetms );  
         
-          roverObs = new RoverPositionObs( roverPos, RoverPosition.DOP_TYPE_STANDARD, roverPos.getpDop(), roverPos.gethDop(), roverPos.getvDop());
+          roverObs = new RoverPosition( roverPos, RoverPosition.DOP_TYPE_STANDARD, roverPos.getpDop(), roverPos.gethDop(), roverPos.getvDop());
           roverObs.index = index;
           roverObs.sampleTime = refTime;
           roverObs.obs = obsR;

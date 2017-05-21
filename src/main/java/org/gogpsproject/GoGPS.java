@@ -33,6 +33,8 @@ import org.gogpsproject.positioning.LS_SA_code_snapshot;
 import org.gogpsproject.positioning.LS_SA_dopplerPos;
 import org.gogpsproject.positioning.MasterPosition;
 import org.gogpsproject.positioning.ReceiverPosition;
+import org.gogpsproject.positioning.RoverPosition;
+import org.gogpsproject.positioning.RoverPositionObs;
 import org.gogpsproject.positioning.Satellites;
 
 /**

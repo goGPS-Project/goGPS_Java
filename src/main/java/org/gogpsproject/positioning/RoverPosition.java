@@ -17,10 +17,12 @@
  * License along with goGPS.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-package org.gogpsproject;
+package org.gogpsproject.positioning;
 /**
  * @author Lorenzo Patocchi cryms.com
  */
+
+import org.gogpsproject.Coordinates;
 
 /**
  * @author Cryms.com

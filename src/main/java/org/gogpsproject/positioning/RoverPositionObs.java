@@ -1,4 +1,9 @@
-package org.gogpsproject;
+package org.gogpsproject.positioning;
+
+import org.gogpsproject.Coordinates;
+import org.gogpsproject.Observations;
+import org.gogpsproject.Status;
+import org.gogpsproject.Time;
 
 /**
  * Augmented RoverPosition with extra information about the status of processed observations

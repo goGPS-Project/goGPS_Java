@@ -29,7 +29,7 @@ import java.util.Date;
 import java.util.TimeZone;
 
 import org.gogpsproject.PositionConsumer;
-import org.gogpsproject.RoverPosition;
+import org.gogpsproject.positioning.RoverPosition;
 /**
  * <p>
  * Produces TXT file

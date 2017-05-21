@@ -19,6 +19,7 @@
  */
 package org.gogpsproject;
 
+import org.gogpsproject.positioning.RoverPosition;
 
 /**
  * @author Lorenzo Patocchi, cryms.com

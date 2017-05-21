@@ -39,9 +39,9 @@ import javax.xml.stream.XMLStreamWriter;
 import org.gogpsproject.ObservationSet;
 import org.gogpsproject.Observations;
 import org.gogpsproject.PositionConsumer;
-import org.gogpsproject.RoverPosition;
-import org.gogpsproject.RoverPositionObs;
 import org.gogpsproject.Status;
+import org.gogpsproject.positioning.RoverPosition;
+import org.gogpsproject.positioning.RoverPositionObs;
 
 import com.sun.xml.txw2.output.IndentingXMLStreamWriter;
 

@@ -9,7 +9,7 @@ import org.gogpsproject.GoGPS;
 //import com.google.maps.model.ElevationResult;
 //import com.google.maps.model.LatLng;
 
-public class Core {
+public abstract class Core {
 
   GoGPS goGPS;
   RoverPosition rover;

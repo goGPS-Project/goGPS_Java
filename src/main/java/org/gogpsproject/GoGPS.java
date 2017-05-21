@@ -1192,7 +1192,6 @@ public class GoGPS implements Runnable{
         // Select all satellites
         System.out.println("////// Itr = " + iter);
         
-        Core cp = new Core(this);
         double correctionMag = satellites.selectPositionUpdate(obsR);
         if (satellites.getAvailNumber() < 6) {
           roverPos.status = Status.NoAprioriPos;

@@ -3,17 +3,12 @@ package com.github;
 import org.junit.Test;
 
 import org.gogpsproject.GoGPS;
-import org.gogpsproject.NavigationProducer;
-import org.gogpsproject.Observations;
-import org.gogpsproject.ObservationsProducer;
-import org.gogpsproject.parser.rinex.RinexNavigation;
-import org.gogpsproject.parser.rinex.RinexNavigationParser;
-import org.gogpsproject.parser.rinex.RinexObservationParser;
-import org.gogpsproject.parser.ublox.DecodeRXMRAWX;
-import org.gogpsproject.parser.ublox.UBXException;
-import org.gogpsproject.parser.ublox.UBXFileReader;
-import org.gogpsproject.positioning.RoverPosition;
-import org.gogpsproject.producer.KmlProducer;
+import org.gogpsproject.consumer.KmlProducer;
+import org.gogpsproject.producer.NavigationProducer;
+import org.gogpsproject.producer.ObservationsProducer;
+import org.gogpsproject.producer.parser.rinex.RinexNavigation;
+import org.gogpsproject.producer.parser.rinex.RinexObservationParser;
+import org.gogpsproject.producer.parser.ublox.UBXFileReader;
 
 import static org.junit.Assert.*;
 
@@ -90,7 +85,7 @@ public class Issues {
                                      .runCodeStandalone()
                                      .runUntilFinished();
 
-        assertTrue( goGPS.getReceiverPosition().isValidXYZ() );
+        assertTrue( goGPS.getRoverPos().isValidXYZ() );
         
     } catch (Exception e) {
         e.printStackTrace();

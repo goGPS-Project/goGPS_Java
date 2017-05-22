@@ -107,7 +107,7 @@ public class LiveTracking {
 			Coordinates initialPosition = new GoGPS(navigationIn, roverIn, null)
     			                              .setDynamicModel(dynamicModel)
     			                              .runCodeStandalone(10)
-    			                              .getReceiverPosition();
+    			                              .getRoverPos();
 
 			/******************************************
 			 * MASTER RTCM/RINEX

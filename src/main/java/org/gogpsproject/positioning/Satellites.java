@@ -44,8 +44,8 @@ public class Satellites {
 
   public Satellites(GoGPS goGPS) {
     this.goGPS = goGPS;
-    this.rover = goGPS.getReceiverPosition();
-    this.master = goGPS.getMasterPosition();
+    this.rover = goGPS.getRoverPos();
+    this.master = goGPS.getMasterPos();
     this.navigation = goGPS.getNavigation();
   }
 

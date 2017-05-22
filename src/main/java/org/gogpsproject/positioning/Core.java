@@ -27,9 +27,9 @@ public abstract class Core {
 //}
   public Core( GoGPS goGPS) {
     this.goGPS  = goGPS;
-    this.rover  = goGPS.getReceiverPosition();
-    this.master = goGPS.getMasterPosition();
-    this.sats   = goGPS.getSatellites();
+    this.rover  = goGPS.getRoverPos();
+    this.master = goGPS.getMasterPos();
+    this.sats   = goGPS.getSats();
   }
 
   /**

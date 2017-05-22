@@ -219,23 +219,25 @@ public class GoGPS implements Runnable{
   /** time update limit for LMS iterations */
   final double TG_TOL = 1;  // milliseconds
 
-	public RoverPosition getReceiverPosition(){
+	public RoverPosition getRoverPos(){
     return roverPos;
   }
 
-  public void setRoverPos(Coordinates roverPos) {
+  public GoGPS setRoverPos(Coordinates roverPos) {
     roverPos.cloneInto(roverPos);
+    return this;
   }
 
-  public MasterPosition getMasterPosition(){
+  public MasterPosition getMasterPos(){
     return masterPos;
   }
 
-  public void setMasterPos(Coordinates masterPos) {
+  public GoGPS setMasterPos(Coordinates masterPos) {
     masterPos.cloneInto(masterPos);
+    return this;
   }
 
-  public Satellites getSatellites(){
+  public Satellites getSats(){
     return satellites;
   }
   

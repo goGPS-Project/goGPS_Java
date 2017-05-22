@@ -800,7 +800,8 @@ public class LS_SA_code_snapshot extends Core {
 
   
   public void tryOffset( Coordinates aPrioriPos, Observations obsR ) throws Exception{
-
+    this.aPrioriPos = aPrioriPos;
+    
   //  Long offsetsec = Math.round(offsetms/1000.0);
     Long offsetms = 0l;
   

@@ -22,7 +22,7 @@ package org.gogpsproject.apps;
 import java.util.Locale;
 import java.util.Vector;
 
-import org.gogpsproject.parser.nvs.NVSSerialConnection;
+import org.gogpsproject.producer.parser.nvs.NVSSerialConnection;
 import org.gogpsproject.producer.rinex.RinexV2Producer;
 import org.gogpsproject.producer.rinex.RinexV3Producer;
 

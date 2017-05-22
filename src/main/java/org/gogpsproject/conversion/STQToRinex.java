@@ -22,7 +22,7 @@ package org.gogpsproject.conversion;
 import java.io.File;
 import java.util.Locale;
 
-import org.gogpsproject.parser.skytraq.STQFileReader;
+import org.gogpsproject.producer.parser.skytraq.STQFileReader;
 import org.gogpsproject.producer.rinex.RinexV2Producer;
 
 /**

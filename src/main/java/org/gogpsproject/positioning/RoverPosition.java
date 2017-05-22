@@ -20,9 +20,8 @@
  *
  */
 package org.gogpsproject.positioning;
-import org.gogpsproject.Observations;
 import org.gogpsproject.Status;
-import org.gogpsproject.Time;
+import org.gogpsproject.producer.Observations;
 
 /**
  * <p>

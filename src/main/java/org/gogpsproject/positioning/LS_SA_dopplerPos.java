@@ -3,9 +3,9 @@ package org.gogpsproject.positioning;
 import org.ejml.simple.SimpleMatrix;
 import org.gogpsproject.Constants;
 import org.gogpsproject.GoGPS;
-import org.gogpsproject.ObservationSet;
-import org.gogpsproject.Observations;
 import org.gogpsproject.Status;
+import org.gogpsproject.producer.ObservationSet;
+import org.gogpsproject.producer.Observations;
 
 public class LS_SA_dopplerPos extends Core {
 

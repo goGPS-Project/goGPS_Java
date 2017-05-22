@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 import org.ejml.simple.SimpleMatrix;
 import org.gogpsproject.GoGPS;
-import org.gogpsproject.Observations;
+import org.gogpsproject.producer.Observations;
 
 public abstract class KalmanFilter extends LS_DD_code {
 

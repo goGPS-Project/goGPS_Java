@@ -34,13 +34,13 @@ import java.util.Vector;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import org.gogpsproject.IonoGps;
-import org.gogpsproject.ObservationSet;
-import org.gogpsproject.Observations;
-import org.gogpsproject.StreamEventListener;
-import org.gogpsproject.Time;
 import org.gogpsproject.ephemeris.EphGps;
 import org.gogpsproject.positioning.Coordinates;
+import org.gogpsproject.positioning.Time;
+import org.gogpsproject.producer.ObservationSet;
+import org.gogpsproject.producer.Observations;
+import org.gogpsproject.producer.StreamEventListener;
+import org.gogpsproject.producer.parser.IonoGps;
 /**
  * <p>
  * Produces Rinex 3 as StreamEventListener

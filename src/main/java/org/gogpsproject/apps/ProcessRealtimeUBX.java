@@ -24,13 +24,13 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 import org.gogpsproject.GoGPS;
-import org.gogpsproject.NavigationProducer;
-import org.gogpsproject.ObservationsBuffer;
-import org.gogpsproject.parser.rtcm3.RTCM3Client;
-import org.gogpsproject.parser.ublox.UBXSerialConnection;
+import org.gogpsproject.consumer.KmlProducer;
 import org.gogpsproject.positioning.Coordinates;
-import org.gogpsproject.parser.ublox.UBXAssistNow;
-import org.gogpsproject.producer.KmlProducer;
+import org.gogpsproject.producer.NavigationProducer;
+import org.gogpsproject.producer.ObservationsBuffer;
+import org.gogpsproject.producer.parser.rtcm3.RTCM3Client;
+import org.gogpsproject.producer.parser.ublox.UBXAssistNow;
+import org.gogpsproject.producer.parser.ublox.UBXSerialConnection;
 
 /**
  * @author Eugenio Realini, Cryms.com

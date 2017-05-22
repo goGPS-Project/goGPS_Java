@@ -5,12 +5,11 @@ import java.util.ArrayList;
 import org.ejml.simple.SimpleMatrix;
 import org.gogpsproject.Constants;
 import org.gogpsproject.GoGPS;
-import org.gogpsproject.IonoGps;
-import org.gogpsproject.NavigationProducer;
-import org.gogpsproject.ObservationSet;
-import org.gogpsproject.Observations;
 import org.gogpsproject.Status;
-import org.gogpsproject.Time;
+import org.gogpsproject.producer.NavigationProducer;
+import org.gogpsproject.producer.ObservationSet;
+import org.gogpsproject.producer.Observations;
+import org.gogpsproject.producer.parser.IonoGps;
 
 public class Satellites {
   

@@ -22,7 +22,7 @@ package org.gogpsproject.conversion;
 import java.io.File;
 import java.util.Locale;
 
-import org.gogpsproject.parser.nvs.NVSFileReader;
+import org.gogpsproject.producer.parser.nvs.NVSFileReader;
 import org.gogpsproject.producer.rinex.RinexV2Producer;
 import org.gogpsproject.producer.rinex.RinexV3Producer;
 

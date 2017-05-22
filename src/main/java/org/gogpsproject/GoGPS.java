@@ -22,6 +22,7 @@ package org.gogpsproject;
 
 import java.util.*;
 
+import org.gogpsproject.consumer.PositionConsumer;
 import org.gogpsproject.positioning.Coordinates;
 import org.gogpsproject.positioning.Core;
 import org.gogpsproject.positioning.KF_DD_code_phase;
@@ -36,6 +37,11 @@ import org.gogpsproject.positioning.MasterPosition;
 import org.gogpsproject.positioning.RoverPosition;
 import org.gogpsproject.positioning.RoverPosition;
 import org.gogpsproject.positioning.Satellites;
+import org.gogpsproject.positioning.Time;
+import org.gogpsproject.producer.NavigationProducer;
+import org.gogpsproject.producer.ObservationSet;
+import org.gogpsproject.producer.Observations;
+import org.gogpsproject.producer.ObservationsProducer;
 
 /**
  * The Class GoGPS.

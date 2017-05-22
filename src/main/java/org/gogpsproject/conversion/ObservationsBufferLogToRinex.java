@@ -22,8 +22,8 @@ package org.gogpsproject.conversion;
 import java.io.IOException;
 import java.util.Calendar;
 
-import org.gogpsproject.Observations;
-import org.gogpsproject.ObservationsBuffer;
+import org.gogpsproject.producer.Observations;
+import org.gogpsproject.producer.ObservationsBuffer;
 import org.gogpsproject.producer.rinex.RinexV2Producer;
 
 /**

@@ -25,8 +25,7 @@ import java.io.IOException;
 
 import org.ejml.simple.SimpleMatrix;
 import org.gogpsproject.Constants;
-import org.gogpsproject.Streamable;
-import org.gogpsproject.Time;
+import org.gogpsproject.producer.Streamable;
 
 /**
  * <p>

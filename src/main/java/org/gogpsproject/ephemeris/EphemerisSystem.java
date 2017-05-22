@@ -25,9 +25,9 @@ import java.util.Arrays;
 import java.util.TimeZone;
 
 import org.gogpsproject.Constants;
-import org.gogpsproject.Observations;
-import org.gogpsproject.Time;
 import org.gogpsproject.positioning.SatellitePosition;
+import org.gogpsproject.positioning.Time;
+import org.gogpsproject.producer.Observations;
 import org.ejml.simple.SimpleMatrix; 
 
 /**

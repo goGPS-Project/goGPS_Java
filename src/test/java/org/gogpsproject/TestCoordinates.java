@@ -2,6 +2,7 @@ package org.gogpsproject;
 
 import static org.junit.Assert.assertEquals;
 
+import org.gogpsproject.positioning.Coordinates;
 import org.junit.Test;
 
 public class TestCoordinates {

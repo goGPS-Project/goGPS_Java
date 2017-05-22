@@ -21,8 +21,9 @@
 package org.gogpsproject;
 import java.util.Locale;
 
-import org.gogpsproject.ObservationsBuffer;
-import org.gogpsproject.parser.rtcm3.RTCM3Client;
+import org.gogpsproject.positioning.Coordinates;
+import org.gogpsproject.producer.ObservationsBuffer;
+import org.gogpsproject.producer.parser.rtcm3.RTCM3Client;
 import org.gogpsproject.producer.rinex.RinexV2Producer;
 
 public class TestRTCM3 {

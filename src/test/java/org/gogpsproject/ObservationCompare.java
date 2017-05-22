@@ -24,8 +24,11 @@ import java.io.IOException;
 import java.util.Calendar;
 import java.util.Locale;
 
-import org.gogpsproject.parser.rinex.RinexObservationParser;
-import org.gogpsproject.parser.ublox.UBXFileReader;
+import org.gogpsproject.producer.ObservationSet;
+import org.gogpsproject.producer.Observations;
+import org.gogpsproject.producer.ObservationsProducer;
+import org.gogpsproject.producer.parser.rinex.RinexObservationParser;
+import org.gogpsproject.producer.parser.ublox.UBXFileReader;
 import org.gogpsproject.producer.rinex.RinexV2Producer;
 
 /**

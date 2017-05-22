@@ -27,10 +27,10 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-
-import org.gogpsproject.ObservationsBuffer;
-import org.gogpsproject.parser.rinex.RinexNavigation;
-import org.gogpsproject.producer.KmlProducer;
+import org.gogpsproject.consumer.KmlProducer;
+import org.gogpsproject.producer.NavigationProducer;
+import org.gogpsproject.producer.ObservationsBuffer;
+import org.gogpsproject.producer.parser.rinex.RinexNavigation;
 
 @SuppressWarnings("restriction")
 public class TestReadObsLog {

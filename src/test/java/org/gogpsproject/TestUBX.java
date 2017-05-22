@@ -33,7 +33,11 @@ import java.util.Locale;
 import java.util.Vector;
 
 import org.gogpsproject.ephemeris.EphGps;
-import org.gogpsproject.parser.ublox.UBXSerialConnection;
+import org.gogpsproject.positioning.Coordinates;
+import org.gogpsproject.producer.Observations;
+import org.gogpsproject.producer.StreamEventListener;
+import org.gogpsproject.producer.parser.IonoGps;
+import org.gogpsproject.producer.parser.ublox.UBXSerialConnection;
 
 @SuppressWarnings("restriction")
 public class TestUBX implements StreamEventListener{

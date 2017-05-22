@@ -25,15 +25,18 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.text.*;
 
-import org.gogpsproject.parser.rinex.RinexNavigation;
-import org.gogpsproject.parser.rinex.RinexNavigationParser;
-import org.gogpsproject.parser.rinex.RinexObservationParser;
-import org.gogpsproject.parser.rtcm3.RTCM3Client;
-import org.gogpsproject.parser.sp3.SP3Navigation;
-import org.gogpsproject.parser.ublox.UBXSerialConnection;
-import org.gogpsproject.parser.ublox.UBXAssistNow;
-import org.gogpsproject.parser.ublox.UBXFileReader;
-import org.gogpsproject.producer.KmlProducer;
+import org.gogpsproject.consumer.KmlProducer;
+import org.gogpsproject.positioning.Coordinates;
+import org.gogpsproject.producer.NavigationProducer;
+import org.gogpsproject.producer.ObservationsBuffer;
+import org.gogpsproject.producer.parser.rinex.RinexNavigation;
+import org.gogpsproject.producer.parser.rinex.RinexNavigationParser;
+import org.gogpsproject.producer.parser.rinex.RinexObservationParser;
+import org.gogpsproject.producer.parser.rtcm3.RTCM3Client;
+import org.gogpsproject.producer.parser.sp3.SP3Navigation;
+import org.gogpsproject.producer.parser.ublox.UBXAssistNow;
+import org.gogpsproject.producer.parser.ublox.UBXFileReader;
+import org.gogpsproject.producer.parser.ublox.UBXSerialConnection;
 
 /**
  * @author Eugenio Realini, Cryms.com

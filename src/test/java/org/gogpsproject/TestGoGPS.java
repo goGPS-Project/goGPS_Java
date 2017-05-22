@@ -23,14 +23,16 @@ import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-import org.gogpsproject.parser.rinex.RinexNavigation;
-import org.gogpsproject.parser.rinex.RinexNavigationParser;
-import org.gogpsproject.parser.rinex.RinexObservationParser;
-import org.gogpsproject.parser.sp3.SP3Navigation;
-import org.gogpsproject.parser.ublox.UBXFileReader;
-import org.gogpsproject.parser.nvs.NVSFileReader;
-import org.gogpsproject.producer.KmlProducer;
-import org.gogpsproject.producer.TxtProducer;
+import org.gogpsproject.consumer.KmlProducer;
+import org.gogpsproject.consumer.TxtProducer;
+import org.gogpsproject.producer.NavigationProducer;
+import org.gogpsproject.producer.ObservationsProducer;
+import org.gogpsproject.producer.parser.nvs.NVSFileReader;
+import org.gogpsproject.producer.parser.rinex.RinexNavigation;
+import org.gogpsproject.producer.parser.rinex.RinexNavigationParser;
+import org.gogpsproject.producer.parser.rinex.RinexObservationParser;
+import org.gogpsproject.producer.parser.sp3.SP3Navigation;
+import org.gogpsproject.producer.parser.ublox.UBXFileReader;
 
 /**
  * @author Eugenio Realini, Cryms.com

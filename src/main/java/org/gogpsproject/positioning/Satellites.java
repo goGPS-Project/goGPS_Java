@@ -438,7 +438,7 @@ public class Satellites {
    rover.setPlusXYZ(x.extractMatrix(0, 3, 0, 1));
    rover.computeGeodetic();
 
-   System.out.println( "recpos: " + this );
+   System.out.println( "recpos: " + rover );
    
    return correction_mag; // return correction_mag
   }

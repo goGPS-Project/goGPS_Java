@@ -52,7 +52,7 @@ public abstract class EphemerisSystem {
 	
 	
 	
-	protected SatellitePosition computePositionGps(Observations obs, int satID, char satType, EphGps eph, double receiverClockError) {
+	public SatellitePosition computePositionGps(Observations obs, int satID, char satType, EphGps eph, double receiverClockError) {
 
 		long unixTime = obs.getRefTime().getMsec();
 		double obsPseudorange = obs.getSatByIDType(satID, satType).getPseudorange(0);

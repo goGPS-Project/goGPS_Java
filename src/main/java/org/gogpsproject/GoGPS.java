@@ -1222,11 +1222,11 @@ public class GoGPS implements Runnable{
 
       Time refTime;
       int leapSeconds;
-      try {
-        obsR = roverIn.getCurrentObservations();
-        
-        notifyPositionConsumerEvent(PositionConsumer.EVENT_START_OF_TRACK);
-        while( obsR!=null && !Thread.interrupted() ) { // buffStreamObs.ready()
+      obsR = roverIn.getCurrentObservations();
+      
+      notifyPositionConsumerEvent(PositionConsumer.EVENT_START_OF_TRACK);
+      while( obsR!=null && !Thread.interrupted() ) { // buffStreamObs.ready()
+       try {
          if(debug) System.out.println("Index: " + obsR.index );
          roverPos.satsInUse = 0;
 
@@ -1292,21 +1292,26 @@ public class GoGPS implements Runnable{
 
           if(debug)System.out.println("-------------------- "+roverPos.getpDop());
         }
+         else if( roverPos.status != Status.EphNotFound ){
+           // invalidate aPrioriPos and recompute later
+           aPrioriPos.setXYZ(0, 0, 0);
+         }
         if(positionConsumers.size()>0){
           roverObs.setRefTime(new Time(obsR.getRefTime().getMsec()));
           notifyPositionConsumerAddCoordinate(roverObs);
         }
-          
+
+       } catch (Throwable e) {
+         e.printStackTrace();
+       } 
+       finally {
         obsR = roverIn.getNextObservations();
         roverPos.status = Status.None;
-      }
-      } catch (Throwable e) {
-        e.printStackTrace();
-      } finally {
-        notifyPositionConsumerEvent(PositionConsumer.EVENT_END_OF_TRACK);
-      }
+      } 
+    }
+    notifyPositionConsumerEvent(PositionConsumer.EVENT_END_OF_TRACK);
       
-      return this;
+    return this;
   }
 
   public RoverPosition runCodeStandaloneCoarseTime() {

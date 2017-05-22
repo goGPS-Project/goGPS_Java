@@ -1,7 +1,6 @@
 package org.gogpsproject.positioning;
 
 import org.ejml.simple.SimpleMatrix;
-import org.gogpsproject.Coordinates;
 import org.gogpsproject.GoGPS;
 import org.gogpsproject.Observations;
 
@@ -24,55 +23,43 @@ public class LS_DD_code extends LS_SA_code {
     // Number of unknown parameters
     int nUnknowns = 3;
 
-    // Define least squares matrices
-    SimpleMatrix A;
-    SimpleMatrix Adop;
-    SimpleMatrix b;
-    SimpleMatrix y0;
-    SimpleMatrix Q;
-    SimpleMatrix x;
-    SimpleMatrix vEstim;
-    SimpleMatrix tropoCorr;
-    SimpleMatrix ionoCorr;
-
     // Covariance matrix obtained from matrix A (satellite geometry) [ECEF coordinates]
     SimpleMatrix covXYZ = new SimpleMatrix(3, 3);
 
     // Covariance matrix obtained from matrix A (satellite geometry) [local coordinates]
-    SimpleMatrix covENU;
-    covENU = new SimpleMatrix(3, 3);
+    SimpleMatrix covENU = new SimpleMatrix(3, 3);
 
     // Number of available satellites (i.e. observations)
     int nObsAvail = sats.avail.size();
 
     // Full design matrix for DOP computation
-    Adop = new SimpleMatrix(nObsAvail, 3);
+    SimpleMatrix Adop = new SimpleMatrix(nObsAvail, 3);
 
     // Double differences with respect to pivot satellite reduce
     // observations by 1
     nObsAvail--;
 
     // Least squares design matrix
-    A = new SimpleMatrix(nObsAvail, nUnknowns);
+    SimpleMatrix A = new SimpleMatrix(nObsAvail, nUnknowns);
 
     // Vector for approximate pseudoranges
-    b = new SimpleMatrix(nObsAvail, 1);
+    SimpleMatrix b = new SimpleMatrix(nObsAvail, 1);
 
     // Vector for observed pseudoranges
-    y0 = new SimpleMatrix(nObsAvail, 1);
+    SimpleMatrix y0 = new SimpleMatrix(nObsAvail, 1);
 
     // Cofactor matrix
-    Q = new SimpleMatrix(nObsAvail, nObsAvail);
+    SimpleMatrix Q = new SimpleMatrix(nObsAvail, nObsAvail);
 
     // Solution vector
-    x = new SimpleMatrix(nUnknowns, 1);
+    SimpleMatrix x = new SimpleMatrix(nUnknowns, 1);
 
     // Vector for observation error
-    vEstim = new SimpleMatrix(nObsAvail, 1);
+    SimpleMatrix vEstim = new SimpleMatrix(nObsAvail, 1);
 
     // Vectors for troposphere and ionosphere corrections
-    tropoCorr = new SimpleMatrix(nObsAvail, 1);
-    ionoCorr = new SimpleMatrix(nObsAvail, 1);
+    SimpleMatrix tropoCorr = new SimpleMatrix(nObsAvail, 1);
+    SimpleMatrix ionoCorr = new SimpleMatrix(nObsAvail, 1);
 
     // Counter for available satellites (without pivot)
     int k = 0;

@@ -20,7 +20,7 @@
 
 package org.gogpsproject.parser.rtcm3;
 
-import org.gogpsproject.Coordinates;
+import org.gogpsproject.positioning.Coordinates;
 import org.gogpsproject.util.Bits;
 
 public class Decode1006Msg implements Decode {

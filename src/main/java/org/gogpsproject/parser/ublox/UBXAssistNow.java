@@ -34,10 +34,10 @@ import java.util.Date;
 import org.gogpsproject.IonoGps;
 import org.gogpsproject.NavigationProducer;
 import org.gogpsproject.Observations;
-import org.gogpsproject.SatellitePosition;
 import org.gogpsproject.StreamResource;
 import org.gogpsproject.ephemeris.EphGps;
 import org.gogpsproject.ephemeris.EphemerisSystem;
+import org.gogpsproject.positioning.SatellitePosition;
 
 /**
  * <p>

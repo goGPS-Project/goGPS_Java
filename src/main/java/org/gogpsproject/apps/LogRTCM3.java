@@ -21,8 +21,8 @@
 package org.gogpsproject.apps;
 import java.util.Locale;
 
-import org.gogpsproject.Coordinates;
 import org.gogpsproject.parser.rtcm3.RTCM3Client;
+import org.gogpsproject.positioning.Coordinates;
 import org.gogpsproject.producer.rinex.RinexV2Producer;
 
 import net.sourceforge.argparse4j.ArgumentParsers;

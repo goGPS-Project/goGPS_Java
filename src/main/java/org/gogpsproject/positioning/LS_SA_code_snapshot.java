@@ -4,15 +4,12 @@ import java.util.ArrayList;
 
 import org.ejml.simple.SimpleMatrix;
 import org.gogpsproject.Constants;
-import org.gogpsproject.Coordinates;
 import org.gogpsproject.GoGPS;
 import org.gogpsproject.NavigationProducer;
 import org.gogpsproject.ObservationSet;
 import org.gogpsproject.Observations;
-import org.gogpsproject.SatellitePosition;
 import org.gogpsproject.Status;
 import org.gogpsproject.Time;
-import org.gogpsproject.TopocentricCoordinates;
 
 public class LS_SA_code_snapshot extends Core {
 

@@ -42,12 +42,12 @@ import java.util.StringTokenizer;
 import java.util.TimeZone;
 import java.util.Vector;
 
-import org.gogpsproject.Coordinates;
 import org.gogpsproject.Observations;
 import org.gogpsproject.StreamEventListener;
 import org.gogpsproject.StreamEventProducer;
 import org.gogpsproject.StreamResource;
 import org.gogpsproject.Time;
+import org.gogpsproject.positioning.Coordinates;
 import org.gogpsproject.util.Bits;
 import org.gogpsproject.util.InputStreamCounter;
 

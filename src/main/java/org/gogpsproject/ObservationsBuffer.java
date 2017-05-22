@@ -31,6 +31,8 @@ import java.util.Vector;
 
 import org.gogpsproject.ephemeris.EphGps;
 import org.gogpsproject.ephemeris.EphemerisSystem;
+import org.gogpsproject.positioning.Coordinates;
+import org.gogpsproject.positioning.SatellitePosition;
 
 /**
  * <p>

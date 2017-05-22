@@ -20,7 +20,6 @@
  *
  */
 package org.gogpsproject.positioning;
-import org.gogpsproject.Coordinates;
 import org.gogpsproject.Observations;
 import org.gogpsproject.Status;
 import org.gogpsproject.Time;
@@ -43,10 +42,10 @@ public class RoverPosition extends ReceiverPosition {
   /** Sats in use from an observation set */
   public long satsInUse = 0;
 
-  /** clock error in ms */
+  /** coarse time clock error in ms */
   public long cErrMS = 0;
   
-  /** Clock error */
+  /** standard subms clock error in s*/
   double receiverClockError; 
 
   /** Clock error rate */

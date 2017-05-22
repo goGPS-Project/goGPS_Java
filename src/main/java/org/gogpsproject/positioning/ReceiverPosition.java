@@ -1,8 +1,6 @@
 package org.gogpsproject.positioning;
 
 import org.ejml.simple.SimpleMatrix;
-import org.gogpsproject.Coordinates;
-import org.gogpsproject.TopocentricCoordinates;
 
 public abstract class ReceiverPosition extends Coordinates {
 

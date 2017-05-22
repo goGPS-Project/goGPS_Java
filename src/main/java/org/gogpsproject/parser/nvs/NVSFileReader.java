@@ -27,17 +27,17 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Vector;
 
-import org.gogpsproject.Coordinates;
 import org.gogpsproject.IonoGps;
 import org.gogpsproject.NavigationProducer;
 import org.gogpsproject.Observations;
 import org.gogpsproject.ObservationsProducer;
-import org.gogpsproject.SatellitePosition;
 import org.gogpsproject.StreamEventListener;
 import org.gogpsproject.StreamEventProducer;
 import org.gogpsproject.StreamResource;
 import org.gogpsproject.ephemeris.EphGps;
 import org.gogpsproject.ephemeris.EphemerisSystem;
+import org.gogpsproject.positioning.Coordinates;
+import org.gogpsproject.positioning.SatellitePosition;
 
 /**
  * <p>

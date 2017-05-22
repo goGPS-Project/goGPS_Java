@@ -20,6 +20,7 @@
 package org.gogpsproject;
 
 import org.gogpsproject.ephemeris.EphGps;
+import org.gogpsproject.positioning.Coordinates;
 
 /**
  * @author Cryms.com

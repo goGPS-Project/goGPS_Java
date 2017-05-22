@@ -2,7 +2,6 @@ package org.gogpsproject.positioning;
 
 import org.ejml.simple.SimpleMatrix;
 import org.gogpsproject.Constants;
-import org.gogpsproject.Coordinates;
 import org.gogpsproject.GoGPS;
 import org.gogpsproject.Observations;
 

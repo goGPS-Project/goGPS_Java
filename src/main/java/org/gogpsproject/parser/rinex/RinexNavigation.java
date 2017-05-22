@@ -43,7 +43,7 @@ import org.gogpsproject.Observations;
 import org.gogpsproject.StreamResource;
 import org.gogpsproject.Time;
 import org.gogpsproject.ephemeris.EphGps;
-import org.gogpsproject.SatellitePosition;
+import org.gogpsproject.positioning.SatellitePosition;
 import org.gogpsproject.util.UncompressInputStream;
 
 /**

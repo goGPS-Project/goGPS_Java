@@ -22,6 +22,7 @@ package org.gogpsproject;
 
 import java.util.*;
 
+import org.gogpsproject.positioning.Coordinates;
 import org.gogpsproject.positioning.Core;
 import org.gogpsproject.positioning.KF_DD_code_phase;
 import org.gogpsproject.positioning.KF_SA_code_phase;
@@ -1387,7 +1388,7 @@ public class GoGPS implements Runnable{
         roverPos.computeGeodetic();
       }
       else {
-        aPrioriPos = new Coordinates();
+        aPrioriPos = Coordinates.globalGeodInstance(0, 0, 0);
         
         System.out.println("\r\nSearching for a priori position");
         

@@ -20,6 +20,7 @@
  */
 package org.gogpsproject;
 
+import org.gogpsproject.positioning.SatellitePosition;
 
 /**
  * <p>

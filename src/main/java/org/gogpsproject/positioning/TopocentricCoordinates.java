@@ -18,7 +18,7 @@
  *
  *
  */
-package org.gogpsproject;
+package org.gogpsproject.positioning;
 
 import org.ejml.simple.SimpleMatrix;
 /**

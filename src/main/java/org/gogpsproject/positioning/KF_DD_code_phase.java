@@ -3,7 +3,6 @@ package org.gogpsproject.positioning;
 import java.util.ArrayList;
 
 import org.ejml.simple.SimpleMatrix;
-import org.gogpsproject.Coordinates;
 import org.gogpsproject.GoGPS;
 import org.gogpsproject.Observations;
 

@@ -23,12 +23,12 @@ import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-import org.gogpsproject.Coordinates;
 import org.gogpsproject.GoGPS;
 import org.gogpsproject.NavigationProducer;
 import org.gogpsproject.ObservationsBuffer;
 import org.gogpsproject.parser.rtcm3.RTCM3Client;
 import org.gogpsproject.parser.ublox.UBXSerialConnection;
+import org.gogpsproject.positioning.Coordinates;
 import org.gogpsproject.parser.ublox.UBXAssistNow;
 import org.gogpsproject.producer.KmlProducer;
 

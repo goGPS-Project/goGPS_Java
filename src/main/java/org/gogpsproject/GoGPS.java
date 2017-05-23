@@ -24,7 +24,6 @@ import java.util.*;
 
 import org.gogpsproject.consumer.PositionConsumer;
 import org.gogpsproject.positioning.Coordinates;
-import org.gogpsproject.positioning.Core;
 import org.gogpsproject.positioning.KF_DD_code_phase;
 import org.gogpsproject.positioning.KF_SA_code_phase;
 import org.gogpsproject.positioning.KalmanFilter;
@@ -34,7 +33,6 @@ import org.gogpsproject.positioning.LS_SA_code_coarse_time;
 import org.gogpsproject.positioning.LS_SA_code_snapshot;
 import org.gogpsproject.positioning.LS_SA_dopplerPos;
 import org.gogpsproject.positioning.MasterPosition;
-import org.gogpsproject.positioning.RoverPosition;
 import org.gogpsproject.positioning.RoverPosition;
 import org.gogpsproject.positioning.Satellites;
 import org.gogpsproject.positioning.Time;
@@ -224,7 +222,7 @@ public class GoGPS implements Runnable{
   }
 
   public GoGPS setRoverPos(Coordinates roverPos) {
-    roverPos.cloneInto(roverPos);
+    roverPos.cloneInto(this.roverPos);
     return this;
   }
 
@@ -233,7 +231,7 @@ public class GoGPS implements Runnable{
   }
 
   public GoGPS setMasterPos(Coordinates masterPos) {
-    masterPos.cloneInto(masterPos);
+    masterPos.cloneInto(this.masterPos);
     return this;
   }
 
@@ -1253,7 +1251,7 @@ public class GoGPS implements Runnable{
          if( !roverPos.isValidXYZ() && aPrioriPos != null && aPrioriPos.isValidXYZ()){
            aPrioriPos.cloneInto(roverPos);
          }
-         else if(  !roverPos.isValidXYZ() && obsR.getNumSat()>0 && !Float.isNaN(obsR.getSatByIdx(0).getDoppler(0))){
+         else if( !roverPos.isValidXYZ() && obsR.getNumSat()>0 && !Float.isNaN(obsR.getSatByIdx(0).getDoppler(0))){
            roverPos.setXYZ(0, 0, 0);
 //           roverPos.selectSatellitesStandaloneFractional(obsR, -100);
            runElevationMethod(obsR);
@@ -1264,6 +1262,12 @@ public class GoGPS implements Runnable{
              roverPos.cloneInto(aPrioriPos);
          }
          
+         if( !roverPos.isValidXYZ() ){
+           obsR = roverIn.getNextObservations();
+           roverPos.status = Status.None;
+           continue;
+         }
+             
          new LS_SA_code_snapshot(this).tryOffset( aPrioriPos, obsR );
 
          if(debug) System.out.println("Valid position? "+roverPos.isValidXYZ()+" x:"+roverPos.getX()+" y:"+roverPos.getY()+" z:"+roverPos.getZ());
@@ -1292,7 +1296,7 @@ public class GoGPS implements Runnable{
 
           if(debug)System.out.println("-------------------- "+roverPos.getpDop());
         }
-         else if( roverPos.status != Status.EphNotFound ){
+         else if( roverPos.status != Status.EphNotFound && !Float.isNaN(obsR.getSatByIdx(0).getDoppler(0))){
            // invalidate aPrioriPos and recompute later
            aPrioriPos.setXYZ(0, 0, 0);
          }

@@ -151,8 +151,7 @@ public class TestGoGPS {
 
 			GoGPS goGPS = new GoGPS(navigationIn, roverIn, masterIn)
 //			GoGPS goGPS = new GoGPS(navigationIn, roverIn);
-  			.addPositionConsumerListener(txt)
-  			.addPositionConsumerListener(kml)
+  			.addPositionConsumerListeners(txt, kml)
   			.setDynamicModel(dynamicModel)
 //			.runCodeStandalone();
 //			.runCodeDoubleDifferences();

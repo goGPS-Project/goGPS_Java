@@ -1213,6 +1213,7 @@ public class GoGPS implements Runnable{
     }
     
     public GoGPS runCodeStandaloneSnapshot() {
+      LS_SA_code_snapshot sa = new LS_SA_code_snapshot(this);
       
       Observations obsR = null;
       RoverPosition roverObs;
@@ -1253,10 +1254,9 @@ public class GoGPS implements Runnable{
          }
          else if( !roverPos.isValidXYZ() && obsR.getNumSat()>0 && !Float.isNaN(obsR.getSatByIdx(0).getDoppler(0))){
            roverPos.setXYZ(0, 0, 0);
-//           roverPos.selectSatellitesStandaloneFractional(obsR, -100);
            runElevationMethod(obsR);
            
-           new LS_SA_dopplerPos(this).dopplerPos(obsR);
+           sa.dopplerPos(obsR);
            
            if( roverPos.isValidXYZ() )
              roverPos.cloneInto(aPrioriPos);
@@ -1268,7 +1268,7 @@ public class GoGPS implements Runnable{
            continue;
          }
              
-         new LS_SA_code_snapshot(this).tryOffset( aPrioriPos, obsR );
+         sa.tryOffset( aPrioriPos, obsR );
 
          if(debug) System.out.println("Valid position? "+roverPos.isValidXYZ()+" x:"+roverPos.getX()+" y:"+roverPos.getY()+" z:"+roverPos.getZ());
          if(debug) System.out.println(" lat:"+roverPos.getGeodeticLatitude()+" lon:"+roverPos.getGeodeticLongitude() );
@@ -1657,6 +1657,11 @@ public class GoGPS implements Runnable{
 		return this;
 	}
 
+  public GoGPS addPositionConsumerListeners(PositionConsumer... positionConsumers) {
+    this.positionConsumers.addAll(Arrays.asList(positionConsumers));
+    return this;
+  }
+	
 	private void notifyPositionConsumerEvent(int event){
 		for(PositionConsumer pc:positionConsumers){
 			try{

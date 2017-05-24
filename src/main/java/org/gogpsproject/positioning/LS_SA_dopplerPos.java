@@ -7,7 +7,7 @@ import org.gogpsproject.Status;
 import org.gogpsproject.producer.ObservationSet;
 import org.gogpsproject.producer.Observations;
 
-public class LS_SA_dopplerPos extends Core {
+public class LS_SA_dopplerPos extends LS_SA_code {
 
   public LS_SA_dopplerPos(GoGPS goGPS) {
     super(goGPS);
@@ -20,6 +20,11 @@ public class LS_SA_dopplerPos extends Core {
     int nUnknowns = 4;
     final double DOPP_POS_TOL = 1.0;    
 
+    double max_iterations = 20; 
+
+    //    sats.selectSatellitesStandaloneFractional(obs, -100);
+    sats.selectStandalone(obs, -100);
+
     // Number of available satellites (i.e. observations)
     int nObsAvail = sats.avail.size();
     if( nObsAvail < MINSV ){
@@ -31,14 +36,10 @@ public class LS_SA_dopplerPos extends Core {
       return;
     }
     
+    /** range rate */
     double[] rodot = new double[nObsAvail];
 
-//    RinexNavigation navigation = (RinexNavigation) goGPS.getNavigation();
-//    long unixTime = obs.getRefTime().getMsec();
-    
-    double max_iterations = 20; 
-
-    // Least squares design matrix
+    /** Least squares design matrix */
     SimpleMatrix A = new SimpleMatrix( nObsAvail, nUnknowns );
 
     // Set up the least squares matrices
@@ -47,24 +48,12 @@ public class LS_SA_dopplerPos extends Core {
       int satId = obs.getSatID(i);
 
       if( sats.pos[i] == null  || !sats.avail.contains(satId) ) {//|| recpos.ecef==null || sats.pos[i].ecef==null ){
-//              l.warning( "ERROR, sats.pos[i]==null?" );
-//              this.setXYZ(0, 0, 0);
-//              return null;
         continue;
       }
 
       ObservationSet os = obs.getSatByID(satId);
 
-//      EphGps eph = navigation.findEph( unixTime, satId, 'G' );
-//      if( eph == null ){
-//        l.warning( "SvID " + satId + " eph is null at " + unixTime );
-//        continue;
-//      }
-//      if( eph.getSvHealth() != 0 ){
-//        l.warning( "SvID " + satId + " health: " + eph.getSvHealth() + " at " + unixTime );
-//        continue;
-//      }
-
+      // scalar product of speed vector X unit vector
       float doppler = os.getDoppler(ObservationSet.L1);
       rodot[i] = doppler * Constants.SPEED_OF_LIGHT/Constants.FL1;
 
@@ -96,9 +85,10 @@ public class LS_SA_dopplerPos extends Core {
         
         SimpleMatrix tempv = rover.minusXYZ(sats.pos[i]);
 
-        double Ym = Math.sqrt(Math.pow(tempv.get(0), 2)
-            + Math.pow(tempv.get(1), 2)
-            + Math.pow(tempv.get(2), 2));
+        /** range */
+        double ro = Math.sqrt(Math.pow(tempv.get(0), 2)
+                  + Math.pow(tempv.get(1), 2)
+                  + Math.pow(tempv.get(2), 2));
 
         SimpleMatrix satposxyz = new SimpleMatrix(1,3);
         satposxyz.set(0, 0, sats.pos[i].getX());
@@ -110,22 +100,21 @@ public class LS_SA_dopplerPos extends Core {
         satvelxyz.set(0, 1, sats.pos[i].getSpeed().get(1));
         satvelxyz.set(0, 2, sats.pos[i].getSpeed().get(2));
 
-        double tempd = satposxyz.mult(satvelxyz.transpose()).get(0,0);
+        /** sat pos times speed*/
+        double posvel = satposxyz.mult(satvelxyz.transpose()).get(0,0);
 
-        // B[j] = tempd+W[j]*Ym + Xc[3]*(A[j][3]-Ym);
-        double val = tempd + rodot[i]*Ym + rover.getReceiverClockErrorRate()*( A.get(i, 3) - Ym);
-        b.set(i, 0, val);
-        if( Math.abs(val)<pivot)
-          pivot = Math.abs(val);
+        // B[j] = posvel + rodot[j]*ro + Xc[3]*(A[j][3]-ro);
+        double bval = posvel + rodot[i]*ro + rover.getReceiverClockErrorRate()*( A.get(i, 3) - ro);
+        b.set(i, 0, bval);
+
+        if( Math.abs(bval)<pivot)
+          pivot = Math.abs(bval);
      }
 ///////////////
 //     b.normF()
      System.out.println( String.format( "Residuals -> Adjusted Residuals (ms) - Pivot = %7.4f (ms)",  pivot/Constants.SPEED_OF_LIGHT*1000));
      for( int k=0; k<sats.avail.size(); k++){
-//       int satId = obs.getSatID(k);
-//       ObservationSet os = obs.getSatByID(satId);
        double d = Math.abs(b.get(k))-pivot;
-//       System.out.print( String.format( "%7.4f\r\n", d/Constants.SPEED_OF_LIGHT*1000));
        System.out.print( String.format( "%7.4f\r\n", d/Constants.SPEED_OF_LIGHT*1000));
      }
 ///////////////     
@@ -143,14 +132,16 @@ public class LS_SA_dopplerPos extends Core {
      System.out.println( String.format( "pos diff mag %f (m)", correction_mag ));
 
      // Update Rx position estimate
+//   rover.setPlusXYZ(x.extractMatrix(0, 3, 0, 1));
      rover.setXYZ( x.get(0), 
-                    x.get(1), 
-                    x.get(2));
+                   x.get(1), 
+                   x.get(2));
 
      rover.computeGeodetic();
 
      // Update receiver clock error rate
      rover.receiverClockErrorRate = x.get(3);
+//   rover.receiverClockErrorRate += x.get(3);
      
      System.out.println( "recpos (" + itr +")");
      System.out.println( String.format( "%10.6f,%10.6f", rover.getGeodeticLatitude(), rover.getGeodeticLongitude() ));

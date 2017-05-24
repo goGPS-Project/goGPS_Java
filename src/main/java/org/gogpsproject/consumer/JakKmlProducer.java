@@ -69,7 +69,7 @@ import de.micromata.opengis.kml.v_2_2_0.gx.Track;
  * @author Emanuele Ziglioli - Sirtrack Ltd.
  */
 
-public class JakKmlProducer implements PositionConsumer, Runnable {
+public class JakKmlProducer implements PositionConsumer {
 
   public static final String ATOMNS = "http://www.w3.org/2005/Atom";
   public static final String KMLNS = "http://www.opengis.net/kml/2.2";
@@ -91,10 +91,6 @@ public class JakKmlProducer implements PositionConsumer, Runnable {
 	private int worstLinePixelWidth = 3;
 	private boolean debug=false;
 
-	private Thread t = null;
-
-	private ArrayList<RoverPosition> positions = new ArrayList<RoverPosition>();
-	
 	private final static TimeZone TZ = TimeZone.getTimeZone("GMT");
 
   private transient JAXBContext jc = null;
@@ -116,8 +112,6 @@ public class JakKmlProducer implements PositionConsumer, Runnable {
 	  this.filename = filename;
 		this.goodDopThreshold = goodDopTreshold;
 		timeKML.setTimeZone(TZ);
-		t = new Thread(this, "JakKmlProducer");
-		t.start();
 	}
 
   private JAXBContext getJaxbContext() throws JAXBException {
@@ -285,22 +279,14 @@ public class JakKmlProducer implements PositionConsumer, Runnable {
    * @see org.gogpsproject.producer.PositionConsumer#addCoordinate(org.gogpsproject.Coordinates)
    */
   @Override
-  public void addCoordinate(RoverPosition coord) {
-  	if(debug) System.out.println("Lon:"+cf.format(coord.getGeodeticLongitude()) + " " // geod.get(0)
-  			+"Lat:"+ cf.format(coord.getGeodeticLatitude()) + " " // geod.get(1)
-  			+"H:"+ cf.format(coord.getGeodeticHeight()) + "\t" // geod.get(2)
-  			+"P:"+ coord.getpDop()+" "
-  			+"H:"+ coord.gethDop()+" "
-  			+"V:"+ coord.getvDop()+" ");//geod.get(2)
+  public void addCoordinate( RoverPosition c ) {
+  	if(debug) System.out.println("Lon:"+cf.format(c.getGeodeticLongitude()) + " " // geod.get(0)
+  			+"Lat:"+ cf.format(c.getGeodeticLatitude()) + " " // geod.get(1)
+  			+"H:"+ cf.format(c.getGeodeticHeight()) + "\t" // geod.get(2)
+  			+"P:"+ c.getpDop()+" "
+  			+"H:"+ c.gethDop()+" "
+  			+"V:"+ c.getvDop()+" ");//geod.get(2)
   
-  	positions.add(coord);
-  }
-
-  /* (non-Javadoc)
-   * @see org.gogpsproject.producer.PositionConsumer#addCoordinate(org.gogpsproject.Coordinates)
-   */
-  public void writeCoordinate( RoverPosition c ) {
-      
       if( c.status != Status.Valid )
         return;
       
@@ -402,22 +388,13 @@ public class JakKmlProducer implements PositionConsumer, Runnable {
 	 */
 	@Override
 	public void event(int event) {
-//		if(event == EVENT_START_OF_TRACK){
-//			startOfTrack();
-//		}
-		if(event == EVENT_END_OF_TRACK){
-      while( last < positions.size()){
-        try {
-          Thread.sleep(100);
-        } catch (InterruptedException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
-        }
-      }
-
-			// finish writing
-			t = null;
-			endOfTrack();
+	  switch( event ){
+	  case EVENT_START_OF_TRACK: 
+	    startOfTrack(); 
+	    break;
+	  case EVENT_END_OF_TRACK:			
+	    endOfTrack();
+	    break;
 		}
 	}
 
@@ -523,71 +500,6 @@ public class JakKmlProducer implements PositionConsumer, Runnable {
 		return debug;
 	}
 
-	/* (non-Javadoc)
-	 * @see java.lang.Runnable#run()
-	 */
-	@SuppressWarnings("unchecked")
-	@Override
-	public void run() {
-		try {
-      startOfTrack();
-			while(t!=null && Thread.currentThread()==t){
-			  int j;
-			  for( j = last; j<positions.size(); j++){
-          writeCoordinate(positions.get(j));
-        }
-			  last = j;
-				Thread.sleep(100);
-			}
-//      endOfTrack();
-
-//			//flush the last coordinates
-//			if(last != positions.size()){ // check if we have more data to write
-//				last = positions.size();
-//
-////				goodDop = false;
-//				XMLStreamWriter out = startOfTrack();
-//				if(out!=null){
-//					for(ReceiverPosition pos: (ArrayList<ReceiverPosition>) positions.clone()){
-//						writeCoordinate(pos);
-//					}
-//					endOfTrack();
-//				}
-//			}
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-	}
-	public void cleanStop(){
-		t=null;
-	}
-
-//  public final static class NameSpaceBeautyfier extends NamespacePrefixMapper {
-//    /**
-//     * Internal method!
-//     * <p>Customizing Namespace Prefixes During Marshalling to a more readable format.</p>
-//     * <p>The default output is like:</p>
-//     * <pre>{@code&lt;kml ... xmlns:ns2="http://www.w3.org/2005/Atom" xmlns:ns3="urn:oasis:names:tc:ciq:xsdschema:xAL:2.0" xmlns:ns4="http://www.google.com/kml/ext/2.2"&gt;}</pre>
-//     * <p>is changed to:</p>
-//     * <pre>{@code &lt;kml ... xmlns:atom="http://www.w3.org/2005/Atom" xmlns:xal="urn:oasis:names:tc:ciq:xsdschema:xAL:2.0" xmlns:gx="http://www.google.com/kml/ext/2.2"&gt;}</pre><p>What it does:</p>
-//     * <p>namespaceUri: http://www.w3.org/2005/Atom              prefix: atom</p><p>namespaceUri: urn:oasis:names:tc:ciq:xsdschema:xAL:2.0 prefix: xal</p><p>namespaceUri: http://www.google.com/kml/ext/2.2        prefix: gx</p><p>namespaceUri: anything else prefix: null</p>
-//     * 
-//     */
-//    @Override
-//    public String getPreferredPrefix(String namespaceUri, String suggestion, boolean requirePrefix) {
-//        if (namespaceUri.matches("http://www.w3.org/\\d{4}/Atom")) {
-//            return "atom";
-//        }
-//        if (namespaceUri.matches("urn:oasis:names:tc:ciq:xsdschema:xAL:.*?")) {
-//            return "xal";
-//        }
-//        if (namespaceUri.matches("http://www.google.com/kml/ext/.*?")) {
-//            return "gx";
-//        }
-//        return null;
-//    }
-//   }	
-	
 	public static class Coordinate extends de.micromata.opengis.kml.v_2_2_0.Coordinate {
 	  private DecimalFormat df = new DecimalFormat("#.00000");
 

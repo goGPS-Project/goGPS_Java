@@ -38,7 +38,7 @@ import org.gogpsproject.positioning.RoverPosition;
  * @author Eugenio Realini
  */
 
-public class TxtProducerCoarseTime implements PositionConsumer, Runnable {
+public class TxtProducerCoarseTime implements PositionConsumer  {
 
 	private static DecimalFormat f = new DecimalFormat("0.000");
 	private static DecimalFormat g = new DecimalFormat("0.00000000");
@@ -49,12 +49,9 @@ public class TxtProducerCoarseTime implements PositionConsumer, Runnable {
 	private String filename = null;
 	private boolean debug=false;
 
-	private Thread t = null;
-
-	private ArrayList<RoverPosition> positions = new ArrayList<RoverPosition>();
-	
 	private final static TimeZone TZ = TimeZone.getTimeZone("GMT");
-
+	FileWriter out;
+	
 	public TxtProducerCoarseTime(String filename) throws IOException{
 		this.filename = filename;
 
@@ -62,24 +59,73 @@ public class TxtProducerCoarseTime implements PositionConsumer, Runnable {
 		
 		dateTXT.setTimeZone(TZ);
 		timeTXT.setTimeZone(TZ);
-
-		t = new Thread(this, "TxtProducer");
-		t.start();
 	}
 
 	/* (non-Javadoc)
 	 * @see org.gogpsproject.producer.PositionConsumer#addCoordinate(org.gogpsproject.Coordinates)
 	 */
 	@Override
-	public void addCoordinate(RoverPosition coord) {
-		if(debug) System.out.println("Lon:"+g.format(coord.getGeodeticLongitude()) + " " // geod.get(0)
-				+"Lat:"+ g.format(coord.getGeodeticLatitude()) + " " // geod.get(1)
-				+"H:"+ f.format(coord.getGeodeticHeight()) + "\t" // geod.get(2)
-				+"P:"+ coord.getpDop()+" "
-				+"H:"+ coord.gethDop()+" "
-				+"V:"+ coord.getvDop()+" ");//geod.get(2)
+	public void addCoordinate(RoverPosition c ) {
+		if(debug) System.out.println("Lon:"+g.format(c.getGeodeticLongitude()) + " " // geod.get(0)
+				+"Lat:"+ g.format(c.getGeodeticLatitude()) + " " // geod.get(1)
+				+"H:"+ f.format(c.getGeodeticHeight()) + "\t" // geod.get(2)
+				+"P:"+ c.getpDop()+" "
+				+"H:"+ c.gethDop()+" "
+				+"V:"+ c.getvDop()+" ");//geod.get(2)
 
-		positions.add(coord);
+    try {
+      PrintWriter pw = new PrintWriter(out);
+
+      pw.printf("%5d  ", c.index);
+      pw.printf("%13s  ", c.status.toString() );
+      pw.printf("%2d/%1d  ", c.satsInUse, c.obs.getNumSat() );
+      
+      // RTC date, time
+      String d  = dateTXT.format(new Date(c.getRefTime().getMsec()));
+      String t0 = timeTXT.format(new Date(c.sampleTime.getMsec()));
+
+      pw.printf("%8s%14s", d, t0 );
+
+      if( c.status != Status.Valid ){
+        pw.printf("\r\n");
+        out.flush();
+        return;
+      }
+
+      // FIX time
+      String t  = timeTXT.format(new Date(c.getRefTime().getMsec()));
+
+      double delta = (c.getRefTime().getMsec() - c.sampleTime.getMsec())/1000.0;
+      pw.printf("%15s%10.3f", t, delta);
+
+      //GPS week
+      int week = c.getRefTime().getGpsWeek();
+      pw.printf("%12d", week);
+      
+      //GPS time-of-week (tow)
+      double tow = c.getRefTime().getGpsTime();
+      pw.printf("%15.3f", tow);
+      
+      //latitude, longitude, ellipsoidal height
+      double lat = c.getGeodeticLatitude();
+      double lon = c.getGeodeticLongitude();
+      double hEllips = c.getGeodeticHeight();
+      
+      pw.printf("%13.5f%13.5f%13.5f", lat, lon, hEllips);
+      
+      pw.printf("%7.1f", c.gethDop() );
+
+      pw.printf("%7.1f", c.eRes );
+
+      pw.printf("\r\n");
+      out.flush();
+
+    } catch (NullPointerException e) {
+      e.printStackTrace();
+    } catch (IOException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
 	}
 
   /* (non-Javadoc)
@@ -102,76 +148,17 @@ public class TxtProducerCoarseTime implements PositionConsumer, Runnable {
 
 	
 	/* (non-Javadoc)
-	 * @see org.gogpsproject.producer.PositionConsumer#addCoordinate(org.gogpsproject.Coordinates)
-	 */
-	public void writeCoordinate(RoverPosition c, FileWriter out ) {
-		try {
-			PrintWriter pw = new PrintWriter(out);
-
-      pw.printf("%5d  ", c.index);
-      pw.printf("%13s  ", c.status.toString() );
-      pw.printf("%2d/%1d  ", c.satsInUse, c.obs.getNumSat() );
-      
-			// RTC date, time
-      String d  = dateTXT.format(new Date(c.getRefTime().getMsec()));
-      String t0 = timeTXT.format(new Date(c.sampleTime.getMsec()));
-
-			pw.printf("%8s%14s", d, t0 );
-
-			if( c.status != Status.Valid ){
-        pw.printf("\r\n");
-        out.flush();
-        return;
-      }
-
-      // FIX time
-      String t  = timeTXT.format(new Date(c.getRefTime().getMsec()));
-
-      double delta = (c.getRefTime().getMsec() - c.sampleTime.getMsec())/1000.0;
-      pw.printf("%15s%10.3f", t, delta);
-
-			//GPS week
-			int week = c.getRefTime().getGpsWeek();
-			pw.printf("%12d", week);
-			
-			//GPS time-of-week (tow)
-			double tow = c.getRefTime().getGpsTime();
-			pw.printf("%15.3f", tow);
-			
-			//latitude, longitude, ellipsoidal height
-			double lat = c.getGeodeticLatitude();
-			double lon = c.getGeodeticLongitude();
-			double hEllips = c.getGeodeticHeight();
-			
-			pw.printf("%13.5f%13.5f%13.5f", lat, lon, hEllips);
-			
-			pw.printf("%7.1f", c.gethDop() );
-
-	    pw.printf("%7.1f", c.eRes );
-
-			pw.printf("\r\n");
-			out.flush();
-
-		} catch (NullPointerException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-
-	/* (non-Javadoc)
 	 * @see org.gogpsproject.producer.PositionConsumer#event(int)
 	 */
 	@Override
 	public void event(int event) {
-//		if(event == EVENT_START_OF_TRACK){
-//			startOfTrack();
-//		}
-		if(event == EVENT_END_OF_TRACK){
-			// finish writing
-			t = null;
-		}
+	  switch( event ){
+  	  case EVENT_START_OF_TRACK:
+        out = writeHeader();
+      break;
+  	  case EVENT_END_OF_TRACK: 
+      break;
+	  }
 	}
 
 	/**
@@ -188,48 +175,4 @@ public class TxtProducerCoarseTime implements PositionConsumer, Runnable {
 		return debug;
 	}
 
-	/* (non-Javadoc)
-	 * @see java.lang.Runnable#run()
-	 */
-	@Override
-	public void run() {
-		int last = 0;
-		try {
-			while(t!=null && Thread.currentThread()==t){
-				if(last != positions.size()){ // check if we have more data to write
-					last = positions.size();
-
-//					goodDop = false;
-					FileWriter out = writeHeader();
-					if(out!=null){
-						for(RoverPosition pos: (ArrayList<RoverPosition>) positions.clone()){
-							writeCoordinate(pos, out);
-						}
-					}
-
-				}
-
-				Thread.sleep(1000);
-			}
-
-			//flush the last coordinates
-			if(last != positions.size()){ // check if we have more data to write
-				last = positions.size();
-
-//				goodDop = false;
-				FileWriter out = writeHeader();
-				if(out!=null){
-					for(RoverPosition pos: (ArrayList<RoverPosition>) positions.clone()){
-						writeCoordinate(pos, out);
-					}
-				}
-
-			}
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-	}
-	public void cleanStop(){
-		t=null;
-	}
 }

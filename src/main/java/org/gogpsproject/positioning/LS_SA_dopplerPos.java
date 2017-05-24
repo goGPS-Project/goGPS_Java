@@ -197,9 +197,11 @@ public class LS_SA_dopplerPos extends LS_SA_code {
       SimpleMatrix A = new SimpleMatrix( nObsAvail, nUnknowns );
 
       // Set up the least squares matrices
-      int k = 0;
-      for (int i = 0; i < obs.getNumSat(); i++) {
+      SimpleMatrix b = new SimpleMatrix( nObsAvail, 1 );
 
+      double pivotSNR = 0;
+      double pivot = 0;
+      for (int i = 0, k = 0; i < obs.getNumSat(); i++) {
         int satId = obs.getSatID(i);
 
         if( sats.pos[i] == null  || !sats.avail.contains(satId) ) {//|| recpos.ecef==null || sats.pos[i].ecef==null ){
@@ -250,21 +252,7 @@ public class LS_SA_dopplerPos extends LS_SA_code {
                                      + Math.pow(sats.pos[i].getY(), 2)
                                      + Math.pow(sats.pos[i].getZ(), 2));
         A.set( k, 3, satpos_norm ); 
-        k++;
-      }
-      
-      SimpleMatrix b = new SimpleMatrix( nObsAvail, 1 );
 
-      double pivotSNR = 0;
-      double pivot = 0;
-      k = 0;
-      for (int i = 0; i<obs.getNumSat(); i++) {
-        int satId = obs.getSatID(i);
-        ObservationSet os = obs.getSatByIdx(i);
-        if( sats.pos[i] == null  || !sats.avail.contains(satId) ) {//|| recpos.ecef==null || sats.pos[i].ecef==null ){
-          continue;
-        }
-        
         SimpleMatrix tempv = rover.minusXYZ(sats.pos[i]);
 
         /** range */
@@ -286,7 +274,6 @@ public class LS_SA_dopplerPos extends LS_SA_code {
         double posvel = satposxyz.mult(satvelxyz.transpose()).get(0,0);
 
         // B[j] = posvel + rodot[j]*ro + Xc[3]*(A[j][3]-ro);
-        double satpos_norm = A.get(k, 3);
         double bval = posvel + rodot[k]*ro + rover.getReceiverClockErrorRate()*( satpos_norm - ro);
         b.set(k, 0, bval);
 

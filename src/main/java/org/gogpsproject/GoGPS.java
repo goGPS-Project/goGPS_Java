@@ -1564,7 +1564,7 @@ public class GoGPS implements Runnable{
    * @return
    * @throws Exception
    */
-  public RoverPosition runDopplerPos( final int interval ) throws Exception {
+  public GoGPS runDopplerPos() {
     
     long index = 0;
     Observations obsR = null;
@@ -1572,72 +1572,68 @@ public class GoGPS implements Runnable{
     LS_SA_dopplerPos sa = new LS_SA_dopplerPos(this);
     Time refTime;
     try {
-      obsR = roverIn.getNextObservations();
+      obsR = roverIn.getCurrentObservations();
       
       notifyPositionConsumerEvent(PositionConsumer.EVENT_START_OF_TRACK);
       while( obsR!=null ) { // buffStreamObs.ready()
 
         refTime = obsR.getRefTime();
-          // If there are at least four satellites
-        //  l.info( "GpsSize: "+ obsR.getNumSat() );
-//          if (obsR.getGpsSize() >= 5) { // gps.length
-//            if(debug) 
-//                System.out.println("OK "+obsR.getGpsSize()+" satellites");
 
-            // compute a priori pos based on doppler
-            sa.dopplerPos(obsR);
+        // for test
+        roverPos.setXYZ(0, 0, 0);
+        
+        runElevationMethod(obsR);
 
-            // If an approximate position was computed
-            if(debug) System.out.println("Valid position? "+roverPos.isValidXYZ());
-            
-            RoverPosition coord2 = null;
-            
-            if( !roverPos.isValidXYZ() ){
+        sa.dopplerPos(obsR);
+
+        // If an approximate position was computed
+        if(debug) System.out.println("Valid position? "+roverPos.isValidXYZ());
+        
+        RoverPosition coord2 = null;
+        
+        if( !roverPos.isValidXYZ() ){
 //              coord2 = new ReceiverPosition( Coordinates.globalXYZInstance(0, 0, 0), ReceiverPosition.DOP_TYPE_NONE,0.0,0.0,0.0 );
 //              coord2.status = false;
 //              coord2.satsInView = obsR.getNumSat();
 //              coord2.satsInUse = 0;
-              obsR = roverIn.getNextObservations();
-              continue;
-            }
-            else {
-              if(debug) System.out.println("Valid position? "+roverPos.isValidXYZ()+" x:"+roverPos.getX()+" y:"+roverPos.getY()+" z:"+roverPos.getZ());
-              if(debug) System.out.println(" lat:"+roverPos.getGeodeticLatitude()+" lon:"+roverPos.getGeodeticLongitude() );
-                
-                coord2 = new RoverPosition( roverPos, RoverPosition.DOP_TYPE_STANDARD, roverPos.getpDop(), roverPos.gethDop(), roverPos.getvDop());
+          obsR = roverIn.getNextObservations();
+          continue;
+        }
+          else {
+            if(debug) System.out.println("Valid position? "+roverPos.isValidXYZ()+" x:"+roverPos.getX()+" y:"+roverPos.getY()+" z:"+roverPos.getZ());
+            if(debug) System.out.println(" lat:"+roverPos.getGeodeticLatitude()+" lon:"+roverPos.getGeodeticLongitude() );
+              
+              coord2 = new RoverPosition( roverPos, RoverPosition.DOP_TYPE_STANDARD, roverPos.getpDop(), roverPos.gethDop(), roverPos.getvDop());
 //                coord2.status = true;
 //                coord2.satsInView = obsR.getNumSat();
 //                coord2.satsInUse = ((SnapshotReceiverPosition)roverPos).satsInUse;
 
-                // set other things
-                // "Index,Status, Date, UTC,Latitude [DD], Longitude [DD], 
-                // HDOP,SVs in Use, SVs in View, SNR Avg [dB], 
-                // Residual Error, Clock Error, Clock Error Total,\r\n" );
-                
-                if(debug)System.out.println("-------------------- "+roverPos.getpDop());
+              // set other things
+              // "Index,Status, Date, UTC,Latitude [DD], Longitude [DD], 
+              // HDOP,SVs in Use, SVs in View, SNR Avg [dB], 
+              // Residual Error, Clock Error, Clock Error Total,\r\n" );
+              
+              if(debug)System.out.println("-------------------- "+roverPos.getpDop());
 //                if(stopAtDopThreshold>0.0 && roverPos.getpDop()<stopAtDopThreshold){
 //                  return coord;
 //                }
-            }
-            if(positionConsumers.size()>0){
-              coord2.setRefTime(new Time(obsR.getRefTime().getMsec()));
-              notifyPositionConsumerAddCoordinate(coord2);
-            }
+          }
+          if(positionConsumers.size()>0){
+            coord2.setRefTime(new Time(obsR.getRefTime().getMsec()));
+            notifyPositionConsumerAddCoordinate(coord2);
+          }
 //        }catch(Exception e){
 //          System.out.println("Could not complete due to "+e);
 //          e.printStackTrace();
 //        }
-        do{
-          obsR = roverIn.getNextObservations();
-        }
-        while( obsR != null && obsR.getRefTime().getMsec() - refTime.getMsec() > interval*60*1000 );
+        obsR = roverIn.getNextObservations();
       }
     } catch (Throwable e) {
       e.printStackTrace();
     } finally {
       notifyPositionConsumerEvent(PositionConsumer.EVENT_END_OF_TRACK);
     }
-    return new RoverPosition( roverPos, RoverPosition.DOP_TYPE_STANDARD, roverPos.getpDop(), roverPos.gethDop(), roverPos.getvDop());
+    return this;
   }
 	
   /**

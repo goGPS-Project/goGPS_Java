@@ -55,8 +55,37 @@ public class LS_SA_dopplerPos extends LS_SA_code {
 
       // scalar product of speed vector X unit vector
       float doppler = os.getDoppler(ObservationSet.L1);
-      rodot[i] = doppler * Constants.SPEED_OF_LIGHT/Constants.FL1;
 
+      ////
+      // Line Of Sight vector units (ECEF)
+      SimpleMatrix e = new SimpleMatrix(1,3);
+      e.set( 0,0, rover.diffSat[i].get(0) / rover.satAppRange[i] );
+      e.set( 0,1, rover.diffSat[i].get(1) / rover.satAppRange[i] );
+      e.set( 0,2, rover.diffSat[i].get(2) / rover.satAppRange[i] );
+      double rodotSatSpeed   = -e.mult( sats.pos[i].getSpeed() ).get(0);
+      double dopplerSatSpeed = -rodotSatSpeed*Constants.FL1/Constants.SPEED_OF_LIGHT;
+      ///
+
+      if( Float.isNaN( doppler )){
+        // Line Of Sight vector units (ECEF)
+        rodot[i] = rodotSatSpeed;
+      }
+      else {
+        // scalar product of speed vector X unit vector
+        rodot[i] = doppler * Constants.SPEED_OF_LIGHT/Constants.FL1;
+        
+//        if( Math.abs(doppler - dopplerSatSpeed)>200)
+//          System.out.println("diff here");
+//        rodot[i] = rodotSatSpeed;
+        os.getDoppler(ObservationSet.L1);
+        System.out.println( String.format( "%2d) snr:%2.0f doppler:%6.0f; satSpeed:%6.0f; D:%6.0f", 
+            satId,
+            os.getSignalStrength(ObservationSet.L1),
+            doppler, 
+            dopplerSatSpeed,
+            doppler - dopplerSatSpeed ));
+      }
+      
       // build A matrix
       A.set(i, 0, sats.pos[i].getSpeed().get(0) ); /* X */
       A.set(i, 1, sats.pos[i].getSpeed().get(1) ); /* Y */
@@ -72,7 +101,8 @@ public class LS_SA_dopplerPos extends LS_SA_code {
 
       SimpleMatrix b = new SimpleMatrix( nObsAvail, 1 );
 
-      double pivot = Double.MAX_VALUE;
+      double pivotSNR = 0;
+      double pivot = 0;
 
       for (int i = 0; i<nObsAvail; i++) {
         int satId = obs.getSatID(i);
@@ -104,19 +134,24 @@ public class LS_SA_dopplerPos extends LS_SA_code {
         double posvel = satposxyz.mult(satvelxyz.transpose()).get(0,0);
 
         // B[j] = posvel + rodot[j]*ro + Xc[3]*(A[j][3]-ro);
-        double bval = posvel + rodot[i]*ro + rover.getReceiverClockErrorRate()*( A.get(i, 3) - ro);
+        double satpos_norm = A.get(i, 3);
+        double bval = posvel + rodot[i]*ro + rover.getReceiverClockErrorRate()*( satpos_norm - ro);
         b.set(i, 0, bval);
 
-        if( Math.abs(bval)<pivot)
+        ObservationSet os = obs.getSatByIdx(i);
+        double snr = os.getSignalStrength(ObservationSet.L1);
+        if( snr > pivotSNR ){
+          pivotSNR = snr;
           pivot = Math.abs(bval);
+        }
      }
 ///////////////
 //     b.normF()
-     System.out.println( String.format( "Residuals -> Adjusted Residuals (ms) - Pivot = %7.4f (ms)",  pivot/Constants.SPEED_OF_LIGHT*1000));
-     for( int k=0; k<sats.avail.size(); k++){
-       double d = Math.abs(b.get(k))-pivot;
-       System.out.print( String.format( "%7.4f\r\n", d/Constants.SPEED_OF_LIGHT*1000));
-     }
+//     System.out.println( String.format( "Residuals -> Adjusted Residuals (ms) - Pivot = %7.4f (ms)",  pivot/Constants.SPEED_OF_LIGHT*1000));
+//     for( int k=0; k<sats.avail.size(); k++){
+//       double d = Math.abs(b.get(k))-pivot;
+//       System.out.print( String.format( "%7.4f\r\n", d/Constants.SPEED_OF_LIGHT*1000));
+//     }
 ///////////////     
       
      SimpleMatrix x = A.transpose().mult(A).invert().mult(A.transpose()).mult(b);
@@ -138,6 +173,11 @@ public class LS_SA_dopplerPos extends LS_SA_code {
                    x.get(2));
 
      rover.computeGeodetic();
+     // clamp it to the ground, not very elegant
+     if( rover.getGeodeticHeight()<30 || rover.getGeodeticHeight() > 100 ){
+       rover.setGeod( rover.getGeodeticLatitude(), rover.getGeodeticLongitude(), 30 );
+       rover.computeECEF();
+     }
 
      // Update receiver clock error rate
      rover.receiverClockErrorRate = x.get(3);
@@ -152,14 +192,6 @@ public class LS_SA_dopplerPos extends LS_SA_code {
        break;
     }
     
-    // Compute positioning in geodetic coordinates
-    rover.computeGeodetic();
-    
-    // clamp it to the ground, not very elegant
-    if( rover.getGeodeticHeight()<30 || rover.getGeodeticHeight() > 100 ){
-      rover.setGeod( rover.getGeodeticLatitude(), rover.getGeodeticLongitude(), 30 );
-      rover.computeECEF();
-    }
   }
 }
 

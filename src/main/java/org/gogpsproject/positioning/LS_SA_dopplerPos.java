@@ -224,11 +224,9 @@ public class LS_SA_dopplerPos extends LS_SA_code {
         ///
 
         if( Float.isNaN( doppler )){
-          // Line Of Sight vector units (ECEF)
           rodot[k] = rodotSatSpeed;
         }
         else {
-          // scalar product of speed vector X unit vector
           rodot[k] = doppler * Constants.SPEED_OF_LIGHT/Constants.FL1;
           
 //          if( Math.abs(doppler - dopplerSatSpeed)>200)

@@ -379,16 +379,9 @@ public class LS_SA_dopplerPos extends LS_SA_code {
         float doppler = os.getDoppler(ObservationSet.L1);
         rodot[k] = doppler * Constants.SPEED_OF_LIGHT/Constants.FL1;
         
-        SimpleMatrix tempv = rover.minusXYZ(sats.pos[i]);
-        
-        /** range */
-        double ro = Math.sqrt(Math.pow(tempv.get(0), 2)
-                            + Math.pow(tempv.get(1), 2)
-                            + Math.pow(tempv.get(2), 2));
-        
-        A.set( k, 0, sats.pos[i].getSpeed().get(0)/ro ); /* X */
-        A.set( k, 1, sats.pos[i].getSpeed().get(1)/ro ); /* Y */
-        A.set( k, 2, sats.pos[i].getSpeed().get(2)/ro ); /* Z */
+        A.set( k, 0, sats.pos[i].getSpeed().get(0)/rover.satAppRange[i] ); /* X */
+        A.set( k, 1, sats.pos[i].getSpeed().get(1)/rover.satAppRange[i] ); /* Y */
+        A.set( k, 2, sats.pos[i].getSpeed().get(2)/rover.satAppRange[i] ); /* Z */
         A.set( k, 3, 1 ); 
 
         b.set(k, 0, rodot[k]  - rodotSatSpeed - rover.getClockErrorRate() );

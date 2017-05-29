@@ -321,8 +321,6 @@ public class LS_SA_dopplerPos extends LS_SA_code {
   }
 
   public void dopplerPos( Observations obs ) {
-    int MINSV = 5;
-
     // Number of unknown parameters
     int nUnknowns = 4;
     final double DOPP_POS_TOL = 1.0;    
@@ -336,7 +334,7 @@ public class LS_SA_dopplerPos extends LS_SA_code {
 
       // Number of available satellites (i.e. observations)
       int nObsAvail = sats.avail.size();
-      if( nObsAvail < MINSV-1 ){
+      if( nObsAvail < nUnknowns-1 ){
 //        if( goGPS.isDebug() ) 
         System.out.println("dopplerPos, not enough satellites for " + obs.getRefTime() );
         if( rover.status == Status.None ){
@@ -348,17 +346,12 @@ public class LS_SA_dopplerPos extends LS_SA_code {
       
       nObsAvail++; // add DTM / height soft constraint
 
-      /** range rate */
-      double[] rodot = new double[nObsAvail];
-
       /** Least squares design matrix */
       SimpleMatrix A = new SimpleMatrix( nObsAvail, nUnknowns );
 
       // Set up the least squares matrices
       SimpleMatrix b = new SimpleMatrix( nObsAvail, 1 );
 
-      double pivotSNR = 0;
-      double pivot = 0;
       for (int i = 0, k = 0; i < obs.getNumSat(); i++) {
         int satId = obs.getSatID(i);
 
@@ -373,18 +366,22 @@ public class LS_SA_dopplerPos extends LS_SA_code {
         e.set( 0,0, rover.diffSat[i].get(0) / rover.satAppRange[i] );
         e.set( 0,1, rover.diffSat[i].get(1) / rover.satAppRange[i] );
         e.set( 0,2, rover.diffSat[i].get(2) / rover.satAppRange[i] );
+
+        /** computed satspeed: scalar product of speed vector X LOS unit vector */
         double rodotSatSpeed   = e.mult( sats.pos[i].getSpeed() ).get(0);
         
-        // scalar product of speed vector X unit vector
         float doppler = os.getDoppler(ObservationSet.L1);
-        rodot[k] = doppler * Constants.SPEED_OF_LIGHT/Constants.FL1;
+
+        /** observed range rate */
+        double rodot = doppler * Constants.SPEED_OF_LIGHT/Constants.FL1;
         
         A.set( k, 0, sats.pos[i].getSpeed().get(0)/rover.satAppRange[i] ); /* X */
         A.set( k, 1, sats.pos[i].getSpeed().get(1)/rover.satAppRange[i] ); /* Y */
         A.set( k, 2, sats.pos[i].getSpeed().get(2)/rover.satAppRange[i] ); /* Z */
         A.set( k, 3, 1 ); 
 
-        b.set(k, 0, rodot[k]  - rodotSatSpeed - rover.getClockErrorRate() );
+        /** residuals */
+        b.set(k, 0, rodot  - rodotSatSpeed - rover.getClockErrorRate() );
 
         k++;
      }

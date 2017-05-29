@@ -165,6 +165,7 @@ public class LS_SA_dopplerPos extends LS_SA_code {
     }
   }
   
+  @Deprecated
   public void dopplerPosHill( Observations obs ) {
     int MINSV = 5;
 
@@ -321,7 +322,6 @@ public class LS_SA_dopplerPos extends LS_SA_code {
   }
 
   public void dopplerPos( Observations obs ) {
-    // Number of unknown parameters
     int nUnknowns = 4;
     final double DOPP_POS_TOL = 1.0;    
 
@@ -333,8 +333,9 @@ public class LS_SA_dopplerPos extends LS_SA_code {
 //      sats.selectStandalone(obs, -100);
 
       // Number of available satellites (i.e. observations)
-      int nObsAvail = sats.avail.size();
-      if( nObsAvail < nUnknowns-1 ){
+      int nObsAvail = sats.avail.size() + 1; // add DTM / height soft constraint
+
+      if( nObsAvail < nUnknowns ){
 //        if( goGPS.isDebug() ) 
         System.out.println("dopplerPos, not enough satellites for " + obs.getRefTime() );
         if( rover.status == Status.None ){
@@ -344,8 +345,6 @@ public class LS_SA_dopplerPos extends LS_SA_code {
         return;
       }
       
-      nObsAvail++; // add DTM / height soft constraint
-
       /** Least squares design matrix */
       SimpleMatrix A = new SimpleMatrix( nObsAvail, nUnknowns );
 
@@ -361,6 +360,11 @@ public class LS_SA_dopplerPos extends LS_SA_code {
 
         ObservationSet os = obs.getSatByID(satId);
 
+        A.set( k, 0, sats.pos[i].getSpeed().get(0)/rover.satAppRange[i] ); /* X */
+        A.set( k, 1, sats.pos[i].getSpeed().get(1)/rover.satAppRange[i] ); /* Y */
+        A.set( k, 2, sats.pos[i].getSpeed().get(2)/rover.satAppRange[i] ); /* Z */
+        A.set( k, 3, 1 ); 
+
         // Line Of Sight vector units (ECEF)
         SimpleMatrix e = new SimpleMatrix(1,3);
         e.set( 0,0, rover.diffSat[i].get(0) / rover.satAppRange[i] );
@@ -375,11 +379,6 @@ public class LS_SA_dopplerPos extends LS_SA_code {
         /** observed range rate */
         double rodot = doppler * Constants.SPEED_OF_LIGHT/Constants.FL1;
         
-        A.set( k, 0, sats.pos[i].getSpeed().get(0)/rover.satAppRange[i] ); /* X */
-        A.set( k, 1, sats.pos[i].getSpeed().get(1)/rover.satAppRange[i] ); /* Y */
-        A.set( k, 2, sats.pos[i].getSpeed().get(2)/rover.satAppRange[i] ); /* Z */
-        A.set( k, 3, 1 ); 
-
         /** residuals */
         b.set(k, 0, rodot  - rodotSatSpeed - rover.getClockErrorRate() );
 
@@ -387,8 +386,6 @@ public class LS_SA_dopplerPos extends LS_SA_code {
      }
      
      // Add height soft constraint
-     double lam = Math.toRadians(rover.getGeodeticLongitude());
-     double phi = Math.toRadians(rover.getGeodeticLatitude());
      double hR_app = rover.getGeodeticHeight();
      double h_dtm = hR_app>0? 
         hR_app 
@@ -396,19 +393,18 @@ public class LS_SA_dopplerPos extends LS_SA_code {
      if( h_dtm > 2000 )
       h_dtm = 2000;
     
+     double lam = Math.toRadians(rover.getGeodeticLongitude());
+     double phi = Math.toRadians(rover.getGeodeticLatitude());
+     
      double cosLam = Math.cos(lam);
      double cosPhi = Math.cos(phi);
      double sinLam = Math.sin(lam);
      double sinPhi = Math.sin(phi);
-     double[][] data = new double[1][3];
-     data[0][0] = cosPhi * cosLam;
-     data[0][1] = cosPhi * sinLam;
-     data[0][2] = sinPhi;
     
      int k = nObsAvail-1;
-     A.set(k, 0, data[0][0] );
-     A.set(k, 1, data[0][1] ); 
-     A.set(k, 2, data[0][2] ); 
+     A.set(k, 0, cosPhi * cosLam );
+     A.set(k, 1, cosPhi * sinLam ); 
+     A.set(k, 2, sinPhi ); 
      A.set(k, 3, 0 ); 
      double y0_dtm = h_dtm  - hR_app;
      b.set(k, 0, y0_dtm );

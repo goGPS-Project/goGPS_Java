@@ -1582,7 +1582,7 @@ public class GoGPS implements Runnable{
         // for test
         roverPos.setXYZ(0, 0, 0);
         
-        runElevationMethod(obsR);
+//        runElevationMethod(obsR);
 
         sa.dopplerPos(obsR);
 

@@ -331,7 +331,6 @@ public class LS_SA_dopplerPos extends LS_SA_code {
 
     for (int itr = 0; itr < max_iterations; itr++) {
 
-      goGPS.setDebug( false );
       selectSatellites( obs, -100, GoGPS.MODULO1MS ); 
 //      sats.selectStandalone(obs, -100);
 
@@ -392,28 +391,11 @@ public class LS_SA_dopplerPos extends LS_SA_code {
         A.set( k, 2, sats.pos[i].getSpeed().get(2)/ro ); /* Z */
         A.set( k, 3, 1 ); 
 
-//        SimpleMatrix satposxyz = new SimpleMatrix(1,3);
-//        satposxyz.set(0, 0, sats.pos[i].getX());
-//        satposxyz.set(0, 1, sats.pos[i].getY());
-//        satposxyz.set(0, 2, sats.pos[i].getZ());
-//        
-//        SimpleMatrix satvelxyz = new SimpleMatrix(1,3);
-//        satvelxyz.set(0, 0, sats.pos[i].getSpeed().get(0));
-//        satvelxyz.set(0, 1, sats.pos[i].getSpeed().get(1));
-//        satvelxyz.set(0, 2, sats.pos[i].getSpeed().get(2));
-//
-//        double satpos_norm = Math.sqrt(Math.pow(sats.pos[i].getX(), 2)
-//                           + Math.pow(sats.pos[i].getY(), 2)
-//                           + Math.pow(sats.pos[i].getZ(), 2));
-//
-//        /** satpos times satspeed*/
-//        double posvel = satposxyz.mult(satvelxyz.transpose()).get(0,0);
-//        double bval   = posvel + rodot[k]*ro;
-//        
-        b.set(k, 0, ( rodot[k]  - rodotSatSpeed - rover.getClockErrorRate()));//+ rover.getClockErrorRate()*( satpos_norm - ro )
+        b.set(k, 0, rodot[k]  - rodotSatSpeed - rover.getClockErrorRate() );
 
         k++;
      }
+     
      // Add height soft constraint
      double lam = Math.toRadians(rover.getGeodeticLongitude());
      double phi = Math.toRadians(rover.getGeodeticLatitude());

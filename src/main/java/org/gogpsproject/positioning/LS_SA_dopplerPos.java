@@ -327,6 +327,9 @@ public class LS_SA_dopplerPos extends LS_SA_code {
 
     double max_iterations = 20; 
 
+    /** Least squares design matrix */
+    SimpleMatrix A = null;
+
     for (int itr = 0; itr < max_iterations; itr++) {
 
       selectSatellites( obs, -100, GoGPS.MODULO1MS ); 
@@ -345,8 +348,7 @@ public class LS_SA_dopplerPos extends LS_SA_code {
         return;
       }
       
-      /** Least squares design matrix */
-      SimpleMatrix A = new SimpleMatrix( nObsAvail, nUnknowns );
+      A = new SimpleMatrix( nObsAvail, nUnknowns );
 
       // Set up the least squares matrices
       SimpleMatrix b = new SimpleMatrix( nObsAvail, 1 );
@@ -438,8 +440,23 @@ public class LS_SA_dopplerPos extends LS_SA_code {
      if( correction_mag< DOPP_POS_TOL )
        break;
     }
+    // Compute covariance matrix from A matrix [ECEF reference system]
+    SimpleMatrix covXYZ = A.transpose().mult(A).invert().extractMatrix(0, 3, 0, 3);
+
+    // Allocate and build rotation matrix
+    SimpleMatrix R = Coordinates.rotationMatrix(rover);
+ 
+    /** Covariance matrix obtained from matrix A (satellite geometry) [local coordinates] */
+    // Propagate covariance from global system to local system
+    SimpleMatrix covENU = R.mult(covXYZ).mult(R.transpose());
+
+     //Compute DOP values
+    rover.pDop = Math.sqrt(covXYZ.get(0, 0) + covXYZ.get(1, 1) + covXYZ.get(2, 2));
+    rover.hDop = Math.sqrt(covENU.get(0, 0) + covENU.get(1, 1));
+    rover.vDop = Math.sqrt(covENU.get(2, 2));
+
     System.out.println( rover );
+    
   }
-  
 }
 

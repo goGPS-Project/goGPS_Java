@@ -17,7 +17,7 @@ public class LS_SA_dopplerPos extends LS_SA_code {
   }
 
   /**
-   * Estimate full pseudorange and satellite position from a priori rover position and fractiona pseudoranges
+   * Estimate full pseudorange and satellite position from a priori rover position and fractional pseudoranges
    * @param roverObs
    * @param cutoff
    */
@@ -66,7 +66,7 @@ public class LS_SA_dopplerPos extends LS_SA_code {
       char satType = roverObs.getGnssType(i);
 
       sats.pos[i] = goGPS.getNavigation()
-          .getGpsSatPosition( roverObs, id, 'G', rover.getReceiverClockError() );
+          .getGpsSatPosition( roverObs, id, 'G', rover.getClockError() );
       
       if(  sats.pos[i] == SatellitePosition.UnhealthySat ) {
         sats.pos[i] = null;
@@ -101,7 +101,7 @@ public class LS_SA_dopplerPos extends LS_SA_code {
         os.setCodeC(0, rover.satAppRange[i]);
   
         // Compute GPS satellite positions getGpsByIdx(idx).getSatType()
-        sats.pos[i] = goGPS.getNavigation().getGpsSatPosition(roverObs, id, 'G', rover.getReceiverClockError());
+        sats.pos[i] = goGPS.getNavigation().getGpsSatPosition(roverObs, id, 'G', rover.getClockError());
         
         // restore code observation
         os.setCodeC(0, code);
@@ -119,8 +119,8 @@ public class LS_SA_dopplerPos extends LS_SA_code {
       // Compute rover-satellite approximate pseudorange
       rover.diffSat[i] = rover.minusXYZ(sats.pos[i]);
       rover.satAppRange[i] = Math.sqrt(Math.pow(rover.diffSat[i].get(0), 2)
-                          + Math.pow(rover.diffSat[i].get(1), 2)
-                          + Math.pow(rover.diffSat[i].get(2), 2));
+                           + Math.pow(rover.diffSat[i].get(1), 2)
+                           + Math.pow(rover.diffSat[i].get(2), 2));
 
       double R = rover.satAppRange[i]/Constants.SPEED_OF_LIGHT*1000;
       double C = roverObs.getSatByID(id).getCodeC(0)/Constants.SPEED_OF_LIGHT*1000;
@@ -165,7 +165,7 @@ public class LS_SA_dopplerPos extends LS_SA_code {
     }
   }
   
-  public void dopplerPos( Observations obs ) {
+  public void dopplerPosHill( Observations obs ) {
     int MINSV = 5;
 
     // Number of unknown parameters
@@ -190,6 +190,8 @@ public class LS_SA_dopplerPos extends LS_SA_code {
         return;
       }
       
+//      nObsAvail++; // add DTM / height soft constraint
+
       /** range rate */
       double[] rodot = new double[nObsAvail];
 
@@ -213,7 +215,6 @@ public class LS_SA_dopplerPos extends LS_SA_code {
         // scalar product of speed vector X unit vector
         float doppler = os.getDoppler(ObservationSet.L1);
 
-        ////
         // Line Of Sight vector units (ECEF)
         SimpleMatrix e = new SimpleMatrix(1,3);
         e.set( 0,0, rover.diffSat[i].get(0) / rover.satAppRange[i] );
@@ -221,7 +222,6 @@ public class LS_SA_dopplerPos extends LS_SA_code {
         e.set( 0,2, rover.diffSat[i].get(2) / rover.satAppRange[i] );
         double rodotSatSpeed   = -e.mult( sats.pos[i].getSpeed() ).get(0);
         double dopplerSatSpeed = -rodotSatSpeed*Constants.FL1/Constants.SPEED_OF_LIGHT;
-        ///
 
         if( Float.isNaN( doppler )){
           rodot[k] = rodotSatSpeed;
@@ -229,9 +229,6 @@ public class LS_SA_dopplerPos extends LS_SA_code {
         else {
           rodot[k] = doppler * Constants.SPEED_OF_LIGHT/Constants.FL1;
           
-//          if( Math.abs(doppler - dopplerSatSpeed)>200)
-//            System.out.println("diff here");
-//          rodot[k] = rodotSatSpeed;
           os.getDoppler(ObservationSet.L1);
           System.out.println( String.format( "%2d) snr:%2.0f doppler:%6.0f; satSpeed:%6.0f; D:%6.0f", 
               satId,
@@ -242,9 +239,9 @@ public class LS_SA_dopplerPos extends LS_SA_code {
         }
         
         // build A matrix
-        A.set(k, 0, sats.pos[k].getSpeed().get(0) ); /* X */
-        A.set(k, 1, sats.pos[k].getSpeed().get(1) ); /* Y */
-        A.set(k, 2, sats.pos[k].getSpeed().get(2) ); /* Z */
+        A.set(k, 0, sats.pos[i].getSpeed().get(0) ); /* X */
+        A.set(k, 1, sats.pos[i].getSpeed().get(1) ); /* Y */
+        A.set(k, 2, sats.pos[i].getSpeed().get(2) ); /* Z */
         
         double satpos_norm = Math.sqrt(Math.pow(sats.pos[i].getX(), 2)
                                      + Math.pow(sats.pos[i].getY(), 2)
@@ -268,11 +265,11 @@ public class LS_SA_dopplerPos extends LS_SA_code {
         satvelxyz.set(0, 1, sats.pos[i].getSpeed().get(1));
         satvelxyz.set(0, 2, sats.pos[i].getSpeed().get(2));
 
-        /** sat pos times speed*/
+        /** satpos times satspeed*/
         double posvel = satposxyz.mult(satvelxyz.transpose()).get(0,0);
 
-        // B[j] = posvel + rodot[j]*ro + Xc[3]*(A[j][3]-ro);
-        double bval = posvel + rodot[k]*ro + rover.getReceiverClockErrorRate()*( satpos_norm - ro);
+        // B[j] = posvel + rodot[j]*ro + ClockErrorRate*(satpos_norm-ro);
+        double bval = posvel + rodot[k]*ro + rover.getClockErrorRate()*( satpos_norm - ro );
         b.set(k, 0, bval);
 
         double snr = os.getSignalStrength(ObservationSet.L1);
@@ -282,19 +279,11 @@ public class LS_SA_dopplerPos extends LS_SA_code {
         }
         k++;
      }
-///////////////
-//     b.normF()
-//     System.out.println( String.format( "Residuals -> Adjusted Residuals (ms) - Pivot = %7.4f (ms)",  pivot/Constants.SPEED_OF_LIGHT*1000));
-//     for( int k=0; k<sats.avail.size(); k++){
-//       double d = Math.abs(b.get(k))-pivot;
-//       System.out.print( String.format( "%7.4f\r\n", d/Constants.SPEED_OF_LIGHT*1000));
-//     }
-///////////////     
-      
+    
      SimpleMatrix x = A.transpose().mult(A).invert().mult(A.transpose()).mult(b);
 
      System.out.println( String.format( "Update %d: x: %3.3f, y: %3.3f, z: %3.3f, br: %3.3f", itr, 
-         x.get(0), x.get(1), x.get(2), x.get(3) ));
+                                                    x.get(0), x.get(1), x.get(2), x.get(3) ));
 
      double correction_mag = Math.sqrt( Math.pow( x.get(0) - rover.getX(), 2 ) + 
                                         Math.pow( x.get(1) - rover.getY(), 2 ) +
@@ -304,7 +293,7 @@ public class LS_SA_dopplerPos extends LS_SA_code {
      System.out.println( String.format( "pos diff mag %f (m)", correction_mag ));
 
      // Update receiver clock error rate
-     rover.receiverClockErrorRate = x.get(3);
+     rover.receiverErrorRate = x.get(3);
 
      // Update Rx position estimate
      rover.setXYZ( x.get(0), 
@@ -312,22 +301,176 @@ public class LS_SA_dopplerPos extends LS_SA_code {
                    x.get(2));
 
      rover.computeGeodetic();
-     // clamp it to the ground, not very elegant
-     if( rover.getGeodeticHeight()<30 || rover.getGeodeticHeight() > 100 ){
-       rover.setGeod( rover.getGeodeticLatitude(), rover.getGeodeticLongitude(), 30 );
-       rover.computeECEF();
-     }
-
      
+     // clamp it to the ground, not very elegant
+//     if( rover.getGeodeticHeight()<30 || rover.getGeodeticHeight() > 100 ){
+//       rover.setGeod( rover.getGeodeticLatitude(), rover.getGeodeticLongitude(), 30 );
+//       rover.computeECEF();
+//     }
+
      System.out.println( "recpos (" + itr +")");
-     System.out.println( String.format( "%10.6f,%10.6f", rover.getGeodeticLatitude(), rover.getGeodeticLongitude() ));
+     System.out.println( String.format( "%10.6f,%10.6f,%10.6f", 
+         rover.getGeodeticLatitude(), rover.getGeodeticLongitude(), rover.getGeodeticHeight() ));
      System.out.println();
      
      // if correction is small enough, we're done, exit loop
      if( correction_mag< DOPP_POS_TOL )
        break;
     }
-    
+    System.out.println( rover );
   }
+
+  public void dopplerPos( Observations obs ) {
+    int MINSV = 5;
+
+    // Number of unknown parameters
+    int nUnknowns = 4;
+    final double DOPP_POS_TOL = 1.0;    
+
+    double max_iterations = 20; 
+
+    for (int itr = 0; itr < max_iterations; itr++) {
+
+      goGPS.setDebug( false );
+      selectSatellites( obs, -20, GoGPS.MODULO1MS ); 
+//      sats.selectStandalone(obs, -100);
+
+      // Number of available satellites (i.e. observations)
+      int nObsAvail = sats.avail.size();
+      if( nObsAvail < MINSV-1 ){
+//        if( goGPS.isDebug() ) 
+        System.out.println("dopplerPos, not enough satellites for " + obs.getRefTime() );
+        if( rover.status == Status.None ){
+          rover.status = Status.NotEnoughSats;
+        }
+        rover.setXYZ(0, 0, 0);
+        return;
+      }
+      
+      nObsAvail++; // add DTM / height soft constraint
+
+      /** range rate */
+      double[] rodot = new double[nObsAvail];
+
+      /** Least squares design matrix */
+      SimpleMatrix A = new SimpleMatrix( nObsAvail, nUnknowns );
+
+      // Set up the least squares matrices
+      SimpleMatrix b = new SimpleMatrix( nObsAvail, 1 );
+
+      double pivotSNR = 0;
+      double pivot = 0;
+      for (int i = 0, k = 0; i < obs.getNumSat(); i++) {
+        int satId = obs.getSatID(i);
+
+        if( sats.pos[i] == null  || !sats.avail.contains(satId) ) {//|| recpos.ecef==null || sats.pos[i].ecef==null ){
+          continue;
+        }
+
+        ObservationSet os = obs.getSatByID(satId);
+
+        // Line Of Sight vector units (ECEF)
+        SimpleMatrix e = new SimpleMatrix(1,3);
+        e.set( 0,0, rover.diffSat[i].get(0) / rover.satAppRange[i] );
+        e.set( 0,1, rover.diffSat[i].get(1) / rover.satAppRange[i] );
+        e.set( 0,2, rover.diffSat[i].get(2) / rover.satAppRange[i] );
+        double rodotSatSpeed   = e.mult( sats.pos[i].getSpeed() ).get(0);
+        
+        // scalar product of speed vector X unit vector
+        float doppler = os.getDoppler(ObservationSet.L1);
+        rodot[k] = doppler * Constants.SPEED_OF_LIGHT/Constants.FL1;
+        
+        SimpleMatrix tempv = rover.minusXYZ(sats.pos[i]);
+        
+        /** range */
+        double ro = Math.sqrt(Math.pow(tempv.get(0), 2)
+                            + Math.pow(tempv.get(1), 2)
+                            + Math.pow(tempv.get(2), 2));
+        
+        A.set( k, 0, sats.pos[i].getSpeed().get(0)/ro ); /* X */
+        A.set( k, 1, sats.pos[i].getSpeed().get(1)/ro ); /* Y */
+        A.set( k, 2, sats.pos[i].getSpeed().get(2)/ro ); /* Z */
+        A.set( k, 3, 1 ); 
+
+//        SimpleMatrix satposxyz = new SimpleMatrix(1,3);
+//        satposxyz.set(0, 0, sats.pos[i].getX());
+//        satposxyz.set(0, 1, sats.pos[i].getY());
+//        satposxyz.set(0, 2, sats.pos[i].getZ());
+//        
+//        SimpleMatrix satvelxyz = new SimpleMatrix(1,3);
+//        satvelxyz.set(0, 0, sats.pos[i].getSpeed().get(0));
+//        satvelxyz.set(0, 1, sats.pos[i].getSpeed().get(1));
+//        satvelxyz.set(0, 2, sats.pos[i].getSpeed().get(2));
+//
+//        double satpos_norm = Math.sqrt(Math.pow(sats.pos[i].getX(), 2)
+//                           + Math.pow(sats.pos[i].getY(), 2)
+//                           + Math.pow(sats.pos[i].getZ(), 2));
+//
+//        /** satpos times satspeed*/
+//        double posvel = satposxyz.mult(satvelxyz.transpose()).get(0,0);
+//        double bval   = posvel + rodot[k]*ro;
+//        
+        b.set(k, 0, ( rodot[k]  - rodotSatSpeed + rover.getClockErrorRate()));//+ rover.getClockErrorRate()*( satpos_norm - ro )
+
+        k++;
+     }
+     // Add height soft constraint
+     double lam = Math.toRadians(rover.getGeodeticLongitude());
+     double phi = Math.toRadians(rover.getGeodeticLatitude());
+     double hR_app = rover.getGeodeticHeight();
+     double h_dtm = hR_app>0? 
+        hR_app 
+        : 30; // initialize to something above sea level
+     if( h_dtm > 2000 )
+      h_dtm = 2000;
+    
+     double cosLam = Math.cos(lam);
+     double cosPhi = Math.cos(phi);
+     double sinLam = Math.sin(lam);
+     double sinPhi = Math.sin(phi);
+     double[][] data = new double[1][3];
+     data[0][0] = cosPhi * cosLam;
+     data[0][1] = cosPhi * sinLam;
+     data[0][2] = sinPhi;
+    
+     int k = nObsAvail-1;
+     A.set(k, 0, data[0][0] );
+     A.set(k, 1, data[0][1] ); 
+     A.set(k, 2, data[0][2] ); 
+     A.set(k, 3, 0 ); 
+     double y0_dtm = h_dtm  - hR_app;
+     b.set(k, 0, y0_dtm );
+      
+     SimpleMatrix x = A.transpose().mult(A).invert().mult(A.transpose()).mult(b);
+
+     System.out.println( String.format( "Update %d: x: %3.3f, y: %3.3f, z: %3.3f, cr: %3.3f", itr, 
+                                                    x.get(0), x.get(1), x.get(2), x.get(3) ));
+
+     double correction_mag = Math.sqrt( Math.pow( x.get(0), 2 ) + 
+                                        Math.pow( x.get(1), 2 ) +
+                                        Math.pow( x.get(2), 2 ) );
+
+     // expected
+     System.out.println( String.format( "pos diff mag %f (m)", correction_mag ));
+
+     // Update Rx position estimate
+     rover.setPlusXYZ( x.extractMatrix(0, 3, 0, 1) );
+     rover.computeGeodetic();
+     
+     // Update receiver clock error rate
+     rover.receiverErrorRate += x.get(3);
+
+     System.out.println( "recpos (" + itr +")");
+     System.out.println( String.format( "%10.6f,%10.6f,%10.6f", 
+     rover.getGeodeticLatitude(), rover.getGeodeticLongitude(), rover.getGeodeticHeight() ));
+     System.out.println();
+     
+     // if correction is small enough, we're done, exit loop
+     if( correction_mag< DOPP_POS_TOL )
+       break;
+    }
+    System.out.println( rover );
+  }
+  
 }
 

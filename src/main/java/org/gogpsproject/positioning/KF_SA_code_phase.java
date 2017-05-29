@@ -68,11 +68,11 @@ public class KF_SA_code_phase extends KalmanFilter {
         double appRangeCode;
         double appRangePhase;
         if( goGPS.getFreq() == 0) {
-          appRangeCode = rover.satAppRange[i] + Constants.SPEED_OF_LIGHT*(rover.receiverClockError - sats.pos[i].getSatelliteClockError()) + rover.satTropoCorr[i] + rover.satIonoCorr[i];
-          appRangePhase = rover.satAppRange[i] + Constants.SPEED_OF_LIGHT*(rover.receiverClockError - sats.pos[i].getSatelliteClockError()) + rover.satTropoCorr[i] - rover.satIonoCorr[i];
+          appRangeCode = rover.satAppRange[i] + Constants.SPEED_OF_LIGHT*(rover.clockError - sats.pos[i].getSatelliteClockError()) + rover.satTropoCorr[i] + rover.satIonoCorr[i];
+          appRangePhase = rover.satAppRange[i] + Constants.SPEED_OF_LIGHT*(rover.clockError - sats.pos[i].getSatelliteClockError()) + rover.satTropoCorr[i] - rover.satIonoCorr[i];
         } else {
-          appRangeCode = rover.satAppRange[i] + Constants.SPEED_OF_LIGHT*(rover.receiverClockError - sats.pos[i].getSatelliteClockError()) + rover.satTropoCorr[i] + rover.satIonoCorr[i] * Math.pow(roverObs.getSatByIDType(id, satType).getWavelength(1)/roverObs.getSatByIDType(id, satType).getWavelength(0), 2);
-          appRangePhase = rover.satAppRange[i] + Constants.SPEED_OF_LIGHT*(rover.receiverClockError - sats.pos[i].getSatelliteClockError()) + rover.satTropoCorr[i] - rover.satIonoCorr[i] * Math.pow(roverObs.getSatByIDType(id, satType).getWavelength(1)/roverObs.getSatByIDType(id, satType).getWavelength(0), 2);
+          appRangeCode = rover.satAppRange[i] + Constants.SPEED_OF_LIGHT*(rover.clockError - sats.pos[i].getSatelliteClockError()) + rover.satTropoCorr[i] + rover.satIonoCorr[i] * Math.pow(roverObs.getSatByIDType(id, satType).getWavelength(1)/roverObs.getSatByIDType(id, satType).getWavelength(0), 2);
+          appRangePhase = rover.satAppRange[i] + Constants.SPEED_OF_LIGHT*(rover.clockError - sats.pos[i].getSatelliteClockError()) + rover.satTropoCorr[i] - rover.satIonoCorr[i] * Math.pow(roverObs.getSatByIDType(id, satType).getWavelength(1)/roverObs.getSatByIDType(id, satType).getWavelength(0), 2);
         }
 
         // Fill in one row in the design matrix (for code)
@@ -301,7 +301,7 @@ public class KF_SA_code_phase extends KalmanFilter {
     x = A.transpose().mult(Q.invert()).mult(A).invert().mult(A.transpose()).mult(Q.invert()).mult(y0.minus(b));
   
     // Receiver clock error
-    rover.receiverClockError = x.get(3) / Constants.SPEED_OF_LIGHT;
+    rover.clockError = x.get(3) / Constants.SPEED_OF_LIGHT;
   
     // Estimation of the variance of the observation error
     vEstim = y0.minus(A.mult(x).plus(b));

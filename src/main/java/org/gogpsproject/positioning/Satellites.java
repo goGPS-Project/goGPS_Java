@@ -272,7 +272,7 @@ public class Satellites {
       char satType = roverObs.getGnssType(i);
 
       // Compute GPS satellite positions getGpsByIdx(idx).getSatType()
-      pos[i] = navigation.getGpsSatPosition( roverObs, id, satType, rover.getReceiverClockError());
+      pos[i] = navigation.getGpsSatPosition( roverObs, id, satType, rover.getClockError());
       
       if(pos[i]!=null){
 
@@ -474,7 +474,7 @@ public class Satellites {
       char satType = roverObs.getGnssType(i);
 
       // Compute GPS satellite positions
-      pos[i] = navigation.getGpsSatPosition(roverObs, id, satType, rover.getReceiverClockError());
+      pos[i] = navigation.getGpsSatPosition(roverObs, id, satType, rover.getClockError());
 
       if(pos[i]!=null){
 

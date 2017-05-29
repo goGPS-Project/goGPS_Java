@@ -391,7 +391,7 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
         if( goGPS.isDebug()) System.out.println( String.format( "common bias: %2.4f (ms)", cbiasms ));
 
         // Receiver clock error in seconds
-        rover.receiverClockError = x.get(3)/ Constants.SPEED_OF_LIGHT;
+        rover.clockError = x.get(3)/ Constants.SPEED_OF_LIGHT;
        
         // apply correction to Rx position estimate
         rover.setPlusXYZ( x.extractMatrix(0, 3, 0, 1) );

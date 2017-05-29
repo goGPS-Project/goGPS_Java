@@ -120,7 +120,7 @@ public class LS_SA_code extends Core {
         .mult(Q.invert()).mult(y0.minus(b));
 
     // Receiver clock error
-    rover.receiverClockError = x.get(3) / Constants.SPEED_OF_LIGHT;
+    rover.clockError = x.get(3) / Constants.SPEED_OF_LIGHT;
 
     if(estimateOnlyClock)
       return;

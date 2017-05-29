@@ -398,7 +398,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
      System.out.println( String.format( "time update: %3.3f (s)", tg ));
 
      // Receiver clock error
-     rover.receiverClockError = x.get(3) / Constants.SPEED_OF_LIGHT;
+     rover.clockError = x.get(3) / Constants.SPEED_OF_LIGHT;
 
      // apply correction to Rx position estimate
      rover.setPlusXYZ(x.extractMatrix(0, 3, 0, 1));
@@ -1026,7 +1026,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
 //     System.out.println( String.format( "time update: %3.3f (s)", tg ));
 
      // Receiver clock error
-     rover.receiverClockError = x.get(3) / Constants.SPEED_OF_LIGHT;
+     rover.clockError = x.get(3) / Constants.SPEED_OF_LIGHT;
 
      // apply correction to Rx position estimate
      rover.setPlusXYZ(x.extractMatrix(0, 3, 0, 1));

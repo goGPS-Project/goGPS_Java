@@ -45,10 +45,10 @@ public class RoverPosition extends ReceiverPosition {
   public long cErrMS = 0;
   
   /** standard subms clock error in s*/
-  double receiverClockError; 
+  double clockError; 
 
   /** Clock error rate */
-	double receiverClockErrorRate; 
+	double receiverErrorRate; 
 	
   /** Average residual error for least-squares computation */
   public double eRes;
@@ -79,7 +79,7 @@ public class RoverPosition extends ReceiverPosition {
 	public RoverPosition(){
 		super();
 		this.setXYZ(0.0, 0.0, 0.0);
-		this.receiverClockError = 0.0;
+		this.clockError = 0.0;
 	}
 
   public RoverPosition(Coordinates c) {
@@ -95,20 +95,20 @@ public class RoverPosition extends ReceiverPosition {
     this.vDop = vDop;
   }
   
-	public double getReceiverClockError() {
-		return receiverClockError;
+	public double getClockError() {
+		return clockError;
 	}
 
-	public void setReceiverClockError(double receiverClockError) {
-		this.receiverClockError = receiverClockError;
+	public void setClockError(double clockError ) {
+		this.clockError = clockError;
 	}
 
-  public double getReceiverClockErrorRate() {
-    return receiverClockErrorRate;
+  public double getClockErrorRate() {
+    return receiverErrorRate;
   }
 
-  public void setReceiverClockErrorRate(double receiverClockErrorRate) {
-    this.receiverClockErrorRate = receiverClockErrorRate;
+  public void setClockErrorRate(double receiverClockErrorRate) {
+    this.receiverErrorRate = receiverClockErrorRate;
   }
 
 	public double getpDop() {

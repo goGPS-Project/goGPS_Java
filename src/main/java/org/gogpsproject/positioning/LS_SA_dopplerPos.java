@@ -332,7 +332,7 @@ public class LS_SA_dopplerPos extends LS_SA_code {
     for (int itr = 0; itr < max_iterations; itr++) {
 
       goGPS.setDebug( false );
-      selectSatellites( obs, -20, GoGPS.MODULO1MS ); 
+      selectSatellites( obs, -100, GoGPS.MODULO1MS ); 
 //      sats.selectStandalone(obs, -100);
 
       // Number of available satellites (i.e. observations)
@@ -410,7 +410,7 @@ public class LS_SA_dopplerPos extends LS_SA_code {
 //        double posvel = satposxyz.mult(satvelxyz.transpose()).get(0,0);
 //        double bval   = posvel + rodot[k]*ro;
 //        
-        b.set(k, 0, ( rodot[k]  - rodotSatSpeed + rover.getClockErrorRate()));//+ rover.getClockErrorRate()*( satpos_norm - ro )
+        b.set(k, 0, ( rodot[k]  - rodotSatSpeed - rover.getClockErrorRate()));//+ rover.getClockErrorRate()*( satpos_norm - ro )
 
         k++;
      }
@@ -461,8 +461,9 @@ public class LS_SA_dopplerPos extends LS_SA_code {
      rover.receiverErrorRate += x.get(3);
 
      System.out.println( "recpos (" + itr +")");
-     System.out.println( String.format( "%10.6f,%10.6f,%10.6f", 
-     rover.getGeodeticLatitude(), rover.getGeodeticLongitude(), rover.getGeodeticHeight() ));
+     System.out.println( String.format( "%10.6f,%10.6f,%10.6f cr:%10.6f", 
+                         rover.getGeodeticLatitude(), rover.getGeodeticLongitude(), rover.getGeodeticHeight(),
+                         rover.receiverErrorRate ));
      System.out.println();
      
      // if correction is small enough, we're done, exit loop

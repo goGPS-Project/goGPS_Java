@@ -230,75 +230,80 @@ public class RinexNavigation implements NavigationProducer {
 		if(rnf.exists()){
       System.out.println(url+" from cache file "+rnf);
       rnp = new RinexNavigationParser(rnf);
-      rnp.init();
+      try{
+        rnp.init();
+        return rnp;
+      }
+      catch( Exception e ){
+        rnf.delete();
+      }
 		}
-		else {
-			System.out.println(url+" from the net.");
-			FTPClient ftp = new FTPClient();
+		
+		// if the file doesn't exist of is invalid
+		System.out.println(url+" from the net.");
+		FTPClient ftp = new FTPClient();
 
-			try {
-				int reply;
-				System.out.println("URL: "+url);
-				url = url.substring("ftp://".length());
-				String server = url.substring(0, url.indexOf('/'));
-				String remoteFile = url.substring(url.indexOf('/'));
-				String remotePath = remoteFile.substring(0,remoteFile.lastIndexOf('/'));
-				remoteFile = remoteFile.substring(remoteFile.lastIndexOf('/')+1);
+		try {
+			int reply;
+			System.out.println("URL: "+url);
+			url = url.substring("ftp://".length());
+			String server = url.substring(0, url.indexOf('/'));
+			String remoteFile = url.substring(url.indexOf('/'));
+			String remotePath = remoteFile.substring(0,remoteFile.lastIndexOf('/'));
+			remoteFile = remoteFile.substring(remoteFile.lastIndexOf('/')+1);
+
+			ftp.connect(server);
+			ftp.login("anonymous", "info@eriadne.org");
+
+			System.out.print(ftp.getReplyString());
+
+			// After connection attempt, you should check the reply code to
+			// verify
+			// success.
+			reply = ftp.getReplyCode();
+
+			if (!FTPReply.isPositiveCompletion(reply)) {
+				ftp.disconnect();
+				System.err.println("FTP server refused connection.");
+				return null;
+			}
+
+			ftp.enterLocalPassiveMode();
+			ftp.setRemoteVerificationEnabled(false);
+
+			System.out.println("cwd to "+remotePath+" "+ftp.changeWorkingDirectory(remotePath));
+			System.out.println(ftp.getReplyString());
+			ftp.setFileType(FTP.BINARY_FILE_TYPE);
+			System.out.println(ftp.getReplyString());
+
+			System.out.println("open "+remoteFile);
+			InputStream is = ftp.retrieveFileStream(remoteFile);
+			System.out.println(ftp.getReplyString());
+			if(ftp.getReplyString().startsWith("550")){
+				negativeChache.put(origurl, new Date());
+				throw new FileNotFoundException();
+			}
+      InputStream uis = is;
+
+			if(remoteFile.endsWith(".Z")){
+				uis = new UncompressInputStream(is);
+			}
+
+			rnp = new RinexNavigationParser(uis,rnf);
+			rnp.init();
+			is.close();
 
 
-				ftp.connect(server);
-				ftp.login("anonymous", "info@eriadne.org");
+			ftp.completePendingCommand();
 
-				System.out.print(ftp.getReplyString());
-
-				// After connection attempt, you should check the reply code to
-				// verify
-				// success.
-				reply = ftp.getReplyCode();
-
-				if (!FTPReply.isPositiveCompletion(reply)) {
+			ftp.logout();
+		} 
+		finally {
+			if (ftp.isConnected()) {
+				try {
 					ftp.disconnect();
-					System.err.println("FTP server refused connection.");
-					return null;
-				}
-
-				ftp.enterLocalPassiveMode();
-				ftp.setRemoteVerificationEnabled(false);
-
-				System.out.println("cwd to "+remotePath+" "+ftp.changeWorkingDirectory(remotePath));
-				System.out.println(ftp.getReplyString());
-				ftp.setFileType(FTP.BINARY_FILE_TYPE);
-				System.out.println(ftp.getReplyString());
-
-				System.out.println("open "+remoteFile);
-				InputStream is = ftp.retrieveFileStream(remoteFile);
-				System.out.println(ftp.getReplyString());
-				if(ftp.getReplyString().startsWith("550")){
-					negativeChache.put(origurl, new Date());
-					throw new FileNotFoundException();
-				}
-        InputStream uis = is;
-
-				if(remoteFile.endsWith(".Z")){
-					uis = new UncompressInputStream(is);
-				}
-
-				rnp = new RinexNavigationParser(uis,rnf);
-				rnp.init();
-				is.close();
-
-
-				ftp.completePendingCommand();
-
-				ftp.logout();
-			} 
-			finally {
-				if (ftp.isConnected()) {
-					try {
-						ftp.disconnect();
-					} catch (IOException ioe) {
-						// do nothing
-					}
+				} catch (IOException ioe) {
+					// do nothing
 				}
 			}
 		}

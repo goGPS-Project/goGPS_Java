@@ -118,9 +118,12 @@ public class RinexNavigationParser extends EphemerisSystem implements Navigation
 				parseDataNavV3();
 
 			}
-
+	    close();
 		}
-		close();
+		else{
+		  close();
+      throw new RuntimeException( fileNav.toString() + " is invalid ");
+		}
 	}
 
 
@@ -473,7 +476,7 @@ public class RinexNavigationParser extends EphemerisSystem implements Navigation
 			// Display an error if END OF HEADER was not reached
 			System.err.println("END OF HEADER was not found in file "
 					+ fileNav.toString());
-
+			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

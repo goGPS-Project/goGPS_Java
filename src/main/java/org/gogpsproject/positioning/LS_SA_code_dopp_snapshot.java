@@ -80,11 +80,9 @@ public class LS_SA_code_dopp_snapshot extends LS_SA_code_snapshot {
         selectSatellites( roverObs, -10, GoGPS.MODULO1MS );
       
       int ns = sats.getAvailNumber();
-      nObsAvail = sats.getAvailNumber();
-      nObsAvail *= 2; // use doppler 
-      nObsAvail++;    // add DTM / height soft constraint
+      nObsAvail = 2*sats.getAvailNumber() + 1; // use doppler and DTM / height soft constraint
 
-      if( 2*nObsAvail+1<nUnknowns ){
+      if( nObsAvail<nUnknowns ){
         if( goGPS.isDebug()) System.out.println("\r\nNot enough satellites for " + roverObs.getRefTime() );
         rover.setXYZ(0, 0, 0);
         if( nObsAvail>0 ){
@@ -138,9 +136,6 @@ public class LS_SA_code_dopp_snapshot extends LS_SA_code_snapshot {
           // TODO revert to code-only case
           return null;
 
-        /** range rate = scalar product of speed vector X unit vector */
-        double rodot = doppler * Constants.SPEED_OF_LIGHT/Constants.FL1;
-
         ObservationSet os = roverObs.getSatByID(satId);
 
         if( satId == pivotSatId  && pivotIndex != k ) {
@@ -155,6 +150,13 @@ public class LS_SA_code_dopp_snapshot extends LS_SA_code_snapshot {
         e.set( 0,1, rover.diffSat[i].get(1) / rover.satAppRange[i] );
         e.set( 0,2, rover.diffSat[i].get(2) / rover.satAppRange[i] );
   
+        /** range rate = scalar product of speed vector X unit vector */
+        double rodot = doppler * Constants.SPEED_OF_LIGHT/Constants.FL1;
+
+        /** computed satspeed: scalar product of speed vector X LOS unit vector */
+        double rodotSatSpeed   = e.mult( sats.pos[i].getSpeed() ).get(0);
+        
+        /** Design Matrix */
         A.set( k, 0, e.get(0) ); /* X */
         A.set( k, 1, e.get(1) ); /* Y */
         A.set( k, 2, e.get(2) ); /* Z */
@@ -165,18 +167,6 @@ public class LS_SA_code_dopp_snapshot extends LS_SA_code_snapshot {
         A.set( ns+k, 2, sats.pos[i].getSpeed().get(2)/rover.satAppRange[i] ); /* VZ */
         A.set( ns+k, 5, 1 );     // clock error rate
   
-        /** computed satspeed: scalar product of speed vector X LOS unit vector */
-        double rodotSatSpeed   = e.mult( sats.pos[i].getSpeed() ).get(0);
-        
-//        double dopplerSatSpeed = -rodotSatSpeed*Constants.FL1/Constants.SPEED_OF_LIGHT;
-//        if( goGPS.isDebug() ) System.out.println( String.format( "%2d) doppler:%6.0f; satSpeed:%6.0f; D:%6.0f", 
-//            satId,
-//            doppler, 
-//            dopplerSatSpeed,
-//            doppler - dopplerSatSpeed ));
-        
-//        rodot = rodotSatSpeed;
-        
         /** residuals */
         // Add the approximate pseudorange value to b
         b.set(k, 0, (rover.satAppRange[i] - sats.pos[i].getSatelliteClockError() * Constants.SPEED_OF_LIGHT) % GoGPS.MODULO1MS );
@@ -414,8 +404,7 @@ public class LS_SA_code_dopp_snapshot extends LS_SA_code_snapshot {
             rover.eRes, cbiasms ));
     }
     
-    
-    /** Observation Errors */
+//    /** Observation Errors */
 //    SimpleMatrix vEstim = y0.minus(A.mult(x).plus(b));
 //    double varianceEstim = (vEstim.transpose().mult(Q.invert())
 //        .mult(vEstim)).get(0)

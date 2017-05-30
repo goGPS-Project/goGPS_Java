@@ -110,14 +110,14 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
 //      }
 //      if( goGPS.isDebug()) System.out.println();
       
-      if( roverObs.getNumSat()>5 )
+      if( roverObs.getNumSat()>nUnknowns )
         selectSatellites( roverObs, cutOffEl, GoGPS.MODULO1MS ); 
       else
         selectSatellites( roverObs, -10, GoGPS.MODULO1MS );
         
-      nObsAvail = sats.getAvailNumber();
+      nObsAvail = sats.getAvailNumber() + 1; // add DTM / height soft constraint
   
-      if( nObsAvail+1<nUnknowns-1 ){
+      if( nObsAvail<nUnknowns ){
         if( goGPS.isDebug()) System.out.println("\r\nNot enough satellites for " + roverObs.getRefTime() );
         rover.setXYZ(0, 0, 0);
         if( nObsAvail>0 ){
@@ -134,8 +134,6 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
       
       pivotElevation = rover.topo[savedIndex].getElevation();
       
-      nObsAvail++; // add DTM / height soft constraint
-  
       // Least squares design matrix
       A = new SimpleMatrix( nObsAvail, nUnknowns );
   
@@ -167,6 +165,8 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
         if (sats.pos[i]==null || !sats.avail.contains(satId)) 
           continue; // i loop
       
+        float doppler = roverObs.getSatByID(satId).getDoppler(ObservationSet.L1);
+
         ObservationSet os = roverObs.getSatByID(satId);
 
         if( satId == pivotSatId  && pivotIndex != k ) {
@@ -181,11 +181,11 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
         e.set( 0,1, rover.diffSat[i].get(1) / rover.satAppRange[i] );
         e.set( 0,2, rover.diffSat[i].get(2) / rover.satAppRange[i] );
   
-        // scalar product of speed vector X unit vector
-        float doppler = roverObs.getSatByID(satId).getDoppler(ObservationSet.L1);
+        /** range rate = scalar product of speed vector X unit vector */
         double rodot;
-        double rodotSatSpeed   = -e.mult( sats.pos[i].getSpeed() ).get(0);
-        double dopplerSatSpeed = -rodotSatSpeed*Constants.FL1/Constants.SPEED_OF_LIGHT;
+
+        /** computed satspeed: scalar product of speed vector X LOS unit vector */
+        double rodotSatSpeed   = e.mult( sats.pos[i].getSpeed() ).get(0);
 
         if( Float.isNaN( doppler )){
           rodot = rodotSatSpeed;
@@ -193,25 +193,25 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
         else {
           // scalar product of speed vector X unit vector
           rodot = -doppler * Constants.SPEED_OF_LIGHT/Constants.FL1;
+
+          double dopplerSatSpeed = rodotSatSpeed*Constants.FL1/Constants.SPEED_OF_LIGHT;
           if( goGPS.isDebug() ) System.out.println( String.format( "%2d) doppler:%6.0f; satSpeed:%6.0f; D:%6.0f", 
               satId,
               doppler, 
               dopplerSatSpeed,
               doppler - dopplerSatSpeed ));
           
-//          if( Math.abs(doppler - dopplerSatSpeed)>200)
-//            System.out.println("diff here");
           rodot = rodotSatSpeed;
         }
         
-        
-        // Fill in one row in the design matrix
-        A.set(k, 0, e.get(0) ); /* X */
-        A.set(k, 1, e.get(1) ); /* Y */
-        A.set(k, 2, e.get(2) ); /* Z */
-        A.set(k, 3, 1); /* clock error */
-        A.set(k, 4, rodot );
+        /** Design Matrix */
+        A.set( k, 0, e.get(0) ); /* X */
+        A.set( k, 1, e.get(1) ); /* Y */
+        A.set( k, 2, e.get(2) ); /* Z */
+        A.set( k, 3, 1 );        // clock error 
+        A.set( k, 4, -rodot );   // common bias
   
+        /** residuals */
         // Add the approximate pseudorange value to b
         b.set(k, 0, (rover.satAppRange[i] - sats.pos[i].getSatelliteClockError() * Constants.SPEED_OF_LIGHT) % GoGPS.MODULO1MS );
   
@@ -314,7 +314,7 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
         }
       } 
       
-      if( rover.satsInUse +1 < nUnknowns ){
+      if( rover.satsInUse + 1 < nUnknowns ){
         if( goGPS.isDebug()) System.out.println("Not enough satellites for " + roverObs.getRefTime() );
         rover.setXYZ(0, 0, 0);
         if( rover.status == Status.None ){
@@ -517,7 +517,7 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
       rover.status = Status.None;
       // select a pivot with at least elCutOff elevation
       int maxIterations = 3;
-      residCutOff = 0.001;
+//      residCutOff = 0.001;
       SnapshotPivotResult pivotRes = snapshotProcessPivot( roverObs, satIdx, maxIterations, elCutOff, residCutOff  );
       
       if( pivotRes == null && rover.status == Status.EphNotFound ){

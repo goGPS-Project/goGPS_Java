@@ -83,7 +83,6 @@ public class GoGPS implements Runnable{
 	/** The weights. */
 	private int weights = WEIGHT_SAT_ELEVATION;
 
-
 	/** The Constant DYN_MODEL_STATIC. */
 	public final static int DYN_MODEL_STATIC = 1;
 
@@ -92,6 +91,7 @@ public class GoGPS implements Runnable{
 
 	/** The Constant DYN_MODEL_CONST_ACCELERATION. */
 	public final static int DYN_MODEL_CONST_ACCELERATION = 3;
+	
 	// Kalman filter parameters
 	/** The dynamic model. */
 	private int dynamicModel = DYN_MODEL_CONST_SPEED;
@@ -188,11 +188,13 @@ public class GoGPS implements Runnable{
 
 	private Vector<PositionConsumer> positionConsumers = new Vector<PositionConsumer>();
 
-
 //	private boolean debug = false;
 	private boolean debug = true;
 
 	private boolean useDTM = false;
+
+	/** Use Doppler observations in standalone snapshot case */
+	private boolean useDoppler = false;
 	
   public final static double MODULO1MS  = Constants.SPEED_OF_LIGHT /1000;     // check 1ms bit slip
   public final static double MODULO20MS = Constants.SPEED_OF_LIGHT * 20/1000; // check 20ms bit slip
@@ -211,12 +213,6 @@ public class GoGPS implements Runnable{
 
   /** max residual error to exclude a given range */
   private double residThreshold = 3.0;
-
-  /** pos update limit for LMS iterations */
-  final double POS_TOL = 1.0;    // meters
-  
-  /** time update limit for LMS iterations */
-  final double TG_TOL = 1;  // milliseconds
 
 	public RoverPosition getRoverPos(){
     return roverPos;
@@ -706,6 +702,17 @@ public class GoGPS implements Runnable{
 
   public GoGPS setOffsetMs( long offsetms){
     this.offsetms = offsetms;
+    return this;
+  }
+
+  /** Use Doppler observations in standalone snapshot case */
+  public boolean useDoppler() {
+    return useDoppler;
+  }
+
+  /** Use Doppler observations in standalone snapshot case */
+  public GoGPS useDoppler(boolean useDoppler) {
+    this.useDoppler = useDoppler;
     return this;
   }
 
@@ -1216,6 +1223,11 @@ public class GoGPS implements Runnable{
     public GoGPS runCodeStandaloneSnapshot() {
       LS_SA_code_snapshot sa = null;
       
+      if( useDoppler )
+        sa = new LS_SA_code_dopp_snapshot(this);
+      else
+        sa = new LS_SA_code_snapshot(this);
+      
       Observations obsR = null;
       Coordinates aPrioriPos = (Coordinates) roverPos.clone();
 
@@ -1228,11 +1240,6 @@ public class GoGPS implements Runnable{
          if(debug) System.out.println("Index: " + obsR.index );
          roverPos.satsInUse = 0;
 
-         if( Float.isNaN( obsR.getSatByIdx(0).getDoppler(0) ))
-           sa = new LS_SA_code_snapshot(this);
-         else
-           sa = new LS_SA_code_dopp_snapshot(this);
-           
          // apply time offset
          roverPos.sampleTime = obsR.getRefTime();
          obsR.setRefTime(new Time(obsR.getRefTime().getMsec() + offsetms ));
@@ -1323,6 +1330,12 @@ public class GoGPS implements Runnable{
   }
 	
   GoGPS runCoarseTime(Observations obsR, final double MODULO ){
+    /** pos update limit for LMS iterations */
+    final double POS_TOL = 1.0;    // meters
+    
+    /** time update limit for LMS iterations */
+    final double TG_TOL = 1;  // milliseconds
+
     for (int iter = 0; iter < 2000; iter++) {
       if(debug) System.out.println("\r\n////// itr = " + iter );
       long   updatems = obsR.getRefTime().getMsec();

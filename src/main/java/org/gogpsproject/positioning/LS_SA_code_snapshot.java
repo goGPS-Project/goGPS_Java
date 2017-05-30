@@ -619,7 +619,7 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
       aPrioriPos.cloneInto(rover);
     }
     
-    Long updatedms = new LS_SA_code_snapshot(goGPS).snapshotPos(obsR);
+    Long updatedms = snapshotPos(obsR);
     
     if( updatedms == null && rover.status == Status.MaxCorrection ){
       if(goGPS.isDebug()) System.out.println("Reset aPrioriPos");        

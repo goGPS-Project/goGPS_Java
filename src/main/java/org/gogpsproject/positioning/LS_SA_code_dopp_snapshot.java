@@ -465,7 +465,7 @@ public class LS_SA_code_dopp_snapshot extends LS_SA_code_snapshot {
 
     // Number of GPS observations
     int nObs = roverObs.getNumSat();
-    if( nObs < nUnknowns ){
+    if( 2*nObs + 1 < nUnknowns ){
       if(goGPS.isDebug()) System.out.println("Not enough satellites for " + roverObs.getRefTime() );
       rover.setXYZ(0, 0, 0);
       rover.satsInUse = nObs;
@@ -490,7 +490,7 @@ public class LS_SA_code_dopp_snapshot extends LS_SA_code_snapshot {
       rover.status = Status.None;
       // select a pivot with at least elCutOff elevation
       int maxIterations = 3;
-      residCutOff = 0.015;
+//      residCutOff = 0.05;
       SnapshotPivotResult pivotRes = snapshotProcessPivot( roverObs, satIdx, maxIterations, elCutOff, residCutOff  );
       
       if( pivotRes == null && rover.status == Status.EphNotFound ){
@@ -587,7 +587,7 @@ public class LS_SA_code_dopp_snapshot extends LS_SA_code_snapshot {
       aPrioriPos.cloneInto(rover);
     }
     
-    Long updatedms = new LS_SA_code_dopp_snapshot(goGPS).snapshotPos(obsR);
+    Long updatedms = snapshotPos(obsR);
     
     if( updatedms == null && rover.status == Status.MaxCorrection ){
       if(goGPS.isDebug()) System.out.println("Reset aPrioriPos");        

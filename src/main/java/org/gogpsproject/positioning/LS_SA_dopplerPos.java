@@ -362,10 +362,10 @@ public class LS_SA_dopplerPos extends LS_SA_code {
 
         ObservationSet os = obs.getSatByID(satId);
 
-        A.set( k, 0, sats.pos[i].getSpeed().get(0)/rover.satAppRange[i] ); /* X */
-        A.set( k, 1, sats.pos[i].getSpeed().get(1)/rover.satAppRange[i] ); /* Y */
-        A.set( k, 2, sats.pos[i].getSpeed().get(2)/rover.satAppRange[i] ); /* Z */
-        A.set( k, 3, 1 ); 
+        A.set( k, 0, sats.pos[i].getSpeed().get(0)/rover.satAppRange[i] ); /* VX */
+        A.set( k, 1, sats.pos[i].getSpeed().get(1)/rover.satAppRange[i] ); /* VY */
+        A.set( k, 2, sats.pos[i].getSpeed().get(2)/rover.satAppRange[i] ); /* VZ */
+        A.set( k, 3, 1 ); // clock error rate
 
         // Line Of Sight vector units (ECEF)
         SimpleMatrix e = new SimpleMatrix(1,3);

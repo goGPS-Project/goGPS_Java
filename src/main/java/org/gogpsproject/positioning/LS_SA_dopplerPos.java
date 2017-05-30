@@ -456,7 +456,6 @@ public class LS_SA_dopplerPos extends LS_SA_code {
     rover.vDop = Math.sqrt(covENU.get(2, 2));
 
     System.out.println( rover );
-    
   }
 }
 

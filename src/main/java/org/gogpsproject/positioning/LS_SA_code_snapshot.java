@@ -80,8 +80,7 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
     long refTime = roverObs.getRefTime().getMsec();
     long unixTime = refTime;
 
-    // Define least squares matrices
-    SimpleMatrix A = null;  // aka H or G, // Least squares design matrix
+    SimpleMatrix A = null;  // design matrix
     SimpleMatrix b = null;  // Vector for approximate (estimated, predicted) pseudoranges
     SimpleMatrix y0 = null; // Observed pseudoranges
     SimpleMatrix Q = null;  // Cofactor (Weighted) Matrix
@@ -91,8 +90,8 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
 
     int pivotSatId = roverObs.getSatID(pivotIndex);
 
-    final double POS_TOL = 1.0;    // meters
-    final double TG_TOL = 1;  // milliseconds
+    final double POS_TOL = 1.0; // meters
+    final double TG_TOL = 1;    // milliseconds
 
     int nObsAvail = 0;
     double pivotElevation = 0;
@@ -448,15 +447,8 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
     }
     
     
-    SimpleMatrix vEstim; // Observation Errors
-    // Covariance matrix obtained from matrix A (satellite geometry) [ECEF coordinates]
-    SimpleMatrix covXYZ = null;
-
-    // Covariance matrix obtained from matrix A (satellite geometry) [local coordinates]
-    SimpleMatrix covENU = null;
-
-    
-    vEstim = y0.minus(A.mult(x).plus(b));
+    /** Observation Errors */
+    SimpleMatrix vEstim = y0.minus(A.mult(x).plus(b));
     double varianceEstim = (vEstim.transpose().mult(Q.invert())
         .mult(vEstim)).get(0)
         / (nObsAvail - nUnknowns);
@@ -470,16 +462,17 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
       positionCovariance = null;
    }
 
+     /** Covariance matrix obtained from matrix A (satellite geometry) [ECEF coordinates] */
      // Compute covariance matrix from A matrix [ECEF reference system]
 //    covXYZ = A.extractMatrix(0, nObsAvail, 0, 3).transpose().mult(A.extractMatrix(0, nObsAvail, 0, 3)).invert();
-     covXYZ = A.transpose().mult(A).invert().extractMatrix(0, 3, 0, 3);
+    SimpleMatrix covXYZ = A.transpose().mult(A).invert().extractMatrix(0, 3, 0, 3);
 
     // Allocate and build rotation matrix
-    SimpleMatrix R = new SimpleMatrix(3, 3);
-    R = Coordinates.rotationMatrix(rover);
+    SimpleMatrix R = Coordinates.rotationMatrix(rover);
 
+    /** Covariance matrix obtained from matrix A (satellite geometry) [local coordinates] */
     // Propagate covariance from global system to local system
-    covENU = R.mult(covXYZ).mult(R.transpose());
+    SimpleMatrix covENU = R.mult(covXYZ).mult(R.transpose());
 
      //Compute DOP values
     rover.pDop = Math.sqrt(covXYZ.get(0, 0) + covXYZ.get(1, 1) + covXYZ.get(2, 2));

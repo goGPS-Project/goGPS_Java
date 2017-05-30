@@ -30,6 +30,7 @@ import org.gogpsproject.positioning.KalmanFilter;
 import org.gogpsproject.positioning.LS_DD_code;
 import org.gogpsproject.positioning.LS_SA_code;
 import org.gogpsproject.positioning.LS_SA_code_coarse_time;
+import org.gogpsproject.positioning.LS_SA_code_dopp_snapshot;
 import org.gogpsproject.positioning.LS_SA_code_snapshot;
 import org.gogpsproject.positioning.LS_SA_dopplerPos;
 import org.gogpsproject.positioning.MasterPosition;
@@ -1213,13 +1214,11 @@ public class GoGPS implements Runnable{
     }
     
     public GoGPS runCodeStandaloneSnapshot() {
-      LS_SA_code_snapshot sa = new LS_SA_code_snapshot(this);
+      LS_SA_code_snapshot sa = null;
       
       Observations obsR = null;
-      RoverPosition roverObs;
       Coordinates aPrioriPos = (Coordinates) roverPos.clone();
 
-      Time refTime;
       int leapSeconds;
       obsR = roverIn.getCurrentObservations();
       
@@ -1229,15 +1228,20 @@ public class GoGPS implements Runnable{
          if(debug) System.out.println("Index: " + obsR.index );
          roverPos.satsInUse = 0;
 
+         if( Float.isNaN( obsR.getSatByIdx(0).getDoppler(0) ))
+           sa = new LS_SA_code_snapshot(this);
+         else
+           sa = new LS_SA_code_dopp_snapshot(this);
+           
          // apply time offset
-         refTime = obsR.getRefTime();
+         roverPos.sampleTime = obsR.getRefTime();
          obsR.setRefTime(new Time(obsR.getRefTime().getMsec() + offsetms ));
 
          // Add Leap Seconds, remove at the end
-         leapSeconds = refTime.getLeapSeconds();
-         Time GPSTime = new Time( refTime.getMsec() + leapSeconds * 1000);
+         leapSeconds = roverPos.sampleTime.getLeapSeconds();
+         Time GPSTime = new Time( roverPos.sampleTime.getMsec() + leapSeconds * 1000);
+         
          obsR.setRefTime(GPSTime);
-
          long refTimeMs = obsR.getRefTime().getMsec();
 
 //         if( truePos != null ){
@@ -1272,25 +1276,16 @@ public class GoGPS implements Runnable{
 
          if(debug) System.out.println("Valid position? "+roverPos.isValidXYZ()+" x:"+roverPos.getX()+" y:"+roverPos.getY()+" z:"+roverPos.getZ());
          if(debug) System.out.println(" lat:"+roverPos.getGeodeticLatitude()+" lon:"+roverPos.getGeodeticLongitude() );
-
-         roverObs = new RoverPosition( roverPos, RoverPosition.DOP_TYPE_STANDARD, roverPos.getpDop(), roverPos.gethDop(), roverPos.getvDop());
-         roverObs.index = obsR.index;
-         roverObs.sampleTime = refTime;
-         roverObs.obs = obsR;
-         roverObs.satsInView = obsR.getNumSat();
-         roverObs.satsInUse = roverPos.satsInUse;
-         roverObs.eRes = roverPos.eRes;
-         roverObs.status = roverPos.status;
-
+         
          if( roverPos.isValidXYZ() ){
            
            offsetms = obsR.getRefTime().getMsec()-refTimeMs;
 
            // remove Leap Seconds
            obsR.setRefTime(new Time(obsR.getRefTime().getMsec() - leapSeconds * 1000));
-
-           roverObs.status = Status.Valid;
-           roverObs.cErrMS = offsetms;
+           roverPos.status = Status.Valid;
+           roverPos.cErrMS = offsetms;
+           
            // update a priori location
            roverPos.cloneInto(aPrioriPos);
 
@@ -1301,8 +1296,8 @@ public class GoGPS implements Runnable{
            aPrioriPos.setXYZ(0, 0, 0);
          }
         if(positionConsumers.size()>0){
-          roverObs.setRefTime(new Time(obsR.getRefTime().getMsec()));
-          notifyPositionConsumerAddCoordinate(roverObs);
+          roverPos.setRefTime(new Time(obsR.getRefTime().getMsec()));
+          notifyPositionConsumerAddCoordinate(roverPos.clone(obsR));
         }
 
        } catch (Throwable e) {
@@ -1501,20 +1496,13 @@ public class GoGPS implements Runnable{
           
           runCoarseTime(obsR, MODULO);
         }
-        RoverPosition roverObs = null;
-            
+
         if( !roverPos.isValidXYZ() || roverPos.gethDop()>this.hdopLimit ){
-          roverObs = new RoverPosition( roverPos, RoverPosition.DOP_TYPE_STANDARD, roverPos.getpDop(), roverPos.gethDop(), roverPos.getvDop());
-          roverObs.index = index;
-          roverObs.sampleTime = refTime;
-          roverObs.obs = obsR;
-          roverObs.satsInView = obsR.getNumSat();
-          roverObs.satsInUse = roverPos.satsInUse;
-          roverObs.status = roverPos.status;
+          roverPos.sampleTime = refTime;
           
           if( roverPos.isValidXYZ() && roverPos.gethDop()>this.hdopLimit ){
             System.out.println( String.format( "Excluding fix hdop = %3.1f > %3.1f (limit)", roverPos.gethDop(), this.hdopLimit ));
-            roverObs.status = Status.MaxHDOP;
+            roverPos.status = Status.MaxHDOP;
           }
           // restore a priori location
           if( aPrioriPos != null && aPrioriPos.isValidXYZ() ){
@@ -1535,19 +1523,11 @@ public class GoGPS implements Runnable{
           if(debug) System.out.println(" lat:"+roverPos.getGeodeticLatitude()+" lon:"+roverPos.getGeodeticLongitude() );
           if(debug) System.out.println(" time offset update (ms): " +  offsetUpdate + "; Total time offset (ms): " + offsetms );  
         
-          roverObs = new RoverPosition( roverPos, RoverPosition.DOP_TYPE_STANDARD, roverPos.getpDop(), roverPos.gethDop(), roverPos.getvDop());
-          roverObs.index = index;
-          roverObs.sampleTime = refTime;
-          roverObs.obs = obsR;
-          roverObs.satsInView = obsR.getNumSat();
-          roverObs.satsInUse = roverPos.satsInUse;
-          roverObs.eRes = roverPos.eRes;
-          roverObs.status = Status.Valid;
-          roverObs.cErrMS = obsR.getRefTime().getMsec() - roverObs.sampleTime.getMsec();
+          roverPos.cErrMS = obsR.getRefTime().getMsec() - roverPos.sampleTime.getMsec();
         }
         if(positionConsumers.size()>0){
-          roverObs.setRefTime(new Time(obsR.getRefTime().getMsec()));
-          notifyPositionConsumerAddCoordinate(roverObs);
+          roverPos.setRefTime(new Time(obsR.getRefTime().getMsec()));
+          notifyPositionConsumerAddCoordinate(roverPos.clone(obsR));
         }
       }
     }

@@ -1,18 +1,18 @@
 package org.gogpsproject.positioning;
 
-import java.util.ArrayList;
 
 import org.ejml.simple.SimpleMatrix;
 import org.gogpsproject.Constants;
 import org.gogpsproject.GoGPS;
 import org.gogpsproject.Status;
-import org.gogpsproject.producer.NavigationProducer;
 import org.gogpsproject.producer.ObservationSet;
 import org.gogpsproject.producer.Observations;
 
 public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
 
-  private static final int MINSV = 4;
+  // Number of unknown parameters
+  public static final int nUnknowns = 5;
+
 
   /** max time update for a valid fix */
   private long maxTimeUpdateSec = 30; // s
@@ -72,9 +72,6 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
     int savedIndex = pivotIndex;
     int nObs = roverObs.getNumSat();
 
-    // Number of unknown parameters
-    int nUnknowns = 5;
-
     Coordinates refPos = (Coordinates) rover.clone();
     
     long refTime = roverObs.getRefTime().getMsec();
@@ -120,7 +117,7 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
         
       nObsAvail = sats.getAvailNumber();
   
-      if( nObsAvail<MINSV ){
+      if( nObsAvail+1<nUnknowns-1 ){
         if( goGPS.isDebug()) System.out.println("\r\nNot enough satellites for " + roverObs.getRefTime() );
         rover.setXYZ(0, 0, 0);
         if( nObsAvail>0 ){
@@ -212,7 +209,6 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
         A.set(k, 0, e.get(0) ); /* X */
         A.set(k, 1, e.get(1) ); /* Y */
         A.set(k, 2, e.get(2) ); /* Z */
-  
         A.set(k, 3, 1); /* clock error */
         A.set(k, 4, rodot );
   
@@ -318,7 +314,7 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
         }
       } 
       
-      if( rover.satsInUse < MINSV ){
+      if( rover.satsInUse +1 < nUnknowns ){
         if( goGPS.isDebug()) System.out.println("Not enough satellites for " + roverObs.getRefTime() );
         rover.setXYZ(0, 0, 0);
         if( rover.status == Status.None ){
@@ -446,23 +442,22 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
             rover.eRes, cbiasms ));
     }
     
-    
-    /** Observation Errors */
-    SimpleMatrix vEstim = y0.minus(A.mult(x).plus(b));
-    double varianceEstim = (vEstim.transpose().mult(Q.invert())
-        .mult(vEstim)).get(0)
-        / (nObsAvail - nUnknowns);
-   
-    // Covariance matrix of the estimation error
-    if (nObsAvail > nUnknowns) {
-      SimpleMatrix covariance = A.transpose().mult(Q.invert()).mult(A).invert()
-      .scale(varianceEstim);
-      positionCovariance = covariance.extractMatrix(0, 3, 0, 3);
-    }else{
-      positionCovariance = null;
-   }
+//    /** Observation Errors */
+//    SimpleMatrix vEstim = y0.minus(A.mult(x).plus(b));
+//    double varianceEstim = (vEstim.transpose().mult(Q.invert())
+//        .mult(vEstim)).get(0)
+//        / (nObsAvail - nUnknowns);
+//   
+//    // Covariance matrix of the estimation error
+//    if (nObsAvail > nUnknowns) {
+//      SimpleMatrix covariance = A.transpose().mult(Q.invert()).mult(A).invert()
+//      .scale(varianceEstim);
+//      positionCovariance = covariance.extractMatrix(0, 3, 0, 3);
+//    }else{
+//      positionCovariance = null;
+//   }
 
-     /** Covariance matrix obtained from matrix A (satellite geometry) [ECEF coordinates] */
+    /** Covariance matrix obtained from matrix A (satellite geometry) [ECEF coordinates] */
      // Compute covariance matrix from A matrix [ECEF reference system]
 //    covXYZ = A.extractMatrix(0, nObsAvail, 0, 3).transpose().mult(A.extractMatrix(0, nObsAvail, 0, 3)).invert();
     SimpleMatrix covXYZ = A.transpose().mult(A).invert().extractMatrix(0, 3, 0, 3);
@@ -497,7 +492,7 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
 
     // Number of GPS observations
     int nObs = roverObs.getNumSat();
-    if( nObs < MINSV ){
+    if( nObs+1 < nUnknowns ){
       if(goGPS.isDebug()) System.out.println("Not enough satellites for " + roverObs.getRefTime() );
       rover.setXYZ(0, 0, 0);
       rover.satsInUse = nObs;

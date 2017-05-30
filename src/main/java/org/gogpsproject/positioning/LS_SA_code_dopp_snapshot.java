@@ -74,7 +74,7 @@ public class LS_SA_code_dopp_snapshot extends LS_SA_code_snapshot {
 //      }
 //      if( goGPS.isDebug()) System.out.println();
       
-      if( roverObs.getNumSat()>nUnknowns )
+      if( 2*roverObs.getNumSat()+1>nUnknowns )
         selectSatellites( roverObs, cutOffEl, GoGPS.MODULO1MS ); 
       else
         selectSatellites( roverObs, -10, GoGPS.MODULO1MS );
@@ -84,7 +84,7 @@ public class LS_SA_code_dopp_snapshot extends LS_SA_code_snapshot {
       nObsAvail *= 2; // use doppler 
       nObsAvail++;    // add DTM / height soft constraint
 
-      if( nObsAvail<nUnknowns ){
+      if( 2*nObsAvail+1<nUnknowns ){
         if( goGPS.isDebug()) System.out.println("\r\nNot enough satellites for " + roverObs.getRefTime() );
         rover.setXYZ(0, 0, 0);
         if( nObsAvail>0 ){
@@ -350,12 +350,12 @@ public class LS_SA_code_dopp_snapshot extends LS_SA_code_snapshot {
       cbiasms = x.get(4) * 1000;
      
       // Update receiver clock error rate
-      rover.receiverErrorRate += x.get(5);
+      rover.clockErrorRate += x.get(5);
       
       if( goGPS.isDebug()) System.out.println( String.format( "\r\npos update:  %5.0f (m)", correction_mag ));
       if( goGPS.isDebug()) System.out.println( String.format( "clock error: %2.4f (us)", rover.clockError*1000000 ));
       if( goGPS.isDebug()) System.out.println( String.format( "common bias: %2.4f (ms)", cbiasms ));
-      if( goGPS.isDebug()) System.out.println( String.format( "clock error rate: %2.4f", rover.receiverErrorRate ));
+      if( goGPS.isDebug()) System.out.println( String.format( "clock error rate: %2.4f", rover.clockErrorRate ));
 
       // apply correction to Rx position estimate
       rover.setPlusXYZ( x.extractMatrix(0, 3, 0, 1) );

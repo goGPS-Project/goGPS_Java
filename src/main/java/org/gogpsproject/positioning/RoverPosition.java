@@ -32,11 +32,9 @@ import org.gogpsproject.producer.Observations;
  */
 public class RoverPosition extends ReceiverPosition {
 
-  public long index;
   public Time sampleTime;
   public Observations obs;
   public Status status = Status.None;
-  public long satsInView = 0;
 
   /** Sats in use from an observation set */
   public long satsInUse = 0;
@@ -48,7 +46,7 @@ public class RoverPosition extends ReceiverPosition {
   double clockError; 
 
   /** Clock error rate */
-	double receiverErrorRate; 
+	public double clockErrorRate; 
 	
   /** Average residual error for least-squares computation */
   public double eRes;
@@ -104,11 +102,11 @@ public class RoverPosition extends ReceiverPosition {
 	}
 
   public double getClockErrorRate() {
-    return receiverErrorRate;
+    return clockErrorRate;
   }
 
-  public void setClockErrorRate(double receiverClockErrorRate) {
-    this.receiverErrorRate = receiverClockErrorRate;
+  public void setClockErrorRate(double clockErrorRate) {
+    this.clockErrorRate = clockErrorRate;
   }
 
 	public double getpDop() {
@@ -173,4 +171,16 @@ public class RoverPosition extends ReceiverPosition {
     this.dopType = dopType;
   }
   
+  public RoverPosition clone( Observations obs ){
+    RoverPosition r = new RoverPosition( this, RoverPosition.DOP_TYPE_STANDARD, pDop, hDop, vDop );
+    r.obs        = obs;
+    r.sampleTime = sampleTime;
+    r.satsInUse  = satsInUse;
+    r.eRes       = eRes;
+    r.status     = status;
+    r.clockError = clockError;
+    r.clockErrorRate = clockErrorRate;
+    
+    return r;
+  }
 }

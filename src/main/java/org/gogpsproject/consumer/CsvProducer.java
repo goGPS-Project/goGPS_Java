@@ -39,7 +39,7 @@ import org.gogpsproject.positioning.RoverPosition;
  * @author Eugenio Realini
  */
 
-public class CsvProducer implements PositionConsumer, Runnable {
+public class CsvProducer implements PositionConsumer {
 
   private static DecimalFormat latlonf = new DecimalFormat("0.000000");
   private static DecimalFormat dopf = new DecimalFormat("0.0");
@@ -53,9 +53,8 @@ public class CsvProducer implements PositionConsumer, Runnable {
   private String filename = null;
   private boolean debug=false;
 
-  public Thread t = null;
-
-  private ArrayList<RoverPosition> positions = new ArrayList<RoverPosition>();
+  FileWriter out;
+  int index = 0;
 
   public CsvProducer(String filename) throws IOException{
     TimeZone gmttz = TimeZone.getTimeZone("GMT");
@@ -64,9 +63,6 @@ public class CsvProducer implements PositionConsumer, Runnable {
     this.filename = filename;
 
     writeHeader();
-
-    t = new Thread(this);
-    t.start();
   }
 
   /* (non-Javadoc)
@@ -81,7 +77,8 @@ public class CsvProducer implements PositionConsumer, Runnable {
         +"H:"+ coord.gethDop()+" "
         +"V:"+ coord.getvDop()+" ");//geod.get(2)
 
-    positions.add(coord);
+    writeCoordinate(index, coord, out);
+    index++;
   }
 
   /* (non-Javadoc)
@@ -92,7 +89,7 @@ public class CsvProducer implements PositionConsumer, Runnable {
 //      out.write( "Index,Status,Date,UTC,Latitude [DD], Longitude [DD],HDOP,SVs in Use,SVs in View,SNR Avg [dB],Residual Error,Clock Error,Clock Error Total,\r\n" );
       PrintWriter pw = new PrintWriter(out);
 
-      pw.printf("%d,%s,", c.index, c.status.toString() );
+      pw.printf("%d,%s,", c.obs.index, c.status.toString() );
 
       //date, time
       String d = dateTXT.format(new Date(c.getRefTime().getMsec()));
@@ -109,7 +106,7 @@ public class CsvProducer implements PositionConsumer, Runnable {
         pw.printf("0,0,0,");
         
       
-      pw.printf("%d,%d,", c.satsInUse, c.satsInView ); 
+      pw.printf("%d,%d,", c.satsInUse, c.obs.getNumSat() ); 
       pw.printf("%3.1f,%4.3f,\r\n", c.eRes, c.cErrMS/1000.0); 
 
       out.flush();
@@ -144,12 +141,14 @@ public class CsvProducer implements PositionConsumer, Runnable {
    */
   @Override
   public void event(int event) {
-//    if(event == EVENT_START_OF_TRACK){
-//      startOfTrack();
 //    }
-    if(event == EVENT_END_OF_TRACK){
-      // finish writing
-      t = null;
+    switch( event ){
+      case EVENT_START_OF_TRACK:
+//      startOfTrack();
+        out = writeHeader();
+        break;
+      case EVENT_END_OF_TRACK:
+        break;
     }
   }
 
@@ -167,52 +166,4 @@ public class CsvProducer implements PositionConsumer, Runnable {
     return debug;
   }
 
-  /* (non-Javadoc)
-   * @see java.lang.Runnable#run()
-   */
-  @Override
-  public void run() {
-    int last = 0;
-    try {
-      while(t!=null && Thread.currentThread()==t){
-        if(last != positions.size()){ // check if we have more data to write
-          last = positions.size();
-
-//          goodDop = false;
-          FileWriter out = writeHeader();
-          if(out!=null){
-            int index = 0;
-            for(RoverPosition pos: (ArrayList<RoverPosition>) positions.clone()){
-              writeCoordinate(index, pos, out);
-              index++;
-            }
-          }
-
-        }
-
-        Thread.sleep(1000);
-      }
-
-      //flush the last coordinates
-      if(last != positions.size()){ // check if we have more data to write
-        last = positions.size();
-
-//        goodDop = false;
-        FileWriter out = writeHeader();
-        if(out!=null){
-          int index = 0;
-          for(RoverPosition pos: (ArrayList<RoverPosition>) positions.clone()){
-            writeCoordinate(index, pos, out);
-            index++;
-          }
-        }
-
-      }
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
-  }
-  public void cleanStop(){
-    t=null;
-  }
 }

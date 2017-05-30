@@ -291,7 +291,7 @@ public class JakKmlProducer implements PositionConsumer {
         return;
       
       String t = timeKML.format(new Date(c.getRefTime().getMsec()));
-      String name = c.index + ": " + sdf.format(new Date(c.getRefTime().getMsec()));
+      String name = c.obs.index + ": " + sdf.format(new Date(c.getRefTime().getMsec()));
   
       TimeStamp ts = new TimeStamp();
       ts.setWhen(t);
@@ -318,7 +318,7 @@ public class JakKmlProducer implements PositionConsumer {
       sats+="]]>";
       ExtendedData ed = new ExtendedData();
       ed.setData(Arrays.asList(
-          new Data( Long.toString(c.index) ).withName("index"),
+          new Data( Long.toString(c.obs.index) ).withName("index"),
           new Data( coordStr ).withName("coord"),
           new Data( sdf.format(new Date(c.sampleTime.getMsec()))).withName("RTC Time"),
           new Data( sdf.format(new Date(c.getRefTime().getMsec()))).withName("FIX Time"),

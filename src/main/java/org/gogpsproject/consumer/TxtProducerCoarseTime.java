@@ -62,6 +62,40 @@ public class TxtProducerCoarseTime implements PositionConsumer  {
 	}
 
 	/* (non-Javadoc)
+   * @see org.gogpsproject.producer.PositionConsumer#event(int)
+   */
+  @Override
+  public void event(int event) {
+    switch( event ){
+  	  case EVENT_START_OF_TRACK:
+        out = writeHeader();
+      break;
+  	  case EVENT_END_OF_TRACK: 
+      break;
+    }
+  }
+
+  /* (non-Javadoc)
+   * @see org.gogpsproject.producer.PositionConsumer#startOfTrack()
+   */
+  public FileWriter writeHeader() {
+    try {
+      FileWriter out = new FileWriter(filename);
+  
+      out.write("Index         Status   Sats      Date      RTC time       FIX time     cErr " +
+//            "GPS week        GPS tow" +
+            "     Latitude    Longitude     Altitude    HDOP   eRes" +
+            "   cErrRate" +
+            "\r\n");
+      out.flush();
+      return out;
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
+  /* (non-Javadoc)
 	 * @see org.gogpsproject.producer.PositionConsumer#addCoordinate(org.gogpsproject.Coordinates)
 	 */
 	@Override
@@ -76,9 +110,9 @@ public class TxtProducerCoarseTime implements PositionConsumer  {
     try {
       PrintWriter pw = new PrintWriter(out);
 
-      pw.printf("%5d  ", c.index);
+      pw.printf("%5d  ", c.obs.index);
       pw.printf("%13s  ", c.status.toString() );
-      pw.printf("%2d/%1d  ", c.satsInUse, c.obs.getNumSat() );
+      pw.printf("%2d/%2d  ", c.satsInUse, c.obs.getNumSat() );
       
       // RTC date, time
       String d  = dateTXT.format(new Date(c.getRefTime().getMsec()));
@@ -98,13 +132,13 @@ public class TxtProducerCoarseTime implements PositionConsumer  {
       double delta = (c.getRefTime().getMsec() - c.sampleTime.getMsec())/1000.0;
       pw.printf("%15s%10.3f", t, delta);
 
-      //GPS week
-      int week = c.getRefTime().getGpsWeek();
-      pw.printf("%12d", week);
+//      //GPS week
+//      int week = c.getRefTime().getGpsWeek();
+//      pw.printf("%12d", week);
       
-      //GPS time-of-week (tow)
-      double tow = c.getRefTime().getGpsTime();
-      pw.printf("%15.3f", tow);
+//      //GPS time-of-week (tow)
+//      double tow = c.getRefTime().getGpsTime();
+//      pw.printf("%15.3f", tow);
       
       //latitude, longitude, ellipsoidal height
       double lat = c.getGeodeticLatitude();
@@ -113,9 +147,11 @@ public class TxtProducerCoarseTime implements PositionConsumer  {
       
       pw.printf("%13.5f%13.5f%13.5f", lat, lon, hEllips);
       
-      pw.printf("%7.1f", c.gethDop() );
+      pw.printf("%8.1f", c.gethDop() );
 
       pw.printf("%7.1f", c.eRes );
+
+      pw.printf("%9.0f", c.clockErrorRate );
 
       pw.printf("\r\n");
       out.flush();
@@ -128,40 +164,7 @@ public class TxtProducerCoarseTime implements PositionConsumer  {
     }
 	}
 
-  /* (non-Javadoc)
-   * @see org.gogpsproject.producer.PositionConsumer#startOfTrack()
-   */
-  public FileWriter writeHeader() {
-    try {
-      FileWriter out = new FileWriter(filename);
-
-      out.write("Index         Status  Sats      Date      RTC time       FIX time   Delta(s)   GPS week        GPS tow " +
-            "    Latitude    Longitude     Altitude   HDOP   eRes" +
-            "\r\n");
-      out.flush();
-      return out;
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-    return null;
-  }
-
-	
-	/* (non-Javadoc)
-	 * @see org.gogpsproject.producer.PositionConsumer#event(int)
-	 */
-	@Override
-	public void event(int event) {
-	  switch( event ){
-  	  case EVENT_START_OF_TRACK:
-        out = writeHeader();
-      break;
-  	  case EVENT_END_OF_TRACK: 
-      break;
-	  }
-	}
-
-	/**
+  /**
 	 * @param debug the debug to set
 	 */
 	public void setDebug(boolean debug) {

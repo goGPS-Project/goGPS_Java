@@ -294,7 +294,7 @@ public class LS_SA_dopplerPos extends LS_SA_code {
      System.out.println( String.format( "pos diff mag %f (m)", correction_mag ));
 
      // Update receiver clock error rate
-     rover.receiverErrorRate = x.get(3);
+     rover.clockErrorRate = x.get(3);
 
      // Update Rx position estimate
      rover.setXYZ( x.get(0), 
@@ -428,12 +428,12 @@ public class LS_SA_dopplerPos extends LS_SA_code {
      rover.computeGeodetic();
      
      // Update receiver clock error rate
-     rover.receiverErrorRate += x.get(3);
+     rover.clockErrorRate += x.get(3);
 
      System.out.println( "recpos (" + itr +")");
      System.out.println( String.format( "%10.6f,%10.6f,%10.6f cr:%10.6f", 
                          rover.getGeodeticLatitude(), rover.getGeodeticLongitude(), rover.getGeodeticHeight(),
-                         rover.receiverErrorRate ));
+                         rover.clockErrorRate ));
      System.out.println();
      
      // if correction is small enough, we're done, exit loop

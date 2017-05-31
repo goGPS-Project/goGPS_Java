@@ -33,18 +33,6 @@ public abstract class Core {
   }
 
   /**
-   * @param x
-   * @param y
-   * @return Lorentz inner product
-   */
-  static double lorentzInnerProduct(SimpleMatrix x, SimpleMatrix y) {
-
-    double prod = x.get(0) * y.get(0) + x.get(1) * y.get(1) + x.get(2) * y.get(2) - x.get(3) * y.get(3);
-
-    return prod;
-  }
-  
-  /**
    * @param elevation
    * @param snr
    * @return weight computed according to the variable "goGPS.weights"

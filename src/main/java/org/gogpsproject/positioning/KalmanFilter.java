@@ -168,10 +168,6 @@ public abstract class KalmanFilter extends LS_DD_code {
    */
   public void loop( Observations roverObs, Observations masterObs, Coordinates masterPos) {
 
-    // Covariance matrix obtained from matrix A (satellite geometry) [local coordinates]
-    SimpleMatrix covENU;
-    covENU = new SimpleMatrix(3, 3);
-
     // Set linearization point (approximate coordinates by KF prediction at previous step)
     rover.setXYZ(KFprediction.get(0), KFprediction.get(i1 + 1), KFprediction.get(i2 + 1));
 
@@ -298,11 +294,11 @@ public abstract class KalmanFilter extends LS_DD_code {
     positionCovariance.set(2, 1, Cee.get(i2 + 1, i1 + 1));
 
     // Allocate and build rotation matrix
-    SimpleMatrix R = new SimpleMatrix(3, 3);
-    R = Coordinates.rotationMatrix(rover);
+    SimpleMatrix R = Coordinates.rotationMatrix(rover);
 
     // Propagate covariance from global system to local system
-    covENU = R.mult(positionCovariance).mult(R.transpose());
+    // Covariance matrix obtained from matrix A (satellite geometry) [local coordinates]
+    SimpleMatrix covENU = R.mult(positionCovariance).mult(R.transpose());
 
     // Kalman filter DOP computation
     rover.kpDop = Math.sqrt(positionCovariance.get(0, 0) + positionCovariance.get(1, 1) + positionCovariance.get(2, 2));

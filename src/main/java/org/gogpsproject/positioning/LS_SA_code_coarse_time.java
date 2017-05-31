@@ -80,7 +80,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
     for (int i = 0; i < nObs; i++) {
       id = roverObs.getSatID(i);
 
-      if( sats.pos[i] == null  || !sats.avail.contains(id) ) {//|| recpos.ecef==null || sats.pos[i].ecef==null ){
+      if( sats.pos[i] == null  || !sats.avail.keySet().contains(id) ) {//|| recpos.ecef==null || sats.pos[i].ecef==null ){
 //              l.warning( "ERROR, sats.pos[i]==null?" );
 //              this.setXYZ(0, 0, 0);
 //              return null;
@@ -262,7 +262,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
     for (int i = 0; i < nObs; i++) {
       int satId = roverObs.getSatID(i);
 
-      if( sats.pos[i] == null  || !sats.avail.contains(satId) ) {//|| recpos.ecef==null || sats.pos[i].ecef==null ){
+      if( sats.pos[i] == null  || !sats.avail.keySet().contains(satId) ) {//|| recpos.ecef==null || sats.pos[i].ecef==null ){
         continue;
       }
 
@@ -301,7 +301,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
     for (int i = 0; i < nObs; i++) {
       int satId = roverObs.getSatID(i);
 
-      if( sats.pos[i] == null  || !sats.avail.contains(satId) ) {//|| recpos.ecef==null || sats.pos[i].ecef==null ){
+      if( sats.pos[i] == null  || !sats.avail.keySet().contains(satId) ) {//|| recpos.ecef==null || sats.pos[i].ecef==null ){
         continue;
       }
 
@@ -483,7 +483,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
 
       id = roverObs.getSatID(i);
 
-      if( sats.pos[i] == null  || !sats.avail.contains(id) ) {//|| recpos.ecef==null || sats.pos[i].ecef==null ){
+      if( sats.pos[i] == null  || !sats.avail.keySet().contains(id) ) {//|| recpos.ecef==null || sats.pos[i].ecef==null ){
 //              l.warning( "ERROR, sats.pos[i]==null?" );
 //              this.setXYZ(0, 0, 0);
 //              return null;
@@ -553,7 +553,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
     for( k=0; k<sats.avail.size(); k++){
       int satId = roverObs.getSatID(k);
       
-      if( !sats.avail.contains(satId) || sats.pos[k] == null || rover.topo[k] == null )
+      if( !sats.avail.keySet().contains(satId) || sats.pos[k] == null || rover.topo[k] == null )
         continue;
       
       if( Math.abs(resid.get(k)) < pivot ){
@@ -712,7 +712,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
 
       id = roverObs.getSatID(i);
 
-      if( sats.pos[i] == null  || !sats.avail.contains(id) ) {//|| recpos.ecef==null || sats.pos[i].ecef==null ){
+      if( sats.pos[i] == null  || !sats.avail.keySet().contains(id) ) {//|| recpos.ecef==null || sats.pos[i].ecef==null ){
         int satId = roverObs.getSatID(k);
         ObservationSet os = roverObs.getSatByID(satId);
         os.inUse(false);

@@ -1,6 +1,7 @@
 package org.gogpsproject.positioning;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 
 import org.ejml.simple.SimpleMatrix;
 import org.gogpsproject.Constants;
@@ -42,14 +43,14 @@ public class LS_SA_dopplerPos extends LS_SA_code {
     rover.satIonoCorr = new double[nObs];
 
     // Create a list for available satellites after cutoff
-    sats.avail = new ArrayList<Integer>(0);
-    sats.typeAvail = new ArrayList<Character>(0);
-    sats.gnssAvail = new ArrayList<String>(0);
+    sats.avail = new LinkedHashMap<>();
+    sats.typeAvail = new ArrayList<>(0);
+    sats.gnssAvail = new ArrayList<>(0);
 
     // Create a list for available satellites with phase
-    sats.availPhase = new ArrayList<Integer>(0);
-    sats.typeAvailPhase = new ArrayList<Character>(0);
-    sats.gnssAvailPhase = new ArrayList<String>(0);
+    sats.availPhase = new ArrayList<>(0);
+    sats.typeAvailPhase = new ArrayList<>(0);
+    sats.gnssAvailPhase = new ArrayList<>(0);
     
     // Allocate array of topocentric coordinates
     rover.topo = new TopocentricCoordinates[nObs];
@@ -146,7 +147,7 @@ public class LS_SA_dopplerPos extends LS_SA_code {
       // Check if satellite elevation is higher than cutoff
       if( rover.topo[i].getElevation() >= cutoff ) {
           
-        sats.avail.add(id);
+        sats.avail.put(id, sats.pos[i]);
         sats.typeAvail.add(satType);
         sats.gnssAvail.add(String.valueOf(satType) + String.valueOf(id));
   
@@ -213,7 +214,7 @@ public class LS_SA_dopplerPos extends LS_SA_code {
       for (int i = 0, k = 0; i < obs.getNumSat(); i++) {
         int satId = obs.getSatID(i);
 
-        if( sats.pos[i] == null  || !sats.avail.contains(satId) ) {//|| recpos.ecef==null || sats.pos[i].ecef==null ){
+        if( sats.pos[i] == null  || !sats.avail.keySet().contains(satId) ) {//|| recpos.ecef==null || sats.pos[i].ecef==null ){
           continue;
         }
 
@@ -367,7 +368,7 @@ public class LS_SA_dopplerPos extends LS_SA_code {
       for (int i = 0, k = 0; i < obs.getNumSat(); i++) {
         int satId = obs.getSatID(i);
 
-        if( sats.pos[i] == null  || !sats.avail.contains(satId) ) {//|| recpos.ecef==null || sats.pos[i].ecef==null ){
+        if( sats.pos[i] == null  || !sats.avail.keySet().contains(satId) ) {//|| recpos.ecef==null || sats.pos[i].ecef==null ){
           continue;
         }
 

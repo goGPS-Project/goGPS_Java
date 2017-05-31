@@ -127,7 +127,7 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
         return null;
       }
     
-      if( sats.pos[savedIndex]==null || rover.topo[savedIndex] == null  || !sats.avail.contains(pivotSatId)) {
+      if( sats.pos[savedIndex]==null || rover.topo[savedIndex] == null  || !sats.avail.keySet().contains(pivotSatId)) {
         if( goGPS.isDebug()) System.out.println("\r\nCan't use pivot with satId " + pivotSatId );
         return null; 
       }
@@ -162,7 +162,7 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
       for (int i = 0; i < nObs; i++) {
         int satId = roverObs.getSatID(i);
 
-        if (sats.pos[i]==null || !sats.avail.contains(satId)) 
+        if (sats.pos[i]==null || !sats.avail.keySet().contains(satId)) 
           continue; // i loop
       
         float doppler = roverObs.getSatByID(satId).getDoppler(ObservationSet.L1);
@@ -263,7 +263,7 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
           Integer satId = roverObs.getSatID(k);
           os = roverObs.getSatByID(satId);
     
-          if( !sats.avail.contains(satId) || sats.pos[k] == null || rover.topo[k] == null )
+          if( !sats.avail.keySet().contains(satId) || sats.pos[k] == null || rover.topo[k] == null )
             continue;
     
           os.el = rover.topo[k].getElevation();

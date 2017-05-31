@@ -1,6 +1,8 @@
 package org.gogpsproject.positioning;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import org.ejml.simple.SimpleMatrix;
 import org.gogpsproject.Constants;
@@ -22,7 +24,7 @@ public class Satellites {
   SatellitePosition[] pos; 
 
   /** List of satellites available for processing */
-  ArrayList<Integer> avail; 
+  Map<Integer, SatellitePosition> avail; 
  
   /** List of satellites available for processing */
   ArrayList<Integer> availPhase; 
@@ -230,14 +232,14 @@ public class Satellites {
     master.satIonoCorr = new double[nObs];
 
     // Create a list for available satellites
-    avail = new ArrayList<Integer>(0);
-    typeAvail = new ArrayList<Character>(0);
-    gnssAvail = new ArrayList<String>(0);
+    avail = new LinkedHashMap<>();
+    typeAvail = new ArrayList<>(0);
+    gnssAvail = new ArrayList<>(0);
 
     // Create a list for available satellites with phase
-    availPhase = new ArrayList<Integer>(0);
-    typeAvailPhase = new ArrayList<Character>(0);
-    gnssAvailPhase = new ArrayList<String>(0);
+    availPhase = new ArrayList<>(0);
+    typeAvailPhase = new ArrayList<>(0);
+    gnssAvailPhase = new ArrayList<>(0);
 
     // Allocate arrays of topocentric coordinates
     rover.topo = new TopocentricCoordinates[nObs];
@@ -296,7 +298,7 @@ public class Satellites {
         // Check if satellite elevation is higher than cutoff
         if (rover.topo[i].getElevation() > cutoff) {
           
-          avail.add(id);
+          avail.put(id, pos[i]);
           typeAvail.add(satType);
           gnssAvail.add(String.valueOf(satType) + String.valueOf(id));
 
@@ -368,7 +370,7 @@ public class Satellites {
       // Correct approximate pseudorange for ionosphere
       rover.satIonoCorr[i] = computeIonosphereCorrection(navigation, rover, rover.topo[i].getAzimuth(), rover.topo[i].getElevation(), roverObs.getRefTime());
 
-      avail.add(id);
+      avail.put(id, pos[i]);
       typeAvail.add(satType);
       gnssAvail.add(String.valueOf(satType) + String.valueOf(id));
 
@@ -524,7 +526,7 @@ public class Satellites {
             maxElevCode = rover.topo[i].getElevation();
           }
 
-          avail.add(id);
+          avail.put(id,pos[i]);
           typeAvail.add(satType);
           gnssAvail.add(String.valueOf(satType) + String.valueOf(id));  
 

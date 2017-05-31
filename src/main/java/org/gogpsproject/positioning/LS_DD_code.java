@@ -23,12 +23,6 @@ public class LS_DD_code extends LS_SA_code {
     // Number of unknown parameters
     int nUnknowns = 3;
 
-    // Covariance matrix obtained from matrix A (satellite geometry) [ECEF coordinates]
-    SimpleMatrix covXYZ = new SimpleMatrix(3, 3);
-
-    // Covariance matrix obtained from matrix A (satellite geometry) [local coordinates]
-    SimpleMatrix covENU = new SimpleMatrix(3, 3);
-
     // Number of available satellites (i.e. observations)
     int nObsAvail = sats.avail.size();
 
@@ -188,20 +182,7 @@ public class LS_DD_code extends LS_SA_code {
       positionCovariance = null;
     }
 
-    // Compute covariance matrix from A matrix [ECEF reference system]
-    covXYZ = Adop.transpose().mult(Adop).invert();
-
-    // Allocate and build rotation matrix
-    SimpleMatrix R = new SimpleMatrix(3, 3);
-    R = Coordinates.rotationMatrix(rover);
-
-    // Propagate covariance from global system to local system
-    covENU = R.mult(covXYZ).mult(R.transpose());
-
-    //Compute DOP values
-    rover.pDop = Math.sqrt(covXYZ.get(0, 0) + covXYZ.get(1, 1) + covXYZ.get(2, 2));
-    rover.hDop = Math.sqrt(covENU.get(0, 0) + covENU.get(1, 1));
-    rover.vDop = Math.sqrt(covENU.get(2, 2));
+    updateDops(A);
 
     // Compute positioning in geodetic coordinates
     rover.computeGeodetic();

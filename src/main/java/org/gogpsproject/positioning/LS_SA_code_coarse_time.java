@@ -46,14 +46,6 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
     SimpleMatrix tropoCorr; 
     SimpleMatrix ionoCorr;
 
-    // Covariance matrix obtained from matrix A (satellite geometry) [ECEF coordinates]
-    SimpleMatrix covXYZ;
-    covXYZ = new SimpleMatrix(3, 3);
-
-    // Covariance matrix obtained from matrix A (satellite geometry) [local coordinates]
-    SimpleMatrix covENU;
-    covENU = new SimpleMatrix(3, 3);
-
     // Number of available satellites (i.e. observations)
     int nObsAvail = sats.avail.size();
     
@@ -433,20 +425,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
        this.positionCovariance = null;
      }
      
-     // Compute covariance matrix from A matrix [ECEF reference system]
-     covXYZ = A.transpose().mult(A).invert().extractMatrix(0, 3, 0, 3);
-
-     // Allocate and build rotation matrix
-     SimpleMatrix R = new SimpleMatrix(3, 3);
-     R = Coordinates.rotationMatrix(rover);
-
-     // Propagate covariance from global system to local system
-     covENU = R.mult(covXYZ).mult(R.transpose());
-
-     //Compute DOP values
-     rover.pDop = Math.sqrt(covXYZ.get(0, 0) + covXYZ.get(1, 1) + covXYZ.get(2, 2));
-     rover.hDop = Math.sqrt(covENU.get(0, 0) + covENU.get(1, 1));
-     rover.vDop = Math.sqrt(covENU.get(2, 2));
+     updateDops(A);
      
      return correction_mag; // return correction_mag
   }
@@ -474,14 +453,6 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
     SimpleMatrix vEstim; // Observation Errors
     SimpleMatrix tropoCorr; 
     SimpleMatrix ionoCorr;
-
-    // Covariance matrix obtained from matrix A (satellite geometry) [ECEF coordinates]
-    SimpleMatrix covXYZ;
-    covXYZ = new SimpleMatrix(3, 3);
-
-    // Covariance matrix obtained from matrix A (satellite geometry) [local coordinates]
-    SimpleMatrix covENU;
-    covENU = new SimpleMatrix(3, 3);
 
     // Number of available satellites (i.e. observations)
     int nObsAvail = sats.avail.size();
@@ -704,20 +675,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
        this.positionCovariance = null;
      }
      
-     // Compute covariance matrix from A matrix [ECEF reference system]
-     covXYZ = A.transpose().mult(A).invert().extractMatrix(0, 3, 0, 3);
-
-     // Allocate and build rotation matrix
-     SimpleMatrix R = new SimpleMatrix(3, 3);
-     R = Coordinates.rotationMatrix(rover);
-
-     // Propagate covariance from global system to local system
-     covENU = R.mult(covXYZ).mult(R.transpose());
-
-     //Compute DOP values
-     rover.pDop = Math.sqrt(covXYZ.get(0, 0) + covXYZ.get(1, 1) + covXYZ.get(2, 2));
-     rover.hDop = Math.sqrt(covENU.get(0, 0) + covENU.get(1, 1));
-     rover.vDop = Math.sqrt(covENU.get(2, 2));
+     updateDops(A);
      
      return correction_mag; // return correction_mag
   }
@@ -748,14 +706,6 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
     SimpleMatrix vEstim; // Observation Errors
     SimpleMatrix tropoCorr; 
     SimpleMatrix ionoCorr;
-
-    // Covariance matrix obtained from matrix A (satellite geometry) [ECEF coordinates]
-    SimpleMatrix covXYZ;
-    covXYZ = new SimpleMatrix(3, 3);
-
-    // Covariance matrix obtained from matrix A (satellite geometry) [local coordinates]
-    SimpleMatrix covENU;
-    covENU = new SimpleMatrix(3, 3);
 
     // Number of available satellites (i.e. observations)
     int nObsAvail = sats.avail.size();
@@ -1061,20 +1011,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
        this.positionCovariance = null;
      }
      
-     // Compute covariance matrix from A matrix [ECEF reference system]
-     covXYZ = A.transpose().mult(A).invert().extractMatrix(0, 3, 0, 3);
-
-     // Allocate and build rotation matrix
-     SimpleMatrix R = new SimpleMatrix(3, 3);
-     R = Coordinates.rotationMatrix(rover);
-
-     // Propagate covariance from global system to local system
-     covENU = R.mult(covXYZ).mult(R.transpose());
-
-     //Compute DOP values
-     rover.pDop = Math.sqrt(covXYZ.get(0, 0) + covXYZ.get(1, 1) + covXYZ.get(2, 2));
-     rover.hDop = Math.sqrt(covENU.get(0, 0) + covENU.get(1, 1));
-     rover.vDop = Math.sqrt(covENU.get(2, 2));
+     updateDops(A);
      
      return correction_mag; // return correction_mag
   }

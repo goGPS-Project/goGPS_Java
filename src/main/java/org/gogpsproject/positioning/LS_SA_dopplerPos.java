@@ -165,6 +165,12 @@ public class LS_SA_dopplerPos extends LS_SA_code {
     }
   }
   
+  /**
+   * A port of FastGPS's doppler positioning algorithm 
+   * See http://fastgps.sourceforge.net/
+   * spectrum.library.concordia.ca/973909/1/Othieno_MASc_S2012.pdf
+   * @param obs
+   */
   @Deprecated
   public void dopplerPosHill( Observations obs ) {
     int MINSV = 5;
@@ -321,6 +327,11 @@ public class LS_SA_dopplerPos extends LS_SA_code {
     System.out.println( rover );
   }
 
+  /**
+   * A simpler version, based on Van Diggelen (8.3.2.1)
+   * This system returns a position update so it can be plugged in the standard design matrix
+   * @param obs
+   */
   public void dopplerPos( Observations obs ) {
     int nUnknowns = 4;
     final double DOPP_POS_TOL = 1.0;    
@@ -440,21 +451,9 @@ public class LS_SA_dopplerPos extends LS_SA_code {
      if( correction_mag< DOPP_POS_TOL )
        break;
     }
-    // Compute covariance matrix from A matrix [ECEF reference system]
-    SimpleMatrix covXYZ = A.transpose().mult(A).invert().extractMatrix(0, 3, 0, 3);
-
-    // Allocate and build rotation matrix
-    SimpleMatrix R = Coordinates.rotationMatrix(rover);
- 
-    /** Covariance matrix obtained from matrix A (satellite geometry) [local coordinates] */
-    // Propagate covariance from global system to local system
-    SimpleMatrix covENU = R.mult(covXYZ).mult(R.transpose());
-
-     //Compute DOP values
-    rover.pDop = Math.sqrt(covXYZ.get(0, 0) + covXYZ.get(1, 1) + covXYZ.get(2, 2));
-    rover.hDop = Math.sqrt(covENU.get(0, 0) + covENU.get(1, 1));
-    rover.vDop = Math.sqrt(covENU.get(2, 2));
-
+    
+    updateDops(A);
+    
     System.out.println( rover );
   }
 }

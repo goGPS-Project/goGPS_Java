@@ -26,12 +26,6 @@ public class LS_SA_code extends Core {
       nUnknowns = nUnknowns + sys.length();
     }
 
-    // Covariance matrix obtained from matrix A (satellite geometry) [ECEF coordinates]
-    SimpleMatrix covXYZ = new SimpleMatrix(3, 3);
-
-    // Covariance matrix obtained from matrix A (satellite geometry) [local coordinates]
-    SimpleMatrix covENU = new SimpleMatrix(3, 3);
-
     // Number of available satellites (i.e. observations)
     int nObsAvail = sats.avail.size();
 
@@ -144,20 +138,7 @@ public class LS_SA_code extends Core {
       positionCovariance = null;
     }
 
-    // Compute covariance matrix from A matrix [ECEF reference system]
-    covXYZ = A.transpose().mult(A).invert();
-    covXYZ = covXYZ.extractMatrix(0, 3, 0, 3);
-
-    // Allocate and build rotation matrix
-    SimpleMatrix R = Coordinates.rotationMatrix(rover);
-
-    // Propagate covariance from global system to local system
-    covENU = R.mult(covXYZ).mult(R.transpose());
-
-    //Compute DOP values
-    rover.pDop = Math.sqrt(covXYZ.get(0, 0) + covXYZ.get(1, 1) + covXYZ.get(2, 2));
-    rover.hDop = Math.sqrt(covENU.get(0, 0) + covENU.get(1, 1));
-    rover.vDop = Math.sqrt(covENU.get(2, 2));
+    updateDops(A);
 
     // Compute positioning in geodetic coordinates
     rover.computeGeodetic();

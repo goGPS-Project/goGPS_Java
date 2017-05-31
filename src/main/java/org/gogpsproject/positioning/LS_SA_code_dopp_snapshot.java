@@ -432,22 +432,7 @@ public class LS_SA_code_dopp_snapshot extends LS_SA_code_snapshot {
 //      positionCovariance = null;
 //   }
 
-     /** Covariance matrix obtained from matrix A (satellite geometry) [ECEF coordinates] */
-     // Compute covariance matrix from A matrix [ECEF reference system]
-//    covXYZ = A.extractMatrix(0, nObsAvail, 0, 3).transpose().mult(A.extractMatrix(0, nObsAvail, 0, 3)).invert();
-    SimpleMatrix covXYZ = A.transpose().mult(A).invert().extractMatrix(0, 3, 0, 3);
-
-    // Allocate and build rotation matrix
-    SimpleMatrix R = Coordinates.rotationMatrix(rover);
-
-    /** Covariance matrix obtained from matrix A (satellite geometry) [local coordinates] */
-    // Propagate covariance from global system to local system
-    SimpleMatrix covENU = R.mult(covXYZ).mult(R.transpose());
-
-     //Compute DOP values
-    rover.pDop = Math.sqrt(covXYZ.get(0, 0) + covXYZ.get(1, 1) + covXYZ.get(2, 2));
-    rover.hDop = Math.sqrt(covENU.get(0, 0) + covENU.get(1, 1));
-    rover.vDop = Math.sqrt(covENU.get(2, 2));
+    updateDops(A);
     
 //    if( Math.abs(cbiasms)>0.5 )
 //      System.out.println( pivotSatId + ") cbiasms " + cbiasms); 

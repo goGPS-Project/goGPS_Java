@@ -25,12 +25,6 @@ public class KF_SA_code_phase extends KalmanFilter {
     // Matrix containing parameters obtained from the linearization of the observation equations
     SimpleMatrix A = new SimpleMatrix(nObsAvail, 3);
 
-    // Covariance matrix obtained from matrix A (satellite geometry) [ECEF coordinates]
-    SimpleMatrix covXYZ = new SimpleMatrix(3, 3);
-
-    // Covariance matrix obtained from matrix A (satellite geometry) [local coordinates]
-    SimpleMatrix covENU = new SimpleMatrix(3, 3);
-
     // Counter for available satellites
     int k = 0;
 
@@ -113,20 +107,7 @@ public class KF_SA_code_phase extends KalmanFilter {
       }
     }
 
-    // Compute covariance matrix from A matrix [ECEF reference system]
-    covXYZ = A.transpose().mult(A).invert();
-
-    // Allocate and build rotation matrix
-    SimpleMatrix R = new SimpleMatrix(3, 3);
-    R = Coordinates.rotationMatrix(rover);
-
-    // Propagate covariance from global system to local system
-    covENU = R.mult(covXYZ).mult(R.transpose());
-
-    //Compute DOP values
-    rover.pDop = Math.sqrt(covXYZ.get(0, 0) + covXYZ.get(1, 1) + covXYZ.get(2, 2));
-    rover.hDop = Math.sqrt(covENU.get(0, 0) + covENU.get(1, 1));
-    rover.vDop = Math.sqrt(covENU.get(2, 2));
+    updateDops(A);
   }
 
   /**

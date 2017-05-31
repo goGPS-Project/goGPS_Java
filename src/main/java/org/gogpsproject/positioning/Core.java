@@ -101,5 +101,21 @@ public abstract class Core {
 
     return weight;
   }
+  
+  void updateDops( SimpleMatrix A ){
+    // Compute covariance matrix from A matrix [ECEF reference system]
+    SimpleMatrix covXYZ = A.transpose().mult(A).invert().extractMatrix(0, 3, 0, 3);
 
+    // Allocate and build rotation matrix
+    SimpleMatrix R = Coordinates.rotationMatrix(rover);
+ 
+    /** Covariance matrix obtained from matrix A (satellite geometry) [local coordinates] */
+    // Propagate covariance from global system to local system
+    SimpleMatrix covENU = R.mult(covXYZ).mult(R.transpose());
+
+     //Compute DOP values
+    rover.pDop = Math.sqrt(covXYZ.get(0, 0) + covXYZ.get(1, 1) + covXYZ.get(2, 2));
+    rover.hDop = Math.sqrt(covENU.get(0, 0) + covENU.get(1, 1));
+    rover.vDop = Math.sqrt(covENU.get(2, 2));
+  }
 }

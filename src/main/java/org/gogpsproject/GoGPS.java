@@ -194,7 +194,7 @@ public class GoGPS implements Runnable{
 	private boolean useDTM = false;
 
 	/** Use Doppler observations in standalone snapshot case */
-	private boolean useDoppler = false;
+	private boolean useDoppler = true;
 	
   public final static double MODULO1MS  = Constants.SPEED_OF_LIGHT /1000;     // check 1ms bit slip
   public final static double MODULO20MS = Constants.SPEED_OF_LIGHT * 20/1000; // check 20ms bit slip
@@ -1240,6 +1240,11 @@ public class GoGPS implements Runnable{
          if(debug) System.out.println("Index: " + obsR.index );
          roverPos.satsInUse = 0;
 
+         if( useDoppler && Float.isNaN( obsR.getSatByIdx(0).getDoppler(0) )){
+           useDoppler = false;
+           sa = new LS_SA_code_snapshot(this);
+         }
+
          // apply time offset
          roverPos.sampleTime = obsR.getRefTime();
          obsR.setRefTime(new Time(obsR.getRefTime().getMsec() + offsetms ));
@@ -1298,7 +1303,9 @@ public class GoGPS implements Runnable{
 
           if(debug)System.out.println("-------------------- "+roverPos.getpDop());
         }
-         else if( roverPos.status != Status.EphNotFound && !Float.isNaN(obsR.getSatByIdx(0).getDoppler(0))){
+        else if( roverPos.status != Status.EphNotFound 
+             && !Float.isNaN(obsR.getSatByIdx(0).getDoppler(0))
+             && obsR.getNumSat()>5 ){
            // invalidate aPrioriPos and recompute later
            aPrioriPos.setXYZ(0, 0, 0);
          }

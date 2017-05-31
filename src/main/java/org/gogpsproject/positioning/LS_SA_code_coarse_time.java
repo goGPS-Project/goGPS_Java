@@ -410,21 +410,6 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
          rover.getGeodeticHeight(), 
          new Time(unixTime).toString() ));
      
-     // Estimation of the variance of the observation error
-     vEstim = y0.minus(A.mult(x).plus(b));
-     double varianceEstim = (vEstim.transpose().mult(Q.invert())
-         .mult(vEstim)).get(0)
-         / (nObsAvail - nUnknowns);
-
-     // Covariance matrix of the estimation error
-     if (nObsAvail > nUnknowns) {
-       SimpleMatrix covariance = A.transpose().mult(Q.invert()).mult(A).invert()
-       .scale(varianceEstim);
-       this.positionCovariance = covariance.extractMatrix(0, 3, 0, 3);
-     }else{
-       this.positionCovariance = null;
-     }
-     
      updateDops(A);
      
      return correction_mag; // return correction_mag
@@ -659,21 +644,6 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
          rover.getGeodeticLongitude(), 
          rover.getGeodeticHeight(), 
          new Time(unixTime).toString() ));
-     
-     // Estimation of the variance of the observation error
-     vEstim = y0.minus(A.mult(x).plus(b));
-     double varianceEstim = (vEstim.transpose().mult(Q.invert())
-         .mult(vEstim)).get(0)
-         / (nObsAvail - nUnknowns);
-
-     // Covariance matrix of the estimation error
-     if (nObsAvail > nUnknowns) {
-       SimpleMatrix covariance = A.transpose().mult(Q.invert()).mult(A).invert()
-       .scale(varianceEstim);
-       this.positionCovariance = covariance.extractMatrix(0, 3, 0, 3);
-     }else{
-       this.positionCovariance = null;
-     }
      
      updateDops(A);
      
@@ -995,21 +965,6 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
          rover.getGeodeticLongitude(), 
          rover.getGeodeticHeight(), 
          new Time(unixTime).toString() ));
-     
-     // Estimation of the variance of the observation error
-     vEstim = y0.minus(A.mult(x).plus(b));
-     double varianceEstim = (vEstim.transpose().mult(Q.invert())
-         .mult(vEstim)).get(0)
-         / (nObsAvail - nUnknowns);
-
-     // Covariance matrix of the estimation error
-     if (nObsAvail > nUnknowns) {
-       SimpleMatrix covariance = A.transpose().mult(Q.invert()).mult(A).invert()
-       .scale(varianceEstim);
-       this.positionCovariance = covariance.extractMatrix(0, 3, 0, 3);
-     }else{
-       this.positionCovariance = null;
-     }
      
      updateDops(A);
      

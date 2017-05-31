@@ -417,25 +417,7 @@ public class LS_SA_code_dopp_snapshot extends LS_SA_code_snapshot {
             rover.eRes, cbiasms ));
     }
     
-//    /** Observation Errors */
-//    SimpleMatrix vEstim = y0.minus(A.mult(x).plus(b));
-//    double varianceEstim = (vEstim.transpose().mult(Q.invert())
-//        .mult(vEstim)).get(0)
-//        / (nObsAvail - nUnknowns);
-//   
-//    // Covariance matrix of the estimation error
-//    if (nObsAvail > nUnknowns) {
-//      SimpleMatrix covariance = A.transpose().mult(Q.invert()).mult(A).invert()
-//      .scale(varianceEstim);
-//      positionCovariance = covariance.extractMatrix(0, 3, 0, 3);
-//    }else{
-//      positionCovariance = null;
-//   }
-
     updateDops(A);
-    
-//    if( Math.abs(cbiasms)>0.5 )
-//      System.out.println( pivotSatId + ") cbiasms " + cbiasms); 
     
     return new SnapshotPivotResult( savedIndex, pivotSatId, pivotElevation, 
         rover, unixTime, rover.eRes, rover.hDop, sats.getAvailNumber(), cbiasms );

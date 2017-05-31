@@ -120,7 +120,6 @@ public class LS_SA_code extends Core {
       return;
 
     // Receiver position
-    //roverPos.coord.ecef.set(roverPos.coord.ecef.plus(x.extractMatrix(0, 3, 0, 1)));
     rover.setPlusXYZ(x.extractMatrix(0, 3, 0, 1));
 
     // Estimation of the variance of the observation error

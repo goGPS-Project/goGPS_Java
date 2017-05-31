@@ -9,9 +9,6 @@ import org.gogpsproject.producer.Observations;
 
 public class LS_SA_code_dopp_snapshot extends LS_SA_code_snapshot {
 
-  // Number of unknown parameters (here adds the clock error rate)
-  public static final int nUnknowns = 6;
-
   /** max time update for a valid fix */
   private long maxTimeUpdateSec = 30; // s
 
@@ -60,8 +57,10 @@ public class LS_SA_code_dopp_snapshot extends LS_SA_code_snapshot {
 
     // common bias in ms
     double cbiasms = 1;
-    
+   
+
     for (int itr = 0; itr < max_iterations; itr++) {
+
       if( goGPS.isDebug()) System.out.println(">> Itr " + itr);
       
 //      if( goGPS.isDebug() && goGPS.truePos != null ){
@@ -81,6 +80,15 @@ public class LS_SA_code_dopp_snapshot extends LS_SA_code_snapshot {
       
       int ns = sats.getAvailNumber();
       nObsAvail = 2*sats.getAvailNumber() + 1; // use doppler and DTM / height soft constraint
+
+      // Number of unknown parameters (here adds the clock error rate)
+      int nUnknowns = 6;
+
+      boolean estimateClockErrRate = true;
+      if( sats.getAvailNumber() == 2 ){
+        estimateClockErrRate = false;
+        nUnknowns = 5;
+      }
 
       if( nObsAvail<nUnknowns ){
         if( goGPS.isDebug()) System.out.println("\r\nNot enough satellites for " + roverObs.getRefTime() );
@@ -165,7 +173,9 @@ public class LS_SA_code_dopp_snapshot extends LS_SA_code_snapshot {
         A.set( ns+k, 0, sats.pos[i].getSpeed().get(0)/rover.satAppRange[i] ); /* VX */
         A.set( ns+k, 1, sats.pos[i].getSpeed().get(1)/rover.satAppRange[i] ); /* VY */
         A.set( ns+k, 2, sats.pos[i].getSpeed().get(2)/rover.satAppRange[i] ); /* VZ */
-        A.set( ns+k, 5, 1 );     // clock error rate
+        
+        if( estimateClockErrRate )
+          A.set( ns+k, 5, 1 );     // clock error rate
   
         /** residuals */
         // Add the approximate pseudorange value to b
@@ -339,14 +349,17 @@ public class LS_SA_code_dopp_snapshot extends LS_SA_code_snapshot {
       // time update seconds -> ms
       cbiasms = x.get(4) * 1000;
      
-      // Update receiver clock error rate
-      rover.clockErrorRate += x.get(5);
       
       if( goGPS.isDebug()) System.out.println( String.format( "\r\npos update:  %5.0f (m)", correction_mag ));
       if( goGPS.isDebug()) System.out.println( String.format( "clock error: %2.4f (us)", rover.clockError*1000000 ));
       if( goGPS.isDebug()) System.out.println( String.format( "common bias: %2.4f (ms)", cbiasms ));
-      if( goGPS.isDebug()) System.out.println( String.format( "clock error rate: %2.4f", rover.clockErrorRate ));
-
+      
+      if( estimateClockErrRate ) {
+        // Update receiver clock error rate
+        rover.clockErrorRate += x.get(5);
+        if( goGPS.isDebug()) System.out.println( String.format( "clock error rate: %2.4f", rover.clockErrorRate ));
+      }
+      
       // apply correction to Rx position estimate
       rover.setPlusXYZ( x.extractMatrix(0, 3, 0, 1) );
       rover.computeGeodetic();

@@ -1124,7 +1124,7 @@ public class RinexNavigationParser extends EphemerisSystem implements Navigation
 					unixTime = unixTime - delta;
 				}
 				// Compare current time and ephemeris reference time
-				dt = Math.abs(eph.get(i).getRefTime().getMsec() - unixTime /*getGpsTime() - gpsTime*/);
+				dt = Math.abs(eph.get(i).getRefTime().getMsec() - unixTime /*getGpsTime() - gpsTime*/)/1000;
 				// If it's the first round, set the minimum time difference and
 				// select the first ephemeris set candidate; if the current ephemeris set
 				// is closer in time than the previous candidate, select new candidate
@@ -1146,7 +1146,7 @@ public class RinexNavigationParser extends EphemerisSystem implements Navigation
 		long fitInterval = refEph.getFitInt();
 		
 		if (fitInterval != 0) {
-			dtMax = fitInterval*3600/2;
+			dtMax = fitInterval*3600/2; 
 		} else {
 			switch (refEph.getSatType()) {
   			case 'R': dtMax = 950;
@@ -1154,7 +1154,7 @@ public class RinexNavigationParser extends EphemerisSystem implements Navigation
   			default: dtMax = 7200;
 			}
 		}
-		if(dtMin/1000 > dtMax) {
+		if(dtMin > dtMax) {
 			refEph = null;
 		}
 

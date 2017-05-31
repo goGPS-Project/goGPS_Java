@@ -52,17 +52,13 @@ public class LS_SA_code extends Core {
 
     SimpleMatrix ionoCorr = new SimpleMatrix(nObsAvail, 1);
     
-    // Counter for available satellites
-    int k = 0;
-
-    // Satellite ID
-    int id = 0;
-
     // Set up the least squares matrices
-    for (int i = 0; i < nObs; i++) {
+    for( int i = 0, k = 0; i < nObs; i++ ) {
 
-      id = roverObs.getSatID(i);
+      // Satellite ID
+      int id = roverObs.getSatID(i);
       char satType = roverObs.getGnssType(i);   
+      
       String checkAvailGnss = String.valueOf(satType) + String.valueOf(id);
       
       if( sats.pos[i]!=null && sats.gnssAvail.contains(checkAvailGnss)) {
@@ -130,9 +126,9 @@ public class LS_SA_code extends Core {
 
     // Covariance matrix of the estimation error
     if (nObsAvail > nUnknowns) {
-      SimpleMatrix covariance = A.transpose().mult(Q.invert()).mult(A).invert()
-      .scale(varianceEstim);
-      positionCovariance = covariance.extractMatrix(0, 3, 0, 3);
+      positionCovariance = A.transpose().mult(Q.invert()).mult(A).invert()
+      .scale(varianceEstim)
+      .extractMatrix(0, 3, 0, 3);
     }else{
       positionCovariance = null;
     }

@@ -18,13 +18,14 @@
  *
  *
  */
-package org.gogpsproject;
+package org.gogpsproject.apps;
 import java.io.*;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.text.*;
 
+import org.gogpsproject.GoGPS;
 import org.gogpsproject.consumer.KmlProducer;
 import org.gogpsproject.positioning.Coordinates;
 import org.gogpsproject.producer.NavigationProducer;

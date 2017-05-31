@@ -55,9 +55,6 @@ public class LS_DD_code extends LS_SA_code {
     SimpleMatrix tropoCorr = new SimpleMatrix(nObsAvail, 1);
     SimpleMatrix ionoCorr = new SimpleMatrix(nObsAvail, 1);
 
-    // Counter for available satellites (without pivot)
-    int k = 0;
-
     // Counter for available satellites (with pivot)
     int d = 0;
 
@@ -95,13 +92,11 @@ public class LS_DD_code extends LS_SA_code {
         masterObs.getSatByIDType(pivotId, satType).getSignalStrength(goGPS.getFreq()));
     Q.set(roverPivotWeight + masterPivotWeight);
 
-    // Satellite ID
-    int id = 0;
-
     // Set up the least squares matrices
-    for (int i = 0; i < nObs; i++) {
+    for (int i = 0, k = 0; i < nObs; i++) {
 
-      id = roverObs.getSatID(i);
+      // Satellite ID
+      int id = roverObs.getSatID(i);
       satType = roverObs.getGnssType(i);
       String checkAvailGnss = String.valueOf(satType) + String.valueOf(id);
 
@@ -138,6 +133,7 @@ public class LS_DD_code extends LS_SA_code {
             roverObs.getSatByIDType(id, satType).getSignalStrength(goGPS.getFreq()));
         double masterSatWeight = computeWeight(master.topo[i].getElevation(),
             masterObs.getSatByIDType(id, satType).getSignalStrength(goGPS.getFreq()));
+        
         Q.set(k, k, Q.get(k, k) + roverSatWeight + masterSatWeight);
 
         // Increment available satellites counter
@@ -182,7 +178,7 @@ public class LS_DD_code extends LS_SA_code {
       positionCovariance = null;
     }
 
-    updateDops(A);
+    updateDops(Adop);
 
     // Compute positioning in geodetic coordinates
     rover.computeGeodetic();

@@ -35,7 +35,7 @@ public class TopocentricCoordinates {
 	/**
 	 * @param origin
 	 */
-	public void computeTopocentric(Coordinates origin, Coordinates target) {
+	public TopocentricCoordinates computeTopocentric(Coordinates origin, Coordinates target) {
 
 //		// Build rotation matrix from global to local reference systems
 //		SimpleMatrix R = globalToLocalMatrix(origin);
@@ -56,32 +56,35 @@ public class TopocentricCoordinates {
 		// If this object is at zenith ...
 		if (hDist < 1e-20) {
 			// ... set azimuth = 0 and elevation = 90, ...
-			this.topocentric.set(0, 0, 0);
-			this.topocentric.set(1, 0, 90);
+			topocentric.set(0, 0, 0);
+			topocentric.set(1, 0, 90);
 
 		} else {
 
 			// ... otherwise compute azimuth ...
-			this.topocentric.set(0, 0, Math.toDegrees(Math.atan2(E, N)));
+			topocentric.set(0, 0, Math.toDegrees(Math.atan2(E, N)));
 
 			// ... and elevation
-			this.topocentric.set(1, 0, Math.toDegrees(Math.atan2(U, hDist)));
+			topocentric.set(1, 0, Math.toDegrees(Math.atan2(U, hDist)));
 
-			if (this.topocentric.get(0) < 0)
-				this.topocentric.set(0, 0, this.topocentric.get(0) + 360);
+			if (topocentric.get(0) < 0)
+				topocentric.set(0, 0, topocentric.get(0) + 360);
 		}
 
 		// Compute distance
-		this.topocentric.set(2, 0, Math.sqrt(Math.pow(E, 2) + Math.pow(N, 2)
-				+ Math.pow(U, 2)));
+		topocentric.set( 2, 0, Math.sqrt(Math.pow(E, 2) + Math.pow(N, 2) + Math.pow(U, 2)));
+		
+		return this;
 	}
 
 	public double getAzimuth(){
 		return topocentric.get(0);
 	}
+	
 	public double getElevation(){
 		return topocentric.get(1);
 	}
+	
 	public double getDistance(){
 		return topocentric.get(2);
 	}

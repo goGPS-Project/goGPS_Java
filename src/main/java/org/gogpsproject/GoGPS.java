@@ -741,11 +741,11 @@ public class GoGPS implements Runnable{
     return this;
   }
 
-  public long getOffsetMs(){
+  public long getOffsetms(){
     return offsetms;
   }
 
-  public GoGPS setOffsetMs( long offsetms){
+  public GoGPS setOffsetms( long offsetms){
     this.offsetms = offsetms;
     return this;
   }
@@ -1217,121 +1217,9 @@ public class GoGPS implements Runnable{
 		return this;
 	}
 
-    public GoGPS runCodeStandaloneSnapshot() {
-      LS_SA_code_snapshot sa = null;
-      
-      if( useDoppler )
-        sa = new LS_SA_code_dopp_snapshot(this);
-      else
-        sa = new LS_SA_code_snapshot(this);
-      
-      Observations obsR = null;
-      Coordinates aPrioriPos = (Coordinates) roverPos.clone();
-
-      int leapSeconds;
-      obsR = roverIn.getCurrentObservations();
-      
-      notifyPositionConsumerEvent(PositionConsumer.EVENT_START_OF_TRACK);
-      while( obsR!=null && !Thread.interrupted() ) { // buffStreamObs.ready()
-       try {
-         if(debug) System.out.println("Index: " + obsR.index );
-         roverPos.satsInUse = 0;
-
-         if( useDoppler && Float.isNaN( obsR.getSatByIdx(0).getDoppler(0) )){
-           useDoppler = false;
-           sa = new LS_SA_code_snapshot(this);
-         }
-
-         // apply time offset
-         roverPos.sampleTime = obsR.getRefTime();
-         obsR.setRefTime(new Time(obsR.getRefTime().getMsec() + offsetms ));
-
-         // Add Leap Seconds, remove at the end
-         leapSeconds = roverPos.sampleTime.getLeapSeconds();
-         Time GPSTime = new Time( roverPos.sampleTime.getMsec() + leapSeconds * 1000);
-         
-         obsR.setRefTime(GPSTime);
-         long refTimeMs = obsR.getRefTime().getMsec();
-
-//         if( truePos != null ){
-//           if(debug) System.out.println( String.format( "\r\n* True Pos: %8.4f, %8.4f, %8.4f", 
-//               truePos.getGeodeticLatitude(),
-//               truePos.getGeodeticLongitude(),
-//               truePos.getGeodeticHeight()
-//               ));
-//           truePos.selectSatellitesStandaloneFractional( obsR, -100, MODULO1MS );
-//         }
-         
-         if( !roverPos.isValidXYZ() && aPrioriPos != null && aPrioriPos.isValidXYZ()){
-           aPrioriPos.cloneInto(roverPos);
-         }
-         else if( !roverPos.isValidXYZ() && obsR.getNumSat()>0 && !Float.isNaN(obsR.getSatByIdx(0).getDoppler(0))){
-           roverPos.setXYZ(0, 0, 0);
-           sa.runElevationMethod(obsR);
-           
-           sa.dopplerPos(obsR);
-           
-           if( roverPos.isValidXYZ() )
-             roverPos.cloneInto(aPrioriPos);
-         }
-         
-         if( !roverPos.isValidXYZ() ){
-           obsR = roverIn.getNextObservations();
-           roverPos.status = Status.None;
-           continue;
-         }
-             
-         sa.tryOffset( aPrioriPos, obsR );
-
-         if(debug) System.out.println("Valid position? "+roverPos.isValidXYZ()+" x:"+roverPos.getX()+" y:"+roverPos.getY()+" z:"+roverPos.getZ());
-         if(debug) System.out.println(" lat:"+roverPos.getGeodeticLatitude()+" lon:"+roverPos.getGeodeticLongitude() );
-         
-         if( roverPos.isValidXYZ() ){
-           
-           offsetms = obsR.getRefTime().getMsec()-refTimeMs;
-
-           // remove Leap Seconds
-           obsR.setRefTime(new Time(obsR.getRefTime().getMsec() - leapSeconds * 1000));
-           roverPos.status = Status.Valid;
-           roverPos.cErrMS = offsetms;
-           
-           // update a priori location
-           roverPos.cloneInto(aPrioriPos);
-
-          if(debug)System.out.println("-------------------- "+roverPos.getpDop());
-        }
-        else if( roverPos.status != Status.EphNotFound 
-             && !Float.isNaN(obsR.getSatByIdx(0).getDoppler(0))
-             && obsR.getNumSat()>5 ){
-           // invalidate aPrioriPos and recompute later
-           aPrioriPos.setXYZ(0, 0, 0);
-         }
-        if(positionConsumers.size()>0){
-          roverPos.setRefTime(new Time(obsR.getRefTime().getMsec()));
-          notifyPositionConsumerAddCoordinate(roverPos.clone(obsR));
-        }
-
-       } catch (Throwable e) {
-         e.printStackTrace();
-       } 
-       finally {
-        obsR = roverIn.getNextObservations();
-        roverPos.status = Status.None;
-      } 
-    }
-    notifyPositionConsumerEvent(PositionConsumer.EVENT_END_OF_TRACK);
-      
-    return this;
-  }
-
   public GoGPS runCodeStandaloneCoarseTime() {
-    try {
-      new LS_SA_code_coarse_time(this).runCodeStandaloneCoarseTime( MODULO20MS );
-      return this;
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    return null;
+    LS_SA_code_coarse_time.runCodeStandaloneCoarseTime( this, MODULO20MS );
+    return this;
   }
 	
   /**
@@ -1411,6 +1299,11 @@ public class GoGPS implements Runnable{
     return this;
   }
 	
+  public GoGPS runCodeStandaloneSnapshot() {
+    LS_SA_code_snapshot.runCodeStandaloneSnapshot(this);
+    return this;
+  }
+
   /**
 	 * @return the positionConsumer
 	 */
@@ -1543,7 +1436,7 @@ public class GoGPS implements Runnable{
 				runKalmanFilterCodePhaseDoubleDifferences();
 				break;
       case RUN_MODE_STANDALONE_SNAPSHOT:
-        runCodeStandaloneSnapshot();
+        LS_SA_code_snapshot.runCodeStandaloneSnapshot(this);
         break;
       case RUN_MODE_STANDALONE_COARSETIME:
         runCodeStandaloneCoarseTime();

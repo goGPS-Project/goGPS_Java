@@ -35,6 +35,7 @@ import org.gogpsproject.positioning.LS_SA_code_snapshot;
 import org.gogpsproject.positioning.LS_SA_dopplerPos;
 import org.gogpsproject.positioning.MasterPosition;
 import org.gogpsproject.positioning.RoverPosition;
+import org.gogpsproject.positioning.SatellitePosition;
 import org.gogpsproject.positioning.Satellites;
 import org.gogpsproject.positioning.Time;
 import org.gogpsproject.producer.NavigationProducer;
@@ -214,6 +215,70 @@ public class GoGPS implements Runnable{
   /** max residual error to exclude a given range */
   private double residThreshold = 3.0;
 
+  /**
+   * Instantiates a new GoGPS.
+   *
+   * @param navigation the navigation
+   * @param roverIn the rover in
+   * @param masterIn the master in
+   */
+  public GoGPS(NavigationProducer navigation, ObservationsProducer roverIn, ObservationsProducer masterIn){
+
+    stDevCodeP = new double[2];
+    stDevCodeP[0] = 0.6;
+    stDevCodeP[1] = 0.4;
+
+    this.navigation = navigation;
+    this.roverIn = roverIn;
+    this.masterIn = masterIn;
+
+    validPosition = false;
+    
+    roverPos = new RoverPosition();
+    masterPos = new MasterPosition();
+    satellites = new Satellites(this);
+  }
+  
+  /**
+   * Instantiates a new GoGPS.
+   *
+   * @param navigation the navigation
+   * @param roverIn the rover in
+   */
+  public GoGPS(NavigationProducer navigation, ObservationsProducer roverIn ){
+    this( navigation, roverIn, null );
+  }
+  
+  /**
+   * Gets the navigation.
+   *
+   * @return the navigation
+   */
+  public NavigationProducer getNavigation() {
+    return navigation;
+  }
+
+  /**
+   * Sets the navigation.
+   *
+   * @param navigation the navigation to set
+   * @return 
+   */
+  public GoGPS setNavigation(NavigationProducer navigation) {
+    this.navigation = navigation;
+    return this;
+  }
+
+
+  
+  public ObservationsProducer getRoverIn(){
+    return roverIn;
+  }
+
+  public ObservationsProducer getMasterIn(){
+    return masterIn;
+  }
+  
 	public RoverPosition getRoverPos(){
     return roverPos;
   }
@@ -530,26 +595,6 @@ public class GoGPS implements Runnable{
   }
 
   /**
-   * Gets the navigation.
-   *
-   * @return the navigation
-   */
-  public NavigationProducer getNavigation() {
-  	return navigation;
-  }
-
-  /**
-   * Sets the navigation.
-   *
-   * @param navigation the navigation to set
-   * @return 
-   */
-  public GoGPS setNavigation(NavigationProducer navigation) {
-  	this.navigation = navigation;
-    return this;
-  }
-
-  /**
    * Gets the weights.
    *
    * @return the weights
@@ -696,7 +741,7 @@ public class GoGPS implements Runnable{
     return this;
   }
 
-  public long getOffssetMs(){
+  public long getOffsetMs(){
     return offsetms;
   }
 
@@ -715,34 +760,6 @@ public class GoGPS implements Runnable{
     this.useDoppler = useDoppler;
     return this;
   }
-
-  /**
-	 * Instantiates a new GoGPS.
-	 *
-	 * @param navigation the navigation
-	 * @param roverIn the rover in
-	 * @param masterIn the master in
-	 */
-	public GoGPS(NavigationProducer navigation, ObservationsProducer roverIn, ObservationsProducer masterIn){
-
-		stDevCodeP = new double[2];
-		stDevCodeP[0] = 0.6;
-		stDevCodeP[1] = 0.4;
-
-		this.navigation = navigation;
-		this.roverIn = roverIn;
-		this.masterIn = masterIn;
-
-		validPosition = false;
-		
-    roverPos = new RoverPosition();
-    masterPos = new MasterPosition();
-    satellites = new Satellites(this);
-	}
-	
-	public GoGPS(NavigationProducer navigation, ObservationsProducer roverIn){
-	  this(navigation,roverIn,null);
-	}
 
 	/**
 	 * Run code standalone.
@@ -1200,26 +1217,6 @@ public class GoGPS implements Runnable{
 		return this;
 	}
 
-    void runElevationMethod(Observations obsR){
-      roverPos.setGeod(0, 0, 0);
-      roverPos.computeECEF();
-      for (int iter = 0; iter < 500; iter++) {
-        // Select all satellites
-        System.out.println("////// Itr = " + iter);
-        
-        double correctionMag = satellites.selectPositionUpdate(obsR);
-        if (satellites.getAvailNumber() < 6) {
-          roverPos.status = Status.NoAprioriPos;
-          break;
-        }
-        roverPos.status = Status.Valid;
-
-//          if( correctionMag<MODULO/2)
-        if( correctionMag<1)
-          break;
-      }
-    }
-    
     public GoGPS runCodeStandaloneSnapshot() {
       LS_SA_code_snapshot sa = null;
       
@@ -1270,7 +1267,7 @@ public class GoGPS implements Runnable{
          }
          else if( !roverPos.isValidXYZ() && obsR.getNumSat()>0 && !Float.isNaN(obsR.getSatByIdx(0).getDoppler(0))){
            roverPos.setXYZ(0, 0, 0);
-           runElevationMethod(obsR);
+           sa.runElevationMethod(obsR);
            
            sa.dopplerPos(obsR);
            
@@ -1327,238 +1324,16 @@ public class GoGPS implements Runnable{
     return this;
   }
 
-  public RoverPosition runCodeStandaloneCoarseTime() {
+  public GoGPS runCodeStandaloneCoarseTime() {
     try {
-      return runCodeStandaloneCoarseTime( MODULO20MS );
+      new LS_SA_code_coarse_time(this).runCodeStandaloneCoarseTime( MODULO20MS );
+      return this;
     } catch (Exception e) {
       e.printStackTrace();
     }
     return null;
   }
 	
-  GoGPS runCoarseTime(Observations obsR, final double MODULO ){
-    /** pos update limit for LMS iterations */
-    final double POS_TOL = 1.0;    // meters
-    
-    /** time update limit for LMS iterations */
-    final double TG_TOL = 1;  // milliseconds
-
-    for (int iter = 0; iter < 2000; iter++) {
-      if(debug) System.out.println("\r\n////// itr = " + iter );
-      long   updatems = obsR.getRefTime().getMsec();
-
-//      if( truePos != null ){
-//        System.out.println( String.format( "\r\n* True Pos: %8.4f, %8.4f, %8.4f", 
-//            truePos.getGeodeticLatitude(),
-//            truePos.getGeodeticLongitude(),
-//            truePos.getGeodeticHeight()
-//            ));
-//        truePos.selectSatellitesStandaloneFractional( obsR, -100, MODULO20MS );
-//      }
-      
-      System.out.println( String.format( "\r\n* Rover Pos: %8.4f, %8.4f, %8.4f", 
-          roverPos.getGeodeticLatitude(),
-          roverPos.getGeodeticLongitude(),
-          roverPos.getGeodeticHeight()
-          ));
-      LS_SA_code_coarse_time sa = new LS_SA_code_coarse_time(this);
-      sa.selectSatellites( obsR, -100, MODULO20MS );
-      System.out.println();
-
-      if (satellites.getAvailNumber() < 3) {
-        if(debug) System.out.println("Not enough satellites" );
-        roverPos.setXYZ(0, 0, 0);
-        roverPos.status = Status.NotEnoughSats;
-        break;
-      }
-      else {
-        double correction_mag = 
-            satellites.getAvailNumber() == 3?
-            sa.codeStandaloneDTM(obsR, MODULO )
-          : sa.codeStandaloneCoarseTime(obsR, MODULO );
-        updatems = obsR.getRefTime().getMsec() - updatems;
-        
-        if( Math.abs( updatems/1000 )> 12*60*60 ){
-          if(debug) System.out.println("Time update is too large: " + updatems/1000 + " s" );
-          roverPos.setXYZ(0, 0, 0);
-          if( roverPos.status == Status.None ){
-            roverPos.status = Status.MaxCorrection;
-          }
-          break;
-        }
-          
-        if( roverPos.status != Status.None && roverPos.status != Status.Valid )
-          break;
-        
-        // if correction is small enough, we're done, exit loop
-        if( correction_mag< POS_TOL && Math.abs(updatems) < TG_TOL) {
-           roverPos.status = Status.Valid;
-           break; 
-        }
-      }
-    }
-    return this;
-  }
-  
-  public RoverPosition runCodeStandaloneCoarseTime( final double MODULO ) throws Exception {
-    long index = 0;
-    Observations obsR = null;
-    Time refTime;
-    int leapSeconds;
-    
-    // read the whole file
-    List<Observations> obsl = new ArrayList<Observations>();
-    do{
-      obsR = roverIn.getNextObservations();
-      if( obsR!=null )
-        obsl.add(obsR);
-    } while( obsR!=null);
-    
-      Coordinates aPrioriPos = roverIn.getDefinedPosition();
-      if( aPrioriPos != null && aPrioriPos.isValidXYZ() ){
-        roverPos.setXYZ( aPrioriPos.getX(), aPrioriPos.getY(), aPrioriPos.getZ() );
-        roverPos.computeGeodetic();
-      }
-      else {
-        aPrioriPos = Coordinates.globalGeodInstance(0, 0, 0);
-        
-        System.out.println("\r\nSearching for a priori position");
-        
-        long maxNumSat = 0;
-        index = 0;
-        long maxSatIdx = 0;
-        Observations maxSatObs = null;
-        // find the observation set with most satellites
-        Iterator<Observations> it = obsl.iterator();
-        while( it.hasNext() ) { // buffStreamObs.ready()
-          obsR = it.next();
-          if( obsR==null)
-            break;
-          // search for an observation with at least 6 satellites to produce an a priori position using the elevation method
-          if( obsR.getNumSat()>maxNumSat){
-            maxNumSat = obsR.getNumSat();
-            maxSatObs = obsR;
-            maxSatIdx = index;
-          }
-          index++;
-        }
-  
-        roverPos.status = Status.NoAprioriPos;
-        runElevationMethod(maxSatObs);
-            
-        if( roverPos.status == Status.Valid){
-            // remember refTime
-            refTime = maxSatObs.getRefTime();
-            
-            double thr = this.getResidThreshold();
-            this.setResidThreshold(MODULO);
-            runCoarseTime(maxSatObs, MODULO);
-            // restore obsR refTime
-            maxSatObs.setRefTime(refTime);
-            this.setResidThreshold(thr);
-            
-            roverPos.cloneInto(aPrioriPos);
-            roverPos.status = Status.None;
-          }
-      }
-
-    // now process all the observation sets from the top of the file
-    Iterator<Observations> it = obsl.iterator();
-    notifyPositionConsumerEvent(PositionConsumer.EVENT_START_OF_TRACK);
-    index = 0;
-    try {
-      while( it.hasNext() ) { 
-        obsR = it.next();
-        if( obsR == null )
-          break;
-        
-        index++;
-        
-        if(debug){
-          System.out.println("==========================================================================================");
-          System.out.println("Index = " + index );
-          System.out.println("Processing " + obsR);
-        }
-        
-        roverPos.status = Status.None;
-        
-        // apply offset
-        refTime = obsR.getRefTime();
-        
-        // Add Leap Seconds, remove at the end
-        leapSeconds = refTime.getLeapSeconds();
-        Time GPSTime = new Time( refTime.getMsec() + leapSeconds * 1000);
-        obsR.setRefTime(GPSTime);
-        Time newTime = new Time( obsR.getRefTime().getMsec() + offsetms );
-        obsR.setRefTime(newTime);
-        long newTimeRefms = obsR.getRefTime().getMsec();
-        
-        if( !roverPos.isValidXYZ() ){
-          if( obsR.getNumSat()<6){
-            roverPos.status = Status.NoAprioriPos;
-          }
-          else {
-            runElevationMethod(obsR);
-          }
-        }
-
-        // If an approximate position was computed
-        if( !roverPos.isValidXYZ() ){
-          if(debug) System.out.println("Couldn't compute an approximate position at " + obsR.getRefTime());
-          if( roverPos.status == Status.None ){
-            roverPos.status = Status.NoAprioriPos;
-          }
-          continue;
-        }
-        else{
-          
-          if(debug) System.out.println("Approximate position at " + obsR.getRefTime() +"\r\n" + roverPos );
-          
-          runCoarseTime(obsR, MODULO);
-        }
-
-        if( !roverPos.isValidXYZ() || roverPos.gethDop()>this.hdopLimit ){
-          roverPos.sampleTime = refTime;
-          
-          if( roverPos.isValidXYZ() && roverPos.gethDop()>this.hdopLimit ){
-            System.out.println( String.format( "Excluding fix hdop = %3.1f > %3.1f (limit)", roverPos.gethDop(), this.hdopLimit ));
-            roverPos.status = Status.MaxHDOP;
-          }
-          // restore a priori location
-          if( aPrioriPos != null && aPrioriPos.isValidXYZ() ){
-            aPrioriPos.cloneInto(roverPos);
-          } 
-        }
-        else {
-          double offsetUpdate = obsR.getRefTime().getMsec() - newTimeRefms;
-          offsetms += offsetUpdate;
-
-          // remove Leap Seconds
-          obsR.setRefTime(new Time(obsR.getRefTime().getMsec() - leapSeconds * 1000));
-        
-          // update aPrioriPos
-          roverPos.cloneInto(aPrioriPos);
-
-          if(debug) System.out.println("Valid position? "+ roverPos.isValidXYZ() + "\r\n" + roverPos );
-          if(debug) System.out.println(" lat:"+roverPos.getGeodeticLatitude()+" lon:"+roverPos.getGeodeticLongitude() );
-          if(debug) System.out.println(" time offset update (ms): " +  offsetUpdate + "; Total time offset (ms): " + offsetms );  
-        
-          roverPos.cErrMS = obsR.getRefTime().getMsec() - roverPos.sampleTime.getMsec();
-        }
-        if(positionConsumers.size()>0){
-          roverPos.setRefTime(new Time(obsR.getRefTime().getMsec()));
-          notifyPositionConsumerAddCoordinate(roverPos.clone(obsR));
-        }
-      }
-    }
-    catch (Throwable e) {
-      e.printStackTrace();
-    } finally {
-      notifyPositionConsumerEvent(PositionConsumer.EVENT_END_OF_TRACK);
-    }
-    return new RoverPosition( roverPos, RoverPosition.DOP_TYPE_STANDARD, roverPos.getpDop(), roverPos.gethDop(), roverPos.getvDop());
-  }
-
   /**
    * @param interval process fixes every interval minutes
    * @return
@@ -1645,7 +1420,11 @@ public class GoGPS implements Runnable{
 	public void removePositionConsumer(PositionConsumer positionConsumer) {
 		positionConsumers.remove(positionConsumer);
 	}
-	/**
+	public Vector<PositionConsumer> getPositionConsumers() {
+    return positionConsumers;
+  }
+
+  /**
 	 * @param positionConsumer the positionConsumer to add
 	 */
 	public GoGPS addPositionConsumerListener(PositionConsumer positionConsumer) {
@@ -1658,7 +1437,7 @@ public class GoGPS implements Runnable{
     return this;
   }
 	
-	private void notifyPositionConsumerEvent(int event){
+	public void notifyPositionConsumerEvent(int event){
 		for(PositionConsumer pc:positionConsumers){
 			try{
 				pc.event(event);
@@ -1667,7 +1446,8 @@ public class GoGPS implements Runnable{
 			}
 		}
 	}
-	private void notifyPositionConsumerAddCoordinate(RoverPosition coord){
+	
+	public void notifyPositionConsumerAddCoordinate(RoverPosition coord){
 		for(PositionConsumer pc:positionConsumers){
 			try{
 				pc.addCoordinate(coord);

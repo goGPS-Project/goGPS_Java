@@ -483,14 +483,14 @@ public class Satellites {
         // Compute rover-satellite approximate pseudorange
         rover.diffSat[i] = rover.minusXYZ(pos[i]);
         rover.satAppRange[i] = Math.sqrt(Math.pow(rover.diffSat[i].get(0), 2)
-            + Math.pow(rover.diffSat[i].get(1), 2)
-            + Math.pow(rover.diffSat[i].get(2), 2));
+                             + Math.pow(rover.diffSat[i].get(1), 2)
+                             + Math.pow(rover.diffSat[i].get(2), 2));
 
         // Compute master-satellite approximate pseudorange
-        master.diffSat[i] = masterPos.minusXYZ(pos[i]);
+        master.diffSat[i]     = masterPos.minusXYZ(pos[i]);
         master.satAppRange[i] = Math.sqrt(Math.pow(master.diffSat[i].get(0), 2)
-            + Math.pow(master.diffSat[i].get(1), 2)
-            + Math.pow(master.diffSat[i].get(2), 2));
+                              + Math.pow(master.diffSat[i].get(1), 2)
+                              + Math.pow(master.diffSat[i].get(2), 2));
 
         // Compute azimuth, elevation and distance for each satellite from
         // rover
@@ -543,14 +543,13 @@ public class Satellites {
             availPhase.add(id);
             typeAvailPhase.add(satType);
             gnssAvailPhase.add(String.valueOf(satType) + String.valueOf(id));
-            
           }
         }
       }
     }
 
     // Select best pivot satellite
-    if (pivotPhase != -1){
+    if( pivotPhase != -1 ){
       pivot = pivotPhase;
     }else{
       pivot = pivotCode;

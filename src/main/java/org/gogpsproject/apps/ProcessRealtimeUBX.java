@@ -81,7 +81,7 @@ public class ProcessRealtimeUBX {
       String outPath = "./out/" + date1 + ".kml";
       KmlProducer kml = new KmlProducer(outPath, 2.5, 0);
 
-			GoGPS goGPS = new GoGPS(navigationIn, roverIn, null)
+			GoGPS goGPS = new GoGPS( navigationIn, roverIn )
 			                 .setDynamicModel(dynamicModel)
 			                 .addPositionConsumerListener(kml)
 

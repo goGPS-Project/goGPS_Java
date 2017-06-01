@@ -105,7 +105,7 @@ public class LiveTracking {
 			 * compute approx position in stand-alone mode
 			 */
       // retrieve initial position, do not need to be precise
-			Coordinates initialPosition = new GoGPS(navigationIn, roverIn, null)
+			Coordinates initialPosition = new GoGPS( navigationIn, roverIn )
     			                              .setDynamicModel(dynamicModel)
     			                              .runCodeStandalone(10)
     			                              .getRoverPos();

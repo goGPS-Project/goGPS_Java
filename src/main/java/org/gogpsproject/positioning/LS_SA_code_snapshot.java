@@ -1,6 +1,8 @@
 package org.gogpsproject.positioning;
 
 
+import java.text.ParseException;
+
 import org.ejml.simple.SimpleMatrix;
 import org.gogpsproject.Constants;
 import org.gogpsproject.GoGPS;
@@ -562,6 +564,26 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
     long offsetms = result.unixTime - refTime.getMsec();
     
     return offsetms;
+  }
+
+  public void runElevationMethod(Observations obsR){
+    rover.setGeod(0, 0, 0);
+    rover.computeECEF();
+    for (int iter = 0; iter < 500; iter++) {
+      // Select all satellites
+      System.out.println("////// Itr = " + iter);
+      
+      double correctionMag = sats.selectPositionUpdate(obsR);
+      if (sats.getAvailNumber() < 6) {
+        rover.status = Status.NoAprioriPos;
+        break;
+      }
+      rover.status = Status.Valid;
+
+//        if( correctionMag<MODULO/2)
+      if( correctionMag<1)
+        break;
+    }
   }
   
   Long runOffset( Observations obsR, long offsetms ){

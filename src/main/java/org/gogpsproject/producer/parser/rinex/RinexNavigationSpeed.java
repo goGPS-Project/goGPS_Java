@@ -19,7 +19,7 @@ public class RinexNavigationSpeed extends RinexNavigation  {
   @Override
   public SatellitePosition getGpsSatPosition(Observations obs, int satID, char satType, double receiverClockError) {
     long unixTime = obs.getRefTime().getMsec();
-    long requestedTime = unixTime;
+    long requestedTime = unixTime + 2*3600L*1000L;
     EphGps eph = null;
     int maxBack = 3;
     while(eph==null && (maxBack--)>0){
@@ -28,7 +28,7 @@ public class RinexNavigationSpeed extends RinexNavigation  {
       if(rnp!=null){
         obs.rinexFileName = rnp.getFileName();
         
-        if(rnp.isTimestampInEpocsRange(unixTime)){
+          if(rnp.isTimestampInEpocsRange(unixTime)){
   //        return rnp.getGpsSatPosition(obs, satID, satType, receiverClockError);
           eph = rnp.findEph(unixTime, satID, satType);
           if( eph == EphGps.UnhealthyEph )
@@ -46,7 +46,7 @@ public class RinexNavigationSpeed extends RinexNavigation  {
           }
         }
       }
-      requestedTime -= (1L*3600L*1000L);
+      requestedTime -= (2L*3600L*1000L);
     }
     return null;
   }

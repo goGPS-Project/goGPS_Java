@@ -69,20 +69,15 @@ public class GoGPS implements Runnable{
 	// 1 = weight based on satellite elevation
 	// 2 = weight based on signal-to-noise ratio
 	// 3 = weight based on combined elevation and signal-to-noise ratio
-	/** The Constant WEIGHT_EQUAL. */
-	public final static int WEIGHT_EQUAL = 0;
-
-	/** The Constant WEIGHT_SAT_ELEVATION. */
-	public final static int WEIGHT_SAT_ELEVATION = 1;
-
-	/** The Constant WEIGHT_SIGNAL_TO_NOISE_RATIO. */
-	public final static int WEIGHT_SIGNAL_TO_NOISE_RATIO = 2;
-
-	/** The Constant WEIGHT_COMBINED_ELEVATION_SNR. */
-	public final static int WEIGHT_COMBINED_ELEVATION_SNR = 3;
-
+	public static enum WeightingStrategy{
+	  EQUAL,
+	  SAT_ELEVATION,
+	  SIGNAL_TO_NOISE_RATIO,
+	  COMBINED_ELEVATION_SNR
+	}
+	
 	/** The weights. */
-	private int weights = WEIGHT_SAT_ELEVATION;
+	private WeightingStrategy weights = WeightingStrategy.SAT_ELEVATION;
 
 	public static enum DynamicModel {
 	  STATIC(1),
@@ -578,7 +573,7 @@ public class GoGPS implements Runnable{
    *
    * @return the weights
    */
-  public int getWeights() {
+  public WeightingStrategy getWeights() {
   	return weights;
   }
 
@@ -588,7 +583,7 @@ public class GoGPS implements Runnable{
    * @param weights the weights to set
    * @return 
    */
-  public GoGPS setWeights(int weights) {
+  public GoGPS setWeights(WeightingStrategy weights) {
   	this.weights = weights;
     return this;
   }

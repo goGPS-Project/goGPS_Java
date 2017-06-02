@@ -84,18 +84,25 @@ public class GoGPS implements Runnable{
 	/** The weights. */
 	private int weights = WEIGHT_SAT_ELEVATION;
 
-	/** The Constant DYN_MODEL_STATIC. */
-	public final static int DYN_MODEL_STATIC = 1;
-
-	/** The Constant DYN_MODEL_CONST_SPEED. */
-	public final static int DYN_MODEL_CONST_SPEED = 2;
-
-	/** The Constant DYN_MODEL_CONST_ACCELERATION. */
-	public final static int DYN_MODEL_CONST_ACCELERATION = 3;
+	public static enum DynamicModel {
+	  STATIC(1),
+	  CONST_SPEED(2),
+	  CONST_ACCELERATION(3);
+	  
+	  private int order;
+	  
+	  public int getOrder(){
+	    return order;
+	  }
+	  
+	  DynamicModel( int order ){
+	    this.order = order;
+	  }
+	}
 	
 	// Kalman filter parameters
 	/** The dynamic model. */
-	private int dynamicModel = DYN_MODEL_CONST_SPEED;
+	private DynamicModel dynamicModel = DynamicModel.CONST_SPEED;
 
 	/** The st dev init. */
 	private double stDevInit = 1;
@@ -353,26 +360,6 @@ public class GoGPS implements Runnable{
   }
 
   /**
-   * Gets the order.
-   *
-   * @return the order
-   */
-  public int getOrder() {
-  	return dynamicModel;
-  }
-
-  /**
-   * Sets the order.
-   *
-   * @param order the order to set
-   * @return 
-   */
-  public GoGPS setOrder(int order) {
-  	this.dynamicModel = order;
-    return this;
-  }
-
-  /**
    * Gets the st dev init.
    *
    * @return the stDevInit
@@ -611,7 +598,7 @@ public class GoGPS implements Runnable{
    *
    * @return the dynamicModel
    */
-  public int getDynamicModel() {
+  public DynamicModel getDynamicModel() {
   	return dynamicModel;
   }
 
@@ -620,7 +607,7 @@ public class GoGPS implements Runnable{
    *
    * @param dynamicModel the dynamicModel to set
    */
-  public GoGPS setDynamicModel(int dynamicModel) {
+  public GoGPS setDynamicModel(DynamicModel dynamicModel) {
   	this.dynamicModel = dynamicModel;
   	return this;
   }

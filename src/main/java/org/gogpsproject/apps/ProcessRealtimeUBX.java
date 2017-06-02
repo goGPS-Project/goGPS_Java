@@ -24,6 +24,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 import org.gogpsproject.GoGPS;
+import org.gogpsproject.GoGPS.DynamicModel;
 import org.gogpsproject.consumer.KmlProducer;
 import org.gogpsproject.positioning.Coordinates;
 import org.gogpsproject.producer.NavigationProducer;
@@ -43,7 +44,7 @@ public class ProcessRealtimeUBX {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		int dynamicModel = GoGPS.DYN_MODEL_CONST_SPEED;
+		DynamicModel dynamicModel = GoGPS.DynamicModel.CONST_SPEED;
 		try{
 			//force dot as decimal separator
 			Locale.setDefault(new Locale("en", "US"));

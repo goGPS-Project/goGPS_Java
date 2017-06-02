@@ -67,9 +67,9 @@ public abstract class KalmanFilter extends LS_DD_code {
   public void init( Observations roverObs, Observations masterObs, Coordinates masterPos) {
   
     // Order-related quantities
-    o1 = goGPS.getOrder();
-    o2 = goGPS.getOrder() * 2;
-    o3 = goGPS.getOrder() * 3;
+    o1 = goGPS.getDynamicModel().getOrder();
+    o2 = goGPS.getDynamicModel().getOrder() * 2;
+    o3 = goGPS.getDynamicModel().getOrder() * 3;
   
     // Order-related indices
     i1 = o1 - 1;

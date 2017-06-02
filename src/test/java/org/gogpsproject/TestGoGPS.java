@@ -23,6 +23,7 @@ import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import org.gogpsproject.GoGPS.DynamicModel;
 import org.gogpsproject.consumer.KmlProducer;
 import org.gogpsproject.consumer.TxtProducer;
 import org.gogpsproject.producer.NavigationProducer;
@@ -48,7 +49,7 @@ public class TestGoGPS {
 		//force dot as decimal separator
 		Locale.setDefault(new Locale("en", "US"));
 		
-		int dynamicModel = GoGPS.DYN_MODEL_CONST_SPEED;
+		DynamicModel dynamicModel = GoGPS.DynamicModel.CONST_SPEED;
 //		int dynamicModel = GoGPS.DYN_MODEL_STATIC;
 
 		double goodDopThreshold = 2.5;

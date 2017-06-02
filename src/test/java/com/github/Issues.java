@@ -3,6 +3,7 @@ package com.github;
 import org.junit.Test;
 
 import org.gogpsproject.GoGPS;
+import org.gogpsproject.GoGPS.DynamicModel;
 import org.gogpsproject.consumer.KmlProducer;
 import org.gogpsproject.producer.NavigationProducer;
 import org.gogpsproject.producer.ObservationsProducer;
@@ -39,10 +40,9 @@ public class Issues {
         roverIn.init();
         masterIn.init();
 
-        int dynamicModel = GoGPS.DYN_MODEL_STATIC; //may be also set to constant acceleration or static
         GoGPS goGPS = new GoGPS(navigationIn, roverIn, masterIn)
                          .addPositionConsumerListener(kml)
-                         .setDynamicModel(dynamicModel)
+                         .setDynamicModel(DynamicModel.STATIC)
                          .setCutoff(0)
         
 //        .runCodeStandalone();
@@ -77,10 +77,9 @@ public class Issues {
         navigationIn.init();
         roverIn.init();
 
-        int dynamicModel = GoGPS.DYN_MODEL_STATIC; //may be also set to constant acceleration or static
         GoGPS goGPS = new GoGPS(navigationIn, roverIn )
                                      .addPositionConsumerListener(kml)
-                                     .setDynamicModel(dynamicModel)
+                                     .setDynamicModel(DynamicModel.STATIC)
                                      .setCutoff(0)
                                      .runCodeStandalone()
                                      .runUntilFinished();

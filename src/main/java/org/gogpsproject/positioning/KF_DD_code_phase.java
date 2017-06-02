@@ -85,11 +85,11 @@ public class KF_DD_code_phase extends KalmanFilter {
       for (int j = 0; j < nSatAvail + nSatAvailPhase; j++) {
 
         if (i < nSatAvail && j < nSatAvail)
-          Cnn.set(i, j, goGPS.getStDevCode(roverObs.getSatByIDType(pivotId, satType), goGPS.getFreq())
-              * goGPS.getStDevCode(masterObs.getSatByIDType(pivotId, satType), goGPS.getFreq())
+          Cnn.set(i, j, getStDevCode(roverObs.getSatByIDType(pivotId, satType), goGPS.getFreq())
+              * getStDevCode(masterObs.getSatByIDType(pivotId, satType), goGPS.getFreq())
               * (roverPivotWeight + masterPivotWeight));
         else if (i >= nSatAvail && j >= nSatAvail)
-          Cnn.set(i, j, Math.pow(goGPS.getStDevPhase(), 2)
+          Cnn.set(i, j, Math.pow(stDevPhase, 2)
               * (roverPivotWeight + masterPivotWeight));
       }
     }
@@ -162,8 +162,8 @@ public class KF_DD_code_phase extends KalmanFilter {
         double roverSatWeight = computeWeight(rover.topo[i].getElevation(), roverObs.getSatByIDType(id, satType).getSignalStrength(goGPS.getFreq()));
         double masterSatWeight = computeWeight(master.topo[i].getElevation(), masterObs.getSatByIDType(id, satType).getSignalStrength(goGPS.getFreq()));
         double CnnBase = Cnn.get(k, k);
-        Cnn.set(k, k, CnnBase + goGPS.getStDevCode(roverObs.getSatByIDType(id, satType), goGPS.getFreq())
-            * goGPS.getStDevCode(masterObs.getSatByIDType(id, satType), goGPS.getFreq())
+        Cnn.set(k, k, CnnBase + getStDevCode(roverObs.getSatByIDType(id, satType), goGPS.getFreq())
+            * getStDevCode(masterObs.getSatByIDType(id, satType), goGPS.getFreq())
             * (roverSatWeight + masterSatWeight));
 
         if (sats.gnssAvail.contains(checkAvailGnss)){
@@ -185,7 +185,7 @@ public class KF_DD_code_phase extends KalmanFilter {
           // phase)
           CnnBase = Cnn.get(nObsAvail + p, nObsAvail + p);
           Cnn.set(nObsAvail + p, nObsAvail + p, CnnBase
-              + Math.pow(goGPS.getStDevPhase(), 2)
+              + Math.pow(stDevPhase, 2)
               * (roverSatWeight + masterSatWeight));
 
           // Increment satellites with phase counter
@@ -301,8 +301,8 @@ public class KF_DD_code_phase extends KalmanFilter {
           // Store estimated ambiguity combinations and their covariance
           estimatedAmbiguityComb[satAmb.indexOf(id)] = (codeDoubleDiffObserv - phaseDoubleDiffObserv) / roverObs.getSatByIDType(id, satType).getWavelength(goGPS.getFreq());
           estimatedAmbiguityCombCovariance[satAmb.indexOf(id)] = 4
-          * goGPS.getStDevCode(roverObs.getSatByIDType(id, satType), goGPS.getFreq())
-          * goGPS.getStDevCode(masterObs.getSatByIDType(id, satType), goGPS.getFreq()) / Math.pow(roverObs.getSatByIDType(id, satType).getWavelength(goGPS.getFreq()), 2);
+          * getStDevCode(roverObs.getSatByIDType(id, satType), goGPS.getFreq())
+          * getStDevCode(masterObs.getSatByIDType(id, satType), goGPS.getFreq()) / Math.pow(roverObs.getSatByIDType(id, satType).getWavelength(goGPS.getFreq()), 2);
         }
       }
     } else if(goGPS.getAmbiguityStrategy() == GoGPS.AmbiguityStrategy.APPROX | (nObsAvail + nObsAvailPhase <= nUnknowns)) {
@@ -333,8 +333,8 @@ public class KF_DD_code_phase extends KalmanFilter {
           // Store estimated ambiguity combinations and their covariance
           estimatedAmbiguityComb[satAmb.indexOf(id)] = (codeDoubleDiffApprox - phaseDoubleDiffObserv) / roverObs.getSatByIDType(id, satType).getWavelength(goGPS.getFreq());
           estimatedAmbiguityCombCovariance[satAmb.indexOf(id)] = 4
-          * goGPS.getStDevCode(roverObs.getSatByIDType(id, satType), goGPS.getFreq())
-          * goGPS.getStDevCode(masterObs.getSatByIDType(id, satType), goGPS.getFreq()) / Math.pow(roverObs.getSatByIDType(id, satType).getWavelength(goGPS.getFreq()), 2);
+          * getStDevCode(roverObs.getSatByIDType(id, satType), goGPS.getFreq())
+          * getStDevCode(masterObs.getSatByIDType(id, satType), goGPS.getFreq()) / Math.pow(roverObs.getSatByIDType(id, satType).getWavelength(goGPS.getFreq()), 2);
         }
       }
     } 
@@ -399,10 +399,10 @@ public class KF_DD_code_phase extends KalmanFilter {
           roverObs.getSatByIDType(pivotId, satType).getSignalStrength(goGPS.getFreq()));
       double masterPivotWeight = computeWeight(master.topo[pivotIndex].getElevation(),
           masterObs.getSatByIDType(pivotId, satType).getSignalStrength(goGPS.getFreq()));
-      Qcode.set(goGPS.getStDevCode(roverObs.getSatByIDType(pivotId, satType), goGPS.getFreq())
-          * goGPS.getStDevCode(masterObs.getSatByIDType(pivotId, satType), goGPS.getFreq())
+      Qcode.set(getStDevCode(roverObs.getSatByIDType(pivotId, satType), goGPS.getFreq())
+          * getStDevCode(masterObs.getSatByIDType(pivotId, satType), goGPS.getFreq())
           * (roverPivotWeight + masterPivotWeight));
-      Qphase.set(Math.pow(goGPS.getStDevPhase(), 2) * (roverPivotWeight + masterPivotWeight));
+      Qphase.set(Math.pow(stDevPhase, 2) * (roverPivotWeight + masterPivotWeight));
 
       // Set up the least squares matrices...
       // ... for code ...
@@ -442,8 +442,8 @@ public class KF_DD_code_phase extends KalmanFilter {
               roverObs.getSatByIDType(id, satType).getSignalStrength(goGPS.getFreq()));
           double masterSatWeight = computeWeight(master.topo[i].getElevation(),
               masterObs.getSatByIDType(id, satType).getSignalStrength(goGPS.getFreq()));
-          Qcode.set(k, k, Qcode.get(k, k) + goGPS.getStDevCode(roverObs.getSatByID(id), goGPS.getFreq())
-              * goGPS.getStDevCode(masterObs.getSatByIDType(id, satType), goGPS.getFreq())
+          Qcode.set(k, k, Qcode.get(k, k) + getStDevCode(roverObs.getSatByID(id), goGPS.getFreq())
+              * getStDevCode(masterObs.getSatByIDType(id, satType), goGPS.getFreq())
               * (roverSatWeight + masterSatWeight));
 
           // Increment available satellites counter
@@ -494,9 +494,9 @@ public class KF_DD_code_phase extends KalmanFilter {
               master.topo[i].getElevation(),
               masterObs.getSatByIDType(id, satType).getSignalStrength(goGPS.getFreq()));
           Qphase.set(p, p, Qphase.get(p, p)
-              + (Math.pow(goGPS.getStDevPhase(), 2) + Math.pow(roverObs.getSatByIDType(id, satType).getWavelength(goGPS.getFreq()), 2) * Cee.get(i3 + id, i3 + id))
+              + (Math.pow(stDevPhase, 2) + Math.pow(roverObs.getSatByIDType(id, satType).getWavelength(goGPS.getFreq()), 2) * Cee.get(i3 + id, i3 + id))
               * (roverPivotWeight + masterPivotWeight)
-              + (Math.pow(goGPS.getStDevPhase(), 2) + Math.pow(roverObs.getSatByIDType(id, satType).getWavelength(goGPS.getFreq()), 2) * Cee.get(i3 + id, i3 + id))
+              + (Math.pow(stDevPhase, 2) + Math.pow(roverObs.getSatByIDType(id, satType).getWavelength(goGPS.getFreq()), 2) * Cee.get(i3 + id, i3 + id))
               * (roverSatWeight + masterSatWeight));
           int r = 1;
           for (int m = i+1; m < nObs; m++) {
@@ -568,7 +568,7 @@ public class KF_DD_code_phase extends KalmanFilter {
 
         // Store the variance of the estimated ambiguity
         Cvv.set(i3 + satAmb.get(i), i3 + satAmb.get(i),
-            Math.pow(goGPS.getStDevAmbiguity(), 2));
+            Math.pow( stDevAmbiguity, 2));
       }
     }
   }

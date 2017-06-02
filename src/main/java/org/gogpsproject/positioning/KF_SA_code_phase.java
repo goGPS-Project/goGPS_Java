@@ -82,7 +82,7 @@ public class KF_SA_code_phase extends KalmanFilter {
         // Fill in the observation error covariance matrix (for code)
         double roverSatWeight = computeWeight(rover.topo[i].getElevation(), roverObs.getSatByIDType(id, satType).getSignalStrength(goGPS.getFreq()));
         double CnnBase = Cnn.get(k, k);
-        Cnn.set(k, k, CnnBase + Math.pow(goGPS.getStDevCode(roverObs.getSatByIDType(id, satType), goGPS.getFreq()), 2) * roverSatWeight);
+        Cnn.set(k, k, CnnBase + Math.pow(getStDevCode(roverObs.getSatByIDType(id, satType), goGPS.getFreq()), 2) * roverSatWeight);
 
         if (sats.gnssAvail.contains(checkAvailGnss)){
 //        if (sats.availPhase.contains(id) && sats.typeAvailPhase.contains(satType)) {
@@ -98,7 +98,7 @@ public class KF_SA_code_phase extends KalmanFilter {
 
           // Fill in the observation error covariance matrix (for phase)
           CnnBase = Cnn.get(nObsAvail + p, nObsAvail + p);
-          Cnn.set(nObsAvail + p, nObsAvail + p, CnnBase + Math.pow(goGPS.getStDevPhase(), 2) * roverSatWeight);
+          Cnn.set(nObsAvail + p, nObsAvail + p, CnnBase + Math.pow(stDevPhase, 2) * roverSatWeight);
 
           // Increment satellites with phase counter
           p++;
@@ -215,7 +215,7 @@ public class KF_SA_code_phase extends KalmanFilter {
   
         // Fill in the cofactor matrix
         double roverSatWeight = computeWeight(rover.topo[i].getElevation(), roverObs.getSatByIDType(id, satType).getSignalStrength(goGPS.getFreq()));
-        Qcode.set(k, k, Qcode.get(k, k) + goGPS.getStDevCode(roverObs.getSatByID(id), goGPS.getFreq()) * roverSatWeight);
+        Qcode.set(k, k, Qcode.get(k, k) + getStDevCode(roverObs.getSatByID(id), goGPS.getFreq()) * roverSatWeight);
   
         // Increment available satellites counter
         k++;
@@ -256,7 +256,7 @@ public class KF_SA_code_phase extends KalmanFilter {
   
         // Fill in the cofactor matrix
         double roverSatWeight = computeWeight(rover.topo[i].getElevation(), roverObs.getSatByIDType(id, satType).getSignalStrength(goGPS.getFreq()));
-        Qphase.set(p, p, Qphase.get(p, p) + Math.pow(goGPS.getStDevPhase(), 2) * roverSatWeight);
+        Qphase.set(p, p, Qphase.get(p, p) + Math.pow(stDevPhase, 2) * roverSatWeight);
         int r = 1;
         for (int m = i+1; m < nObs; m++) {
           if (sats.pos[m] !=null && sats.availPhase.contains(sats.pos[m].getSatID())) {
@@ -313,7 +313,7 @@ public class KF_SA_code_phase extends KalmanFilter {
         KFprediction.set(i3 + satAmb.get(i), 0, estimatedAmbiguities[i]);
   
         // Store the variance of the estimated ambiguity
-        Cvv.set(i3 + satAmb.get(i), i3 + satAmb.get(i), Math.pow(goGPS.getStDevAmbiguity(), 2));
+        Cvv.set(i3 + satAmb.get(i), i3 + satAmb.get(i), Math.pow( stDevAmbiguity, 2));
       }
     }
   }

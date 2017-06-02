@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import org.ejml.simple.SimpleMatrix;
 import org.gogpsproject.GoGPS;
+import org.gogpsproject.producer.ObservationSet;
 import org.gogpsproject.producer.Observations;
 
 public abstract class KalmanFilter extends LS_DD_code {
@@ -21,6 +22,44 @@ public abstract class KalmanFilter extends LS_DD_code {
   SimpleMatrix KFstate;
   SimpleMatrix KFprediction;
 
+  /** The st dev init. */
+  private final double stDevInit = 1;
+
+  /** The st dev e. */
+  private double stDevE = 0.5;
+
+  /** The st dev n. */
+  private double stDevN = 0.5;
+
+  /** The st dev u. */
+  private double stDevU = 0.1;
+
+  /** The st dev code c. */
+  private double stDevCodeC = 0.3;
+
+  /** The st dev code p. */
+  private double[] stDevCodeP = { 0.6, 0.4 };
+
+
+  /** The st dev phase. */
+  double stDevPhase = 0.003;
+
+  /** The st dev ambiguity. */
+  double stDevAmbiguity = 10;
+
+  /**
+   * Gets the st dev code.
+   *
+   * @param roverObsSet the rover observation set
+   * @param masterObsSet the master observation set
+   * @param i the selected GPS frequency
+   * @return the stDevCode
+   */
+  public double getStDevCode( ObservationSet obsSet, int i) {
+    return obsSet.isPseudorangeP(i)?stDevCodeP[i]:stDevCodeC;
+  }
+
+  
   // Fields for keeping track of satellite configuration changes
   ArrayList<Integer> satOld;
   ArrayList<Character> satTypeOld;
@@ -102,9 +141,9 @@ public abstract class KalmanFilter extends LS_DD_code {
   
     // Model error covariance matrix
     Cvv.zero();
-    Cvv.set(i1, i1, Math.pow(goGPS.getStDevE(), 2));
-    Cvv.set(i2, i2, Math.pow(goGPS.getStDevN(), 2));
-    Cvv.set(i3, i3, Math.pow(goGPS.getStDevU(), 2));
+    Cvv.set(i1, i1, Math.pow( stDevE, 2));
+    Cvv.set(i2, i2, Math.pow( stDevN, 2));
+    Cvv.set(i3, i3, Math.pow(stDevU, 2));
   
     // Improve approximate position accuracy by applying twice code double differences
     for (int i = 0; i < 2; i++) {
@@ -149,14 +188,14 @@ public abstract class KalmanFilter extends LS_DD_code {
       Cee.set(i2 + 1, i2 + 1, positionCovariance.get(2, 2));
     } else {
       positionCovariance = new SimpleMatrix(3, 3);
-      Cee.set(0, 0, Math.pow(goGPS.getStDevInit(), 2));
-      Cee.set(i1 + 1, i1 + 1, Math.pow(goGPS.getStDevInit(), 2));
-      Cee.set(i2 + 1, i2 + 1, Math.pow(goGPS.getStDevInit(), 2));
+      Cee.set(0, 0, Math.pow(stDevInit, 2));
+      Cee.set(i1 + 1, i1 + 1, Math.pow(stDevInit, 2));
+      Cee.set(i2 + 1, i2 + 1, Math.pow(stDevInit, 2));
     }
     for (int i = 1; i < o1; i++) {
-      Cee.set(i, i, Math.pow(goGPS.getStDevInit(), 2));
-      Cee.set(i + i1 + 1, i + i1 + 1, Math.pow(goGPS.getStDevInit(), 2));
-      Cee.set(i + i2 + 1, i + i2 + 1, Math.pow(goGPS.getStDevInit(), 2));
+      Cee.set(i, i, Math.pow(stDevInit, 2));
+      Cee.set(i + i1 + 1, i + i1 + 1, Math.pow(stDevInit, 2));
+      Cee.set(i + i2 + 1, i + i2 + 1, Math.pow(stDevInit, 2));
     }
   }
 
@@ -235,9 +274,9 @@ public abstract class KalmanFilter extends LS_DD_code {
         // Build 3x3 diagonal matrix with variances
         SimpleMatrix diagonal = new SimpleMatrix(3, 3);
         diagonal.zero();
-        diagonal.set(0, 0, Math.pow(goGPS.getStDevE(), 2));
-        diagonal.set(1, 1, Math.pow(goGPS.getStDevN(), 2));
-        diagonal.set(2, 2, Math.pow(goGPS.getStDevU(), 2));
+        diagonal.set(0, 0, Math.pow(stDevE, 2));
+        diagonal.set(1, 1, Math.pow(stDevN, 2));
+        diagonal.set(2, 2, Math.pow(stDevU, 2));
 
         // Propagate local variances to global variances
         diagonal = R.transpose().mult(diagonal).mult(R);

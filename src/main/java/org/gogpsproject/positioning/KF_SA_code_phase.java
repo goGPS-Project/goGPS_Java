@@ -5,7 +5,9 @@ import java.util.ArrayList;
 import org.ejml.simple.SimpleMatrix;
 import org.gogpsproject.Constants;
 import org.gogpsproject.GoGPS;
+import org.gogpsproject.consumer.PositionConsumer;
 import org.gogpsproject.producer.Observations;
+import org.gogpsproject.producer.ObservationsProducer;
 
 public class KF_SA_code_phase extends KalmanFilter {
 
@@ -408,4 +410,122 @@ public class KF_SA_code_phase extends KalmanFilter {
     }
   }
 
+  /**
+   * Run kalman filter on code and phase standalone.
+   */
+  public static void run( GoGPS goGPS ) {
+    
+    RoverPosition rover   = goGPS.getRoverPos();
+    MasterPosition master = goGPS.getMasterPos();
+    Satellites sats       = goGPS.getSats();
+    ObservationsProducer roverIn = goGPS.getRoverIn();
+    ObservationsProducer masterIn = goGPS.getMasterIn();
+    boolean debug = goGPS.isDebug();
+
+    long timeRead = System.currentTimeMillis();
+    long depRead = 0;
+
+    long timeProc = 0;
+    long depProc = 0;
+
+    KalmanFilter kf = new KF_SA_code_phase(goGPS);
+    
+    // Flag to check if Kalman filter has been initialized
+    boolean kalmanInitialized = false;
+
+    try {
+      boolean validPosition = false;
+
+      timeRead = System.currentTimeMillis() - timeRead;
+      depRead = depRead + timeRead;
+
+      Observations obsR = roverIn.getNextObservations();
+
+      while (obsR != null) {
+
+        if(debug)System.out.println("R:"+obsR.getRefTime().getMsec());
+
+        timeRead = System.currentTimeMillis();
+        depRead = depRead + timeRead;
+        timeProc = System.currentTimeMillis();
+
+        // If Kalman filter was not initialized and if there are at least four satellites
+        boolean valid = true;
+        if (!kalmanInitialized && obsR.getNumSat() >= 4) {
+
+          // Compute approximate positioning by iterative least-squares
+          for (int iter = 0; iter < 3; iter++) {
+            // Select all satellites
+            sats.selectStandalone( obsR, -100);
+            
+            if (sats.getAvailNumber() >= 4) {
+              kf.codeStandalone( obsR, false, true);
+            }
+          }
+
+          // If an approximate position was computed
+          if (rover.isValidXYZ()) {
+
+            // Initialize Kalman filter
+            kf.init( obsR, null, roverIn.getDefinedPosition());
+
+            if (rover.isValidXYZ()) {
+              kalmanInitialized = true;
+              if(debug)System.out.println("Kalman filter initialized.");
+            } else {
+              if(debug)System.out.println("Kalman filter not initialized.");
+            }
+          }else{
+            if(debug)System.out.println("A-priori position (from code observations) is not valid.");
+          }
+        } else if (kalmanInitialized) {
+
+          // Do a Kalman filter loop
+          try{
+            kf.loop( obsR, null, roverIn.getDefinedPosition());
+          }catch(Exception e){
+            e.printStackTrace();
+            valid = false;
+          }
+        }
+
+        timeProc = System.currentTimeMillis() - timeProc;
+        depProc = depProc + timeProc;
+
+        if(kalmanInitialized && valid){
+          if(!validPosition){
+            goGPS.notifyPositionConsumerEvent(PositionConsumer.EVENT_START_OF_TRACK);
+            validPosition = true;
+          }else
+            if(goGPS.getPositionConsumers().size()>0){
+              RoverPosition coord = new RoverPosition(rover, RoverPosition.DOP_TYPE_KALMAN, rover.getKpDop(), rover.getKhDop(), rover.getKvDop());
+              coord.setRefTime(new Time(obsR.getRefTime().getMsec()));
+              goGPS.notifyPositionConsumerAddCoordinate(coord);
+            }
+
+        }
+        //System.out.println("--------------------");
+
+        if(debug)System.out.println("-- Get next epoch ---------------------------------------------------");
+        // get next epoch
+        obsR = roverIn.getNextObservations();
+      }
+
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      goGPS.notifyPositionConsumerEvent(PositionConsumer.EVENT_END_OF_TRACK);
+    }
+
+    int elapsedTimeSec = (int) Math.floor(depRead / 1000);
+    int elapsedTimeMillisec = (int) (depRead - elapsedTimeSec * 1000);
+    if(debug)System.out.println("\nElapsed time (read): " + elapsedTimeSec
+        + " seconds " + elapsedTimeMillisec + " milliseconds.");
+
+    elapsedTimeSec = (int) Math.floor(depProc / 1000);
+    elapsedTimeMillisec = (int) (depProc - elapsedTimeSec * 1000);
+    if(debug)System.out.println("\nElapsed time (proc): " + elapsedTimeSec
+        + " seconds " + elapsedTimeMillisec + " milliseconds.");
+  }
+  
 }

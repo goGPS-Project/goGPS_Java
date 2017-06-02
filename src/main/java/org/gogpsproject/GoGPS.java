@@ -127,14 +127,13 @@ public class GoGPS implements Runnable{
 	/** The cycle slip threshold. */
 	private double cycleSlipThreshold = 1;
 	
-	/** The Constant APPROX_PSEUDORANGE. */
-	public final static int APPROX_PSEUDORANGE = 0;
-
-	/** The Constant DOPPLER_PREDICTED_PHASE_RANGE. */
-	public final static int DOPPLER_PREDICTED_PHASE_RANGE = 1;
+	public static enum CycleSlipDetectionStrategy {
+	  APPROX_PSEUDORANGE,
+	  DOPPLER_PREDICTED_PHASE_RANGE
+	}
 	
 	/** The cycle-slip detection strategy. */
-	private int cycleSlipDetectionStrategy = APPROX_PSEUDORANGE;
+	private CycleSlipDetectionStrategy cycleSlipDetectionStrategy = CycleSlipDetectionStrategy.APPROX_PSEUDORANGE;
 
 	public static enum AmbiguityStrategy {
 	  OBSERV,
@@ -631,7 +630,7 @@ public class GoGPS implements Runnable{
    *
    * @return the cycleSlipDetectionStrategy
    */
-  public int getCycleSlipDetectionStrategy() {
+  public CycleSlipDetectionStrategy getCycleSlipDetectionStrategy() {
   	return cycleSlipDetectionStrategy;
   }
 
@@ -641,7 +640,7 @@ public class GoGPS implements Runnable{
    * @param cycleSlipDetectionStrategy the cycleSlipDetectionStrategy to set
    * @return 
    */
-  public GoGPS setCycleSlipDetection(int cycleSlipDetectionStrategy) {
+  public GoGPS setCycleSlipDetection( CycleSlipDetectionStrategy cycleSlipDetectionStrategy ) {
   	this.cycleSlipDetectionStrategy = cycleSlipDetectionStrategy;
     return this;
   }

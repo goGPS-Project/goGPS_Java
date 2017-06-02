@@ -725,7 +725,7 @@ public class KF_DD_code_phase extends KalmanFilter {
         lossOfLockCycleSlipMaster = false;
 
         // cycle slip detected by Doppler predicted phase range
-        if (goGPS.getCycleSlipDetectionStrategy() == GoGPS.DOPPLER_PREDICTED_PHASE_RANGE) {
+        if (goGPS.getCycleSlipDetectionStrategy() == GoGPS.CycleSlipDetectionStrategy.DOPPLER_PREDICTED_PHASE_RANGE) {
           dopplerCycleSlipRover = rover.getDopplerPredictedPhase(satID) != 0.0 && (Math.abs(roverObs.getSatByIDType(satID, satType).getPhaseCycles(goGPS.getFreq())
               - rover.getDopplerPredictedPhase(satID)) > goGPS.getCycleSlipThreshold());
           dopplerCycleSlipMaster = master.getDopplerPredictedPhase(satID) != 0.0 && (Math.abs(masterObs.getSatByIDType(satID, satType).getPhaseCycles(goGPS.getFreq())
@@ -737,7 +737,7 @@ public class KF_DD_code_phase extends KalmanFilter {
 
         // cycle slip detected by approximate pseudorange
         approxRangeCycleSlip = false;
-        if (goGPS.getCycleSlipDetectionStrategy() == GoGPS.APPROX_PSEUDORANGE && satID != pivotId) {
+        if (goGPS.getCycleSlipDetectionStrategy() == GoGPS.CycleSlipDetectionStrategy.APPROX_PSEUDORANGE && satID != pivotId) {
 
           // Rover-satellite and master-satellite approximate pseudorange
           double roverSatCodeAppRange = rover.satAppRange[i];

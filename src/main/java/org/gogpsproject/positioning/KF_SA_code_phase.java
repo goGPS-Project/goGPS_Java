@@ -370,7 +370,7 @@ public class KF_SA_code_phase extends KalmanFilter {
         lossOfLockCycleSlipRover = false;
 
         // cycle slip detected by Doppler predicted phase range
-        if (goGPS.getCycleSlipDetectionStrategy() == GoGPS.DOPPLER_PREDICTED_PHASE_RANGE) {
+        if (goGPS.getCycleSlipDetectionStrategy() == GoGPS.CycleSlipDetectionStrategy.DOPPLER_PREDICTED_PHASE_RANGE) {
           dopplerCycleSlipRover = rover.getDopplerPredictedPhase(satID) != 0.0 && (Math.abs(roverObs.getSatByIDType(satID, satType).getPhaseCycles(goGPS.getFreq())
               - rover.getDopplerPredictedPhase(satID)) > goGPS.getCycleSlipThreshold());
         } else {

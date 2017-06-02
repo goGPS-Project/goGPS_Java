@@ -139,7 +139,7 @@ public class LiveTracking {
       GoGPS goGPS = new GoGPS(navigationIn, roverIn, masterIn)
           .setDynamicModel(dynamicModel)
           .addPositionConsumerListener(kml)
-			    .runThreadMode(GoGPS.RUN_MODE_KALMAN_FILTER_DOUBLE_DIFF);
+			    .runThreadMode( GoGPS.RunMode.KALMAN_FILTER_DOUBLE_DIFF );
 
       // goGPS.runCodeDoubleDifferences();
       // run blocking (never exit in live-tracking)

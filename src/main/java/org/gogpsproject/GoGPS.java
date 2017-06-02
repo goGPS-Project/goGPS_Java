@@ -151,14 +151,16 @@ public class GoGPS implements Runnable{
 	/** The Elevation cutoff. */
 	private double cutoff = 15; // Elevation cutoff
 
-	public final static int RUN_MODE_STANDALONE = 0;
-	public final static int RUN_MODE_DOUBLE_DIFF = 1;
-	public final static int RUN_MODE_KALMAN_FILTER_STANDALONE = 2;
-	public final static int RUN_MODE_KALMAN_FILTER_DOUBLE_DIFF = 3;
-  public final static int RUN_MODE_STANDALONE_SNAPSHOT = 10;
-  public final static int RUN_MODE_STANDALONE_COARSETIME = 11;
+	public static enum RunMode {
+	  STANDALONE,
+	  DOUBLE_DIFF,
+	  KALMAN_FILTER_STANDALONE,
+	  KALMAN_FILTER_DOUBLE_DIFF,
+	  STANDALONE_SNAPSHOT,
+	  STANDALONE_COARSETIME
+	}
 
-	private int runMode = -1;
+	private RunMode runMode;
 	
 	private Thread runThread=null;
 	
@@ -752,12 +754,7 @@ public class GoGPS implements Runnable{
 	 * Run code standalone.
 	 */
 	public GoGPS runCodeStandalone() {
-		try {
-			return runCodeStandalone(-1);
-		} catch (Exception e) {
-			e.printStackTrace();
-			return this;
-		}
+		return runCodeStandalone(-1);
 	}
 
 	/**
@@ -767,7 +764,7 @@ public class GoGPS implements Runnable{
 	 * @return the coordinates
 	 * @throws Exception
 	 */
-	public GoGPS runCodeStandalone(double stopAtDopThreshold) throws Exception {
+	public GoGPS runCodeStandalone(double stopAtDopThreshold) {
 	  LS_SA_code.run(this, stopAtDopThreshold);
 	  return this;
 	}
@@ -817,9 +814,11 @@ public class GoGPS implements Runnable{
 	public void cleanPositionConsumers() {
 		positionConsumers.clear();
 	}
+	
 	public void removePositionConsumer(PositionConsumer positionConsumer) {
 		positionConsumers.remove(positionConsumer);
 	}
+	
 	public Vector<PositionConsumer> getPositionConsumers() {
     return positionConsumers;
   }
@@ -860,37 +859,40 @@ public class GoGPS implements Runnable{
 	/**
 	 * @return the runMode
 	 */
-	public int getRunMode() {
+	public RunMode getRunMode() {
 		return runMode;
 	}
 
 	/**
 	 * @param runMode the run mode to use
 	 */
-	public GoGPS runThreadMode(int runMode) {
-		this.runMode = runMode;
+	public GoGPS runThreadMode( RunMode runMode ) {
+		
+	  this.runMode = runMode;
 		this.runThread = new Thread(this);
+		
 		switch(runMode){
-			case RUN_MODE_STANDALONE:
-				this.runThread.setName("goGPS standalone");
+			case STANDALONE:
+				runThread.setName("goGPS standalone");
 				break;
-			case RUN_MODE_DOUBLE_DIFF:
-				this.runThread.setName("goGPS double difference");
+			case DOUBLE_DIFF:
+				runThread.setName("goGPS double difference");
 				break;
-			case RUN_MODE_KALMAN_FILTER_STANDALONE:
-				this.runThread.setName("goGPS Kalman filter standalone");
+			case KALMAN_FILTER_STANDALONE:
+				runThread.setName("goGPS Kalman filter standalone");
 				break;
-			case RUN_MODE_KALMAN_FILTER_DOUBLE_DIFF:
-				this.runThread.setName("goGPS Kalman filter double difference");
+			case KALMAN_FILTER_DOUBLE_DIFF:
+				runThread.setName("goGPS Kalman filter double difference");
 				break;
-      case RUN_MODE_STANDALONE_SNAPSHOT:
-        this.runThread.setName("goGPS standalone snapshot");
+      case STANDALONE_SNAPSHOT:
+        runThread.setName("goGPS standalone snapshot");
         break;
-      case RUN_MODE_STANDALONE_COARSETIME:
-        this.runThread.setName("goGPS standalone coarse time");
+      case STANDALONE_COARSETIME:
+        runThread.setName("goGPS standalone coarse time");
         break;
 		}
-		this.runThread.start();
+		
+		runThread.start();
 		return this;
 	}
 
@@ -921,25 +923,25 @@ public class GoGPS implements Runnable{
 	 */
 	@Override
 	public void run() {
-		if(this.runMode<0) return;
+		if(this.runMode == null ) return;
 
 		switch(runMode){
-			case RUN_MODE_STANDALONE:
+			case STANDALONE:
 				runCodeStandalone();
 				break;
-			case RUN_MODE_DOUBLE_DIFF:
+			case DOUBLE_DIFF:
 				runCodeDoubleDifferences();
 				break;
-			case RUN_MODE_KALMAN_FILTER_STANDALONE:
+			case KALMAN_FILTER_STANDALONE:
 				runKalmanFilterCodePhaseStandalone();
 				break;
-			case RUN_MODE_KALMAN_FILTER_DOUBLE_DIFF:
+			case KALMAN_FILTER_DOUBLE_DIFF:
 				runKalmanFilterCodePhaseDoubleDifferences();
 				break;
-      case RUN_MODE_STANDALONE_SNAPSHOT:
+      case STANDALONE_SNAPSHOT:
         LS_SA_code_snapshot.run(this);
         break;
-      case RUN_MODE_STANDALONE_COARSETIME:
+      case STANDALONE_COARSETIME:
         runCodeStandaloneCoarseTime();
         break;
 		}
@@ -952,21 +954,18 @@ public class GoGPS implements Runnable{
       if( pc instanceof Thread ){
         try {
           ((Thread)pc).join();
-        } catch (InterruptedException e) {
-          e.printStackTrace();
-        }
+        } catch (InterruptedException e) {}
       }
     }
+    
     return this;
   }
 
   public GoGPS runFor(int seconds ) {
     try {
       Thread.sleep(seconds*1000);
-    } catch (InterruptedException e) {
-      // FIXME Auto-generated catch block
-      e.printStackTrace();
-    }
+    } catch (InterruptedException e) { }
+    
     return this;
   }
 

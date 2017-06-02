@@ -90,7 +90,7 @@ public class ProcessRealtimeUBX {
                         // .runKalmanFilterCodePhaseStandalone();
 
 			                  // run in background
-			                 .runThreadMode(GoGPS.RUN_MODE_KALMAN_FILTER_STANDALONE)
+			                 .runThreadMode( GoGPS.RunMode.KALMAN_FILTER_STANDALONE )
 
 			                  // wait for 2 minutes
 			                 .runFor(120);

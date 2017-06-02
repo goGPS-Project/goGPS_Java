@@ -4,6 +4,7 @@ import org.junit.Test;
 
 import org.gogpsproject.GoGPS;
 import org.gogpsproject.GoGPS.DynamicModel;
+import org.gogpsproject.GoGPS.RunMode;
 import org.gogpsproject.consumer.KmlProducer;
 import org.gogpsproject.producer.NavigationProducer;
 import org.gogpsproject.producer.ObservationsProducer;
@@ -45,9 +46,9 @@ public class Issues {
                          .setDynamicModel(DynamicModel.STATIC)
                          .setCutoff(0)
         
-//        .runCodeStandalone();
-//        .runKalmanFilterCodePhaseStandalone();
-                         .runKalmanFilterCodePhaseDoubleDifferences(); // -> Missing M or R obs
+        .run( RunMode.CODE_STANDALONE );
+//        .run( RunMode.KALMAN_FILTER_CODE_PHASE_STANDALONE );
+//                         .run( RunMode.KALMAN_FILTER_DOUBLE_DIFF); // -> Missing M or R obs
         
         roverIn.release(true, 10000);
         masterIn.release(true, 10000);
@@ -81,7 +82,7 @@ public class Issues {
                                      .addPositionConsumerListener(kml)
                                      .setDynamicModel(DynamicModel.STATIC)
                                      .setCutoff(0)
-                                     .runCodeStandalone()
+                                     .run( RunMode.CODE_STANDALONE_SNAPSHOT )
                                      .runUntilFinished();
 
         assertTrue( goGPS.getRoverPos().isValidXYZ() );

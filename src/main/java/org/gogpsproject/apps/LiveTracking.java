@@ -27,6 +27,7 @@ import java.text.*;
 
 import org.gogpsproject.GoGPS;
 import org.gogpsproject.GoGPS.DynamicModel;
+import org.gogpsproject.GoGPS.RunMode;
 import org.gogpsproject.consumer.KmlProducer;
 import org.gogpsproject.positioning.Coordinates;
 import org.gogpsproject.producer.NavigationProducer;
@@ -51,7 +52,7 @@ public class LiveTracking {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		DynamicModel dynamicModel = GoGPS.DynamicModel.CONST_SPEED;
+		DynamicModel dynamicModel = DynamicModel.CONST_SPEED;
 		try{
 			//force dot as decimal separator
 			Locale.setDefault(new Locale("en", "US"));
@@ -140,7 +141,7 @@ public class LiveTracking {
       GoGPS goGPS = new GoGPS(navigationIn, roverIn, masterIn)
           .setDynamicModel(dynamicModel)
           .addPositionConsumerListener(kml)
-			    .runThreadMode( GoGPS.RunMode.KALMAN_FILTER_DOUBLE_DIFF );
+			    .runThreadMode( RunMode.KALMAN_FILTER_CODE_PHASE_DOUBLE_DIFF );
 
       // goGPS.runCodeDoubleDifferences();
       // run blocking (never exit in live-tracking)

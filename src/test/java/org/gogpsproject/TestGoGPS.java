@@ -24,16 +24,13 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 import org.gogpsproject.GoGPS.DynamicModel;
+import org.gogpsproject.GoGPS.RunMode;
 import org.gogpsproject.consumer.KmlProducer;
 import org.gogpsproject.consumer.TxtProducer;
 import org.gogpsproject.producer.NavigationProducer;
 import org.gogpsproject.producer.ObservationsProducer;
-import org.gogpsproject.producer.parser.nvs.NVSFileReader;
-import org.gogpsproject.producer.parser.rinex.RinexNavigation;
 import org.gogpsproject.producer.parser.rinex.RinexNavigationParser;
 import org.gogpsproject.producer.parser.rinex.RinexObservationParser;
-import org.gogpsproject.producer.parser.sp3.SP3Navigation;
-import org.gogpsproject.producer.parser.ublox.UBXFileReader;
 
 /**
  * @author Eugenio Realini, Cryms.com
@@ -153,11 +150,11 @@ public class TestGoGPS {
 			GoGPS goGPS = new GoGPS(navigationIn, roverIn, masterIn)
 //			GoGPS goGPS = new GoGPS(navigationIn, roverIn);
   			.addPositionConsumerListeners(txt, kml)
-  			.setDynamicModel(dynamicModel)
+  			.setDynamicModel( dynamicModel )
 //			.runCodeStandalone();
 //			.runCodeDoubleDifferences();
 //			.runKalmanFilterCodePhaseStandalone();
-  			.runKalmanFilterCodePhaseDoubleDifferences();
+  			.run( RunMode.KALMAN_FILTER_CODE_PHASE_DOUBLE_DIFF ); 
 
 			try{
 				roverIn.release(true,10000);

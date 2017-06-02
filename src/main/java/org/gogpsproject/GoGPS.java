@@ -23,25 +23,8 @@ package org.gogpsproject;
 import java.util.*;
 
 import org.gogpsproject.consumer.PositionConsumer;
-import org.gogpsproject.positioning.Coordinates;
-import org.gogpsproject.positioning.KF_DD_code_phase;
-import org.gogpsproject.positioning.KF_SA_code_phase;
-import org.gogpsproject.positioning.KalmanFilter;
-import org.gogpsproject.positioning.LS_DD_code;
-import org.gogpsproject.positioning.LS_SA_code;
-import org.gogpsproject.positioning.LS_SA_code_coarse_time;
-import org.gogpsproject.positioning.LS_SA_code_dopp_snapshot;
-import org.gogpsproject.positioning.LS_SA_code_snapshot;
-import org.gogpsproject.positioning.LS_SA_dopplerPos;
-import org.gogpsproject.positioning.MasterPosition;
-import org.gogpsproject.positioning.RoverPosition;
-import org.gogpsproject.positioning.SatellitePosition;
-import org.gogpsproject.positioning.Satellites;
-import org.gogpsproject.positioning.Time;
-import org.gogpsproject.producer.NavigationProducer;
-import org.gogpsproject.producer.ObservationSet;
-import org.gogpsproject.producer.Observations;
-import org.gogpsproject.producer.ObservationsProducer;
+import org.gogpsproject.positioning.*;
+import org.gogpsproject.producer.*;
 
 /**
  * The Class GoGPS.
@@ -150,12 +133,12 @@ public class GoGPS implements Runnable{
 	private double cutoff = 15; // Elevation cutoff
 
 	public static enum RunMode {
-	  STANDALONE,
-	  DOUBLE_DIFF,
-	  KALMAN_FILTER_STANDALONE,
-	  KALMAN_FILTER_DOUBLE_DIFF,
-	  STANDALONE_SNAPSHOT,
-	  STANDALONE_COARSETIME
+	  CODE_STANDALONE,
+	  CODE_DOUBLE_DIFF,
+	  KALMAN_FILTER_CODE_PHASE_STANDALONE,
+	  KALMAN_FILTER_CODE_PHASE_DOUBLE_DIFF,
+	  CODE_STANDALONE_SNAPSHOT,
+	  CODE_STANDALONE_COARSETIME
 	}
 
 	private RunMode runMode;
@@ -729,64 +712,6 @@ public class GoGPS implements Runnable{
   }
 
 	/**
-	 * Run code standalone.
-	 */
-	public GoGPS runCodeStandalone() {
-		return runCodeStandalone(-1);
-	}
-
-	/**
-	 * Run code standalone.
-	 *
-	 * @param getNthPosition the get nth position
-	 * @return the coordinates
-	 * @throws Exception
-	 */
-	public GoGPS runCodeStandalone(double stopAtDopThreshold) {
-	  LS_SA_code.run(this, stopAtDopThreshold);
-	  return this;
-	}
-
-	/**
-	 * Run code double differences.
-	 */
-	public GoGPS runCodeDoubleDifferences() {
-	  LS_DD_code.run(this);
-		return this;
-	}
-
-	/**
-	 * Run kalman filter on code and phase standalone.
-	 */
-	public GoGPS runKalmanFilterCodePhaseStandalone() {
-    KF_SA_code_phase.run(this);
-		return this;
-	}
-
-	/**
-	 * Run kalman filter on code and phase double differences.
-	 */
-	public GoGPS runKalmanFilterCodePhaseDoubleDifferences() {
-	  KF_DD_code_phase.run(this);
-		return this;
-	}
-
-  public GoGPS runDopplerPos() {
-    LS_SA_dopplerPos.run(this);
-    return this;
-  }
-	
-  public GoGPS runCodeStandaloneSnapshot() {
-    LS_SA_code_snapshot.run(this);
-    return this;
-  }
-
-  public GoGPS runCodeStandaloneCoarseTime() {
-    LS_SA_code_coarse_time.run( this, MODULO20MS );
-    return this;
-  }
-
-  /**
 	 * @return the positionConsumer
 	 */
 	public void cleanPositionConsumers() {
@@ -845,34 +770,94 @@ public class GoGPS implements Runnable{
 	 * @param runMode the run mode to use
 	 */
 	public GoGPS runThreadMode( RunMode runMode ) {
-		
-	  this.runMode = runMode;
-		this.runThread = new Thread(this);
-		
-		switch(runMode){
-			case STANDALONE:
-				runThread.setName("goGPS standalone");
-				break;
-			case DOUBLE_DIFF:
-				runThread.setName("goGPS double difference");
-				break;
-			case KALMAN_FILTER_STANDALONE:
-				runThread.setName("goGPS Kalman filter standalone");
-				break;
-			case KALMAN_FILTER_DOUBLE_DIFF:
-				runThread.setName("goGPS Kalman filter double difference");
-				break;
-      case STANDALONE_SNAPSHOT:
-        runThread.setName("goGPS standalone snapshot");
-        break;
-      case STANDALONE_COARSETIME:
-        runThread.setName("goGPS standalone coarse time");
-        break;
-		}
-		
-		runThread.start();
-		return this;
+		return run( runMode, true );
 	}
+
+  public GoGPS run( RunMode runMode ) {
+    return run( runMode, false );
+  }
+  
+  /**
+   * @param runMode the run mode to use
+   */
+  public GoGPS run( RunMode runMode, boolean threadMode ) {
+    this.runMode = runMode;
+    
+    if( threadMode ){
+      runThread = new Thread(this);
+      
+      switch(runMode){
+        case CODE_STANDALONE:
+          runThread.setName("goGPS standalone");
+          break;
+        case CODE_DOUBLE_DIFF:
+          runThread.setName("goGPS double difference");
+          break;
+        case KALMAN_FILTER_CODE_PHASE_STANDALONE:
+          runThread.setName("goGPS Kalman filter standalone");
+          break;
+        case KALMAN_FILTER_CODE_PHASE_DOUBLE_DIFF:
+          runThread.setName("goGPS Kalman filter double difference");
+          break;
+        case CODE_STANDALONE_SNAPSHOT:
+          runThread.setName("goGPS standalone snapshot");
+          break;
+        case CODE_STANDALONE_COARSETIME:
+          runThread.setName("goGPS standalone coarse time");
+          break;
+      }
+      
+      runThread.start();
+    }
+    else
+      run();
+    
+    return this;
+  }
+	
+  /* (non-Javadoc)
+   * @see java.lang.Runnable#run()
+   */
+  @Override
+  public void run() {
+  	if( runMode == null ) 
+  	  throw new RuntimeException( "runMode was not defined. Ex. goGPS.run( RunMode.CODE_STANDALONE )");
+  
+  	switch(runMode){
+  		case CODE_STANDALONE:
+  	    LS_SA_code.run(this, -1);
+  			break;
+  		case CODE_DOUBLE_DIFF:
+  		  LS_DD_code.run(this);
+  			break;
+  		case KALMAN_FILTER_CODE_PHASE_STANDALONE:
+  		  KF_SA_code_phase.run(this);
+  			break;
+  		case KALMAN_FILTER_CODE_PHASE_DOUBLE_DIFF:
+  		  KF_DD_code_phase.run(this);
+  			break;
+      case CODE_STANDALONE_SNAPSHOT:
+        LS_SA_code_snapshot.run(this);
+        break;
+      case CODE_STANDALONE_COARSETIME:
+        LS_SA_code_coarse_time.run( this, MODULO20MS );
+        break;
+  	}
+  
+  	notifyPositionConsumerEvent(PositionConsumer.EVENT_GOGPS_THREAD_ENDED);
+  }
+
+  /**
+   * Run code standalone.
+   *
+   * @param getNthPosition the get nth position
+   * @return the coordinates
+   * @throws Exception
+   */
+  public GoGPS runCodeStandalone(double stopAtDopThreshold) {
+    LS_SA_code.run(this, stopAtDopThreshold);
+    return this;
+  }
 
   public boolean isRunning() {
     return runThread != null && runThread.isAlive();
@@ -890,44 +875,11 @@ public class GoGPS implements Runnable{
       try {
         runThread.interrupt();
         runThread.join();
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
+      } catch (InterruptedException e) {}
     }
   }
 	
-	/* (non-Javadoc)
-	 * @see java.lang.Runnable#run()
-	 */
-	@Override
-	public void run() {
-		if(this.runMode == null ) return;
-
-		switch(runMode){
-			case STANDALONE:
-				runCodeStandalone();
-				break;
-			case DOUBLE_DIFF:
-				runCodeDoubleDifferences();
-				break;
-			case KALMAN_FILTER_STANDALONE:
-				runKalmanFilterCodePhaseStandalone();
-				break;
-			case KALMAN_FILTER_DOUBLE_DIFF:
-				runKalmanFilterCodePhaseDoubleDifferences();
-				break;
-      case STANDALONE_SNAPSHOT:
-        LS_SA_code_snapshot.run(this);
-        break;
-      case STANDALONE_COARSETIME:
-        runCodeStandaloneCoarseTime();
-        break;
-		}
-
-		notifyPositionConsumerEvent(PositionConsumer.EVENT_GOGPS_THREAD_ENDED);
-	}
-
-  public GoGPS runUntilFinished() {
+	public GoGPS runUntilFinished() {
     for( PositionConsumer pc: positionConsumers ){
       if( pc instanceof Thread ){
         try {

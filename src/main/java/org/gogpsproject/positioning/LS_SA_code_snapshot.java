@@ -683,7 +683,7 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
     rover.setXYZ(0, 0, 0);
   }
 
-  public static void runCodeStandaloneSnapshot( GoGPS goGPS ) {
+  public static void run( GoGPS goGPS ) {
     
     RoverPosition rover   = goGPS.getRoverPos();
     MasterPosition master = goGPS.getMasterPos();

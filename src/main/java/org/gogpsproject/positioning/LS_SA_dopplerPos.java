@@ -7,6 +7,7 @@ import org.ejml.simple.SimpleMatrix;
 import org.gogpsproject.Constants;
 import org.gogpsproject.GoGPS;
 import org.gogpsproject.Status;
+import org.gogpsproject.consumer.PositionConsumer;
 import org.gogpsproject.producer.NavigationProducer;
 import org.gogpsproject.producer.ObservationSet;
 import org.gogpsproject.producer.Observations;
@@ -457,5 +458,81 @@ public class LS_SA_dopplerPos extends LS_SA_code {
     
     System.out.println( rover );
   }
+  
+  public static void run( GoGPS goGPS ) {
+    
+    RoverPosition rover   = goGPS.getRoverPos();
+    MasterPosition master = goGPS.getMasterPos();
+    Satellites sats       = goGPS.getSats();
+    
+    long index = 0;
+    Observations obsR = null;
+    
+    LS_SA_dopplerPos sa = new LS_SA_dopplerPos(goGPS);
+    Time refTime;
+    try {
+      obsR = goGPS.getRoverIn().getCurrentObservations();
+      
+      goGPS.notifyPositionConsumerEvent(PositionConsumer.EVENT_START_OF_TRACK);
+      while( obsR!=null ) { // buffStreamObs.ready()
+
+        refTime = obsR.getRefTime();
+
+        // for test
+        rover.setXYZ(0, 0, 0);
+        
+//        runElevationMethod(obsR);
+
+        sa.dopplerPos(obsR);
+
+        // If an approximate position was computed
+        if(goGPS.isDebug()) System.out.println("Valid position? "+rover.isValidXYZ());
+        
+        RoverPosition coord2 = null;
+        
+        if( !rover.isValidXYZ() ){
+//              coord2 = new ReceiverPosition( Coordinates.globalXYZInstance(0, 0, 0), ReceiverPosition.DOP_TYPE_NONE,0.0,0.0,0.0 );
+//              coord2.status = false;
+//              coord2.satsInView = obsR.getNumSat();
+//              coord2.satsInUse = 0;
+          obsR = goGPS.getRoverIn().getNextObservations();
+          continue;
+        }
+          else {
+            if(goGPS.isDebug()) System.out.println("Valid position? "+rover.isValidXYZ()+" x:"+rover.getX()+" y:"+rover.getY()+" z:"+rover.getZ());
+            if(goGPS.isDebug()) System.out.println(" lat:"+rover.getGeodeticLatitude()+" lon:"+rover.getGeodeticLongitude() );
+              
+              coord2 = new RoverPosition( rover, RoverPosition.DOP_TYPE_STANDARD, rover.getpDop(), rover.gethDop(), rover.getvDop());
+//                coord2.status = true;
+//                coord2.satsInView = obsR.getNumSat();
+//                coord2.satsInUse = ((SnapshotReceiverPosition)roverPos).satsInUse;
+
+              // set other things
+              // "Index,Status, Date, UTC,Latitude [DD], Longitude [DD], 
+              // HDOP,SVs in Use, SVs in View, SNR Avg [dB], 
+              // Residual Error, Clock Error, Clock Error Total,\r\n" );
+              
+              if(goGPS.isDebug())System.out.println("-------------------- "+rover.getpDop());
+//                if(stopAtDopThreshold>0.0 && roverPos.getpDop()<stopAtDopThreshold){
+//                  return coord;
+//                }
+          }
+          if(goGPS.getPositionConsumers().size()>0){
+            coord2.setRefTime(new Time(obsR.getRefTime().getMsec()));
+            goGPS.notifyPositionConsumerAddCoordinate(coord2);
+          }
+//        }catch(Exception e){
+//          System.out.println("Could not complete due to "+e);
+//          e.printStackTrace();
+//        }
+        obsR = goGPS.getRoverIn().getNextObservations();
+      }
+    } catch (Throwable e) {
+      e.printStackTrace();
+    } finally {
+      goGPS.notifyPositionConsumerEvent(PositionConsumer.EVENT_END_OF_TRACK);
+    }
+  }
+  
 }
 

@@ -1217,90 +1217,18 @@ public class GoGPS implements Runnable{
 		return this;
 	}
 
-  public GoGPS runCodeStandaloneCoarseTime() {
-    LS_SA_code_coarse_time.runCodeStandaloneCoarseTime( this, MODULO20MS );
-    return this;
-  }
-	
-  /**
-   * @param interval process fixes every interval minutes
-   * @return
-   * @throws Exception
-   */
   public GoGPS runDopplerPos() {
-    
-    long index = 0;
-    Observations obsR = null;
-    
-    LS_SA_dopplerPos sa = new LS_SA_dopplerPos(this);
-    Time refTime;
-    try {
-      obsR = roverIn.getCurrentObservations();
-      
-      notifyPositionConsumerEvent(PositionConsumer.EVENT_START_OF_TRACK);
-      while( obsR!=null ) { // buffStreamObs.ready()
-
-        refTime = obsR.getRefTime();
-
-        // for test
-        roverPos.setXYZ(0, 0, 0);
-        
-//        runElevationMethod(obsR);
-
-        sa.dopplerPos(obsR);
-
-        // If an approximate position was computed
-        if(debug) System.out.println("Valid position? "+roverPos.isValidXYZ());
-        
-        RoverPosition coord2 = null;
-        
-        if( !roverPos.isValidXYZ() ){
-//              coord2 = new ReceiverPosition( Coordinates.globalXYZInstance(0, 0, 0), ReceiverPosition.DOP_TYPE_NONE,0.0,0.0,0.0 );
-//              coord2.status = false;
-//              coord2.satsInView = obsR.getNumSat();
-//              coord2.satsInUse = 0;
-          obsR = roverIn.getNextObservations();
-          continue;
-        }
-          else {
-            if(debug) System.out.println("Valid position? "+roverPos.isValidXYZ()+" x:"+roverPos.getX()+" y:"+roverPos.getY()+" z:"+roverPos.getZ());
-            if(debug) System.out.println(" lat:"+roverPos.getGeodeticLatitude()+" lon:"+roverPos.getGeodeticLongitude() );
-              
-              coord2 = new RoverPosition( roverPos, RoverPosition.DOP_TYPE_STANDARD, roverPos.getpDop(), roverPos.gethDop(), roverPos.getvDop());
-//                coord2.status = true;
-//                coord2.satsInView = obsR.getNumSat();
-//                coord2.satsInUse = ((SnapshotReceiverPosition)roverPos).satsInUse;
-
-              // set other things
-              // "Index,Status, Date, UTC,Latitude [DD], Longitude [DD], 
-              // HDOP,SVs in Use, SVs in View, SNR Avg [dB], 
-              // Residual Error, Clock Error, Clock Error Total,\r\n" );
-              
-              if(debug)System.out.println("-------------------- "+roverPos.getpDop());
-//                if(stopAtDopThreshold>0.0 && roverPos.getpDop()<stopAtDopThreshold){
-//                  return coord;
-//                }
-          }
-          if(positionConsumers.size()>0){
-            coord2.setRefTime(new Time(obsR.getRefTime().getMsec()));
-            notifyPositionConsumerAddCoordinate(coord2);
-          }
-//        }catch(Exception e){
-//          System.out.println("Could not complete due to "+e);
-//          e.printStackTrace();
-//        }
-        obsR = roverIn.getNextObservations();
-      }
-    } catch (Throwable e) {
-      e.printStackTrace();
-    } finally {
-      notifyPositionConsumerEvent(PositionConsumer.EVENT_END_OF_TRACK);
-    }
+    LS_SA_dopplerPos.run(this);
     return this;
   }
 	
   public GoGPS runCodeStandaloneSnapshot() {
-    LS_SA_code_snapshot.runCodeStandaloneSnapshot(this);
+    LS_SA_code_snapshot.run(this);
+    return this;
+  }
+
+  public GoGPS runCodeStandaloneCoarseTime() {
+    LS_SA_code_coarse_time.run( this, MODULO20MS );
     return this;
   }
 
@@ -1436,7 +1364,7 @@ public class GoGPS implements Runnable{
 				runKalmanFilterCodePhaseDoubleDifferences();
 				break;
       case RUN_MODE_STANDALONE_SNAPSHOT:
-        LS_SA_code_snapshot.runCodeStandaloneSnapshot(this);
+        LS_SA_code_snapshot.run(this);
         break;
       case RUN_MODE_STANDALONE_COARSETIME:
         runCodeStandaloneCoarseTime();

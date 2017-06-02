@@ -1037,7 +1037,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
     }
   }
   
-  public static void runCodeStandaloneCoarseTime( GoGPS goGPS, final double MODULO ) {
+  public static void run( GoGPS goGPS, final double MODULO ) {
       
     RoverPosition rover   = goGPS.getRoverPos();
     MasterPosition master = goGPS.getMasterPos();

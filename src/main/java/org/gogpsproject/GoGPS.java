@@ -161,7 +161,6 @@ public class GoGPS implements Runnable{
 	private int runMode = -1;
 	
 	private Thread runThread=null;
-	private boolean running = false;
 	
 	/** The navigation. */
 	private NavigationProducer navigation;
@@ -769,86 +768,8 @@ public class GoGPS implements Runnable{
 	 * @throws Exception
 	 */
 	public GoGPS runCodeStandalone(double stopAtDopThreshold) throws Exception {
-	  /** The rover calculated position is valid */
-	  boolean validPosition = false;
-
-    running = true;
-		LS_SA_code sa = new LS_SA_code(this);
-		
-		RoverPosition coord = null;
-		try {
-			Observations obsR = roverIn.getNextObservations();
-			while( obsR!=null && running ) { // buffStreamObs.ready()
-//				if(debug) System.out.println("OK ");
-
-				//try{
-					// If there are at least four satellites
-					if (obsR.getNumSat() >= 4) { // gps.length
-						if(debug) System.out.println("Total number of satellites: "+obsR.getNumSat());
-
-						// Compute approximate positioning by iterative least-squares
-            if (!roverPos.isValidXYZ()) {
-  						for (int iter = 0; iter < 3; iter++) {
-  							// Select all satellites
-  							satellites.selectStandalone( obsR, -100);
-  							
-  							if (satellites.getAvailNumber() >= 4) {
-  								sa.codeStandalone( obsR, false, true);
-  							}
-  						}
-
-						// If an approximate position was computed
-  						if(debug) System.out.println("Valid approximate position? "+roverPos.isValidXYZ()+ " " + roverPos.toString());
-            }
-						if (roverPos.isValidXYZ()) {
-							// Select available satellites
-							satellites.selectStandalone( obsR );
-							
-							if (satellites.getAvailNumber() >= 4){
-								if(debug) System.out.println("Number of selected satellites: " + satellites.getAvailNumber());
-								// Compute code stand-alone positioning (epoch-by-epoch solution)
-								sa.codeStandalone( obsR, false, false);
-							}
-							else
-								// Discard approximate positioning
-								roverPos.setXYZ(0, 0, 0);
-						}
-
-						if(debug)System.out.println("Valid LS position? "+roverPos.isValidXYZ()+ " " + roverPos.toString() );
-						if (roverPos.isValidXYZ()) {
-							if(!validPosition){
-								notifyPositionConsumerEvent(PositionConsumer.EVENT_START_OF_TRACK);
-								validPosition = true;
-							}
-//							else 
-							{
-								coord = new RoverPosition(roverPos, RoverPosition.DOP_TYPE_STANDARD, roverPos.getpDop(), roverPos.gethDop(), roverPos.getvDop());
-
-								if(positionConsumers.size()>0){
-									coord.setRefTime(new Time(obsR.getRefTime().getMsec()));
-									notifyPositionConsumerAddCoordinate(coord);
-								}
-								if(debug)System.out.println("PDOP: "+roverPos.getpDop());
-								if(debug)System.out.println("------------------------------------------------------------");
-								if(stopAtDopThreshold>0.0 && roverPos.getpDop()<stopAtDopThreshold){
-									return this;
-								}
-							}
-						}
-					}
-//				}catch(Exception e){
-//					System.out.println("Could not complete due to "+e);
-//					e.printStackTrace();
-//				}
-				obsR = roverIn.getNextObservations();
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw e;
-		} finally {
-			notifyPositionConsumerEvent(PositionConsumer.EVENT_END_OF_TRACK);
-		}
-    return this;
+	  LS_SA_code.run(this, stopAtDopThreshold);
+	  return this;
 	}
 
 	/**
@@ -969,13 +890,12 @@ public class GoGPS implements Runnable{
         this.runThread.setName("goGPS standalone coarse time");
         break;
 		}
-		this.running = true;
 		this.runThread.start();
 		return this;
 	}
 
   public boolean isRunning() {
-    return runThread != null && running;
+    return runThread != null && runThread.isAlive();
   }
   
   public String getThreadName(){
@@ -986,19 +906,14 @@ public class GoGPS implements Runnable{
   }
   
   public void stopThreadMode(){
-	  if( !running )
-	    return;
-	  
-    if( runThread != null) {
+    if( isRunning() ) {
       try {
         runThread.interrupt();
         runThread.join();
       } catch (InterruptedException e) {
-        // FIXME Auto-generated catch block
         e.printStackTrace();
       }
     }
-    running = false;
   }
 	
 	/* (non-Javadoc)
@@ -1030,7 +945,6 @@ public class GoGPS implements Runnable{
 		}
 
 		notifyPositionConsumerEvent(PositionConsumer.EVENT_GOGPS_THREAD_ENDED);
-    running = false;
 	}
 
   public GoGPS runUntilFinished() {

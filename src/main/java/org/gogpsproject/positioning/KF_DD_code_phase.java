@@ -275,7 +275,7 @@ public class KF_DD_code_phase extends KalmanFilter {
     // Satellite ID
     int id = 0;
 
-    if (goGPS.getAmbiguityStrategy() == GoGPS.AMBIGUITY_OBSERV) {
+    if (goGPS.getAmbiguityStrategy() == GoGPS.AmbiguityStrategy.OBSERV) {
 
       for (int i = 0; i < nObs; i++) {
 
@@ -305,7 +305,7 @@ public class KF_DD_code_phase extends KalmanFilter {
           * goGPS.getStDevCode(masterObs.getSatByIDType(id, satType), goGPS.getFreq()) / Math.pow(roverObs.getSatByIDType(id, satType).getWavelength(goGPS.getFreq()), 2);
         }
       }
-    } else if(goGPS.getAmbiguityStrategy() == GoGPS.AMBIGUITY_APPROX | (nObsAvail + nObsAvailPhase <= nUnknowns)) {
+    } else if(goGPS.getAmbiguityStrategy() == GoGPS.AmbiguityStrategy.APPROX | (nObsAvail + nObsAvailPhase <= nUnknowns)) {
 
       for (int i = 0; i < nObs; i++) {
 
@@ -338,7 +338,7 @@ public class KF_DD_code_phase extends KalmanFilter {
         }
       }
     } 
-    else if (goGPS.getAmbiguityStrategy() == GoGPS.AMBIGUITY_LS) {
+    else if ( goGPS.getAmbiguityStrategy() == GoGPS.AmbiguityStrategy.LS ) {
 
       // Define least squares matrices
       SimpleMatrix A;

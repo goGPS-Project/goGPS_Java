@@ -136,17 +136,14 @@ public class GoGPS implements Runnable{
 	/** The cycle-slip detection strategy. */
 	private int cycleSlipDetectionStrategy = APPROX_PSEUDORANGE;
 
-	/** The Constant AMBIGUITY_OBSERV. */
-	public final static int AMBIGUITY_OBSERV = 0;
-
-	/** The Constant AMBIGUITY_APPROX. */
-	public final static int AMBIGUITY_APPROX = 1;
-
-	/** The Constant AMBIGUITY_LS. */
-	public final static int AMBIGUITY_LS = 2;
-
+	public static enum AmbiguityStrategy {
+	  OBSERV,
+	  APPROX,
+	  LS
+	}
+	
 	/** The ambiguity strategy. */
-	private int ambiguityStrategy = AMBIGUITY_APPROX;
+	private AmbiguityStrategy ambiguityStrategy = AmbiguityStrategy.APPROX;
 
 	/** The Elevation cutoff. */
 	private double cutoff = 15; // Elevation cutoff
@@ -654,7 +651,7 @@ public class GoGPS implements Runnable{
    *
    * @return the ambiguityStrategy
    */
-  public int getAmbiguityStrategy() {
+  public AmbiguityStrategy getAmbiguityStrategy() {
   	return ambiguityStrategy;
   }
 
@@ -664,7 +661,7 @@ public class GoGPS implements Runnable{
    * @param ambiguityStrategy the ambiguityStrategy to set
    * @return 
    */
-  public GoGPS setAmbiguityStrategy(int ambiguityStrategy) {
+  public GoGPS setAmbiguityStrategy( AmbiguityStrategy ambiguityStrategy ) {
   	this.ambiguityStrategy = ambiguityStrategy;
     return this;
   }

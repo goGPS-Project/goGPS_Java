@@ -33,12 +33,9 @@ public class KF_SA_code_phase extends KalmanFilter {
     // Counter for satellites with phase available
     int p = 0;
 
-    // Satellite ID
-    int id = 0;
-    
     for (int i = 0; i < nObs; i++) {
 
-      id = roverObs.getSatID(i);
+      int id = roverObs.getSatID(i);
       char satType = roverObs.getGnssType(i);
       String checkAvailGnss = String.valueOf(satType) + String.valueOf(id);
 
@@ -98,7 +95,8 @@ public class KF_SA_code_phase extends KalmanFilter {
 
           // Fill in the observation error covariance matrix (for phase)
           CnnBase = Cnn.get(nObsAvail + p, nObsAvail + p);
-          Cnn.set(nObsAvail + p, nObsAvail + p, CnnBase + Math.pow(stDevPhase, 2) * roverSatWeight);
+          Cnn.set(nObsAvail + p, nObsAvail + p, CnnBase 
+              + Math.pow(stDevPhase, 2) * roverSatWeight);
 
           // Increment satellites with phase counter
           p++;
@@ -115,6 +113,7 @@ public class KF_SA_code_phase extends KalmanFilter {
   /**
    * @param roverObs
    */
+  @Override
   void estimateAmbiguities( Observations roverObs, Observations masterObs, Coordinates masterPos, ArrayList<Integer> satAmb, int pivotIndex, boolean init){
   
     // Number of GPS observations
@@ -130,57 +129,37 @@ public class KF_SA_code_phase extends KalmanFilter {
     int nUnknowns = 4 + satAmb.size();
   
     // Estimated ambiguities
-    double[] estimatedAmbiguities;
-    estimatedAmbiguities = new double[satAmb.size()];
+    double[] estimatedAmbiguities = new double[satAmb.size()];
   
     // Covariance of estimated ambiguity combinations
-    double[] estimatedAmbiguitiesCovariance;
-    estimatedAmbiguitiesCovariance = new double[satAmb.size()];
-  
-    // Satellite ID
-    int id = 0;
-  
-    // Define least squares matrices
-    SimpleMatrix A;
-    SimpleMatrix b;
-    SimpleMatrix y0;
-    SimpleMatrix Qcode;
-    SimpleMatrix Qphase;
-    SimpleMatrix Q;
-    SimpleMatrix x;
-    SimpleMatrix vEstim;
-    SimpleMatrix covariance;
-    SimpleMatrix tropoCorr;
-    SimpleMatrix ionoCorr;
+    double[] estimatedAmbiguitiesCovariance = new double[satAmb.size()];
   
     // Least squares design matrix
-    A = new SimpleMatrix(nObsAvail+nObsAvailPhase, nUnknowns);
-    A.zero();
+    SimpleMatrix A = new SimpleMatrix(nObsAvail+nObsAvailPhase, nUnknowns);
   
     // Vector for approximate pseudoranges
-    b = new SimpleMatrix(nObsAvail+nObsAvailPhase, 1);
+    SimpleMatrix b = new SimpleMatrix(nObsAvail+nObsAvailPhase, 1);
   
     // Vector for observed pseudoranges
-    y0 = new SimpleMatrix(nObsAvail+nObsAvailPhase, 1);
+    SimpleMatrix y0 = new SimpleMatrix(nObsAvail+nObsAvailPhase, 1);
   
     // Cofactor matrices
-    Qcode = new SimpleMatrix(nObsAvail, nObsAvail);
-    Qphase = new SimpleMatrix(nObsAvailPhase, nObsAvailPhase);
-    Q = new SimpleMatrix(nObsAvail+nObsAvailPhase, nObsAvail+nObsAvailPhase);
-    Q.zero();
+    SimpleMatrix Qcode = new SimpleMatrix(nObsAvail, nObsAvail);
+    SimpleMatrix Qphase = new SimpleMatrix(nObsAvailPhase, nObsAvailPhase);
+    SimpleMatrix Q = new SimpleMatrix(nObsAvail+nObsAvailPhase, nObsAvail+nObsAvailPhase);
   
     // Solution vector
-    x = new SimpleMatrix(nUnknowns, 1);
+    SimpleMatrix x = new SimpleMatrix(nUnknowns, 1);
   
     // Vector for observation error
-    vEstim = new SimpleMatrix(nObsAvail, 1);
+    SimpleMatrix vEstim = new SimpleMatrix(nObsAvail, 1);
   
     // Error covariance matrix
-    covariance = new SimpleMatrix(nUnknowns, nUnknowns);
+    SimpleMatrix covariance = new SimpleMatrix(nUnknowns, nUnknowns);
   
     // Vectors for troposphere and ionosphere corrections
-    tropoCorr = new SimpleMatrix(nObsAvail+nObsAvailPhase, 1);
-    ionoCorr = new SimpleMatrix(nObsAvail+nObsAvailPhase, 1);
+    SimpleMatrix tropoCorr = new SimpleMatrix(nObsAvail+nObsAvailPhase, 1);
+    SimpleMatrix ionoCorr = new SimpleMatrix(nObsAvail+nObsAvailPhase, 1);
   
     // Counters for available satellites
     int k = 0;
@@ -190,7 +169,7 @@ public class KF_SA_code_phase extends KalmanFilter {
     // ... for code ...
     for (int i = 0; i < nObs; i++) {
   
-      id = roverObs.getSatID(i);
+      int id = roverObs.getSatID(i);
       char satType = roverObs.getGnssType(i);
       String checkAvailGnss = String.valueOf(satType) + String.valueOf(id);
   
@@ -225,7 +204,7 @@ public class KF_SA_code_phase extends KalmanFilter {
     // ... and phase
     for (int i = 0; i < nObs; i++) {
   
-      id = roverObs.getSatID(i);
+      int id = roverObs.getSatID(i);
       char satType = roverObs.getGnssType(i);
       String checkAvailGnss = String.valueOf(satType) + String.valueOf(id);
   
@@ -242,7 +221,8 @@ public class KF_SA_code_phase extends KalmanFilter {
   
           // Add the observed phase range value to y0
           y0.set(k, 0, roverObs.getSatByIDType(id, satType).getPhaserange(goGPS.getFreq()));
-        } else {
+        } 
+        else {
           // Add the observed phase range value + known N to y0
           y0.set(k, 0, roverObs.getSatByIDType(id, satType).getPhaserange(goGPS.getFreq()) + KFprediction.get(i3 + id) * roverObs.getSatByIDType(id, satType).getWavelength(goGPS.getFreq()));
         }
@@ -257,6 +237,7 @@ public class KF_SA_code_phase extends KalmanFilter {
         // Fill in the cofactor matrix
         double roverSatWeight = computeWeight(rover.topo[i].getElevation(), roverObs.getSatByIDType(id, satType).getSignalStrength(goGPS.getFreq()));
         Qphase.set(p, p, Qphase.get(p, p) + Math.pow(stDevPhase, 2) * roverSatWeight);
+        
         int r = 1;
         for (int m = i+1; m < nObs; m++) {
           if (sats.pos[m] !=null && sats.availPhase.contains(sats.pos[m].getSatID())) {
@@ -320,7 +301,10 @@ public class KF_SA_code_phase extends KalmanFilter {
 
   /**
    * @param roverObs
+   * @param masterObs
+   * @param masterPos
    */
+  @Override
   void checkSatelliteConfiguration(Observations roverObs, Observations masterObs, Coordinates masterPos) {
 
     // Lists for keeping track of satellites that need ambiguity (re-)estimation
@@ -351,25 +335,20 @@ public class KF_SA_code_phase extends KalmanFilter {
       }
     }
 
-    // Cycle-slip detection
-    boolean lossOfLockCycleSlipRover;
-    boolean dopplerCycleSlipRover;
-    boolean obsCodeCycleSlip;
-    boolean cycleSlip;
-    
     for (int i = 0; i < roverObs.getNumSat(); i++) {
 
       int satID = roverObs.getSatID(i);
       char satType = roverObs.getGnssType(i);
       String checkAvailGnss = String.valueOf(satType) + String.valueOf(satID);
 
+      boolean lossOfLockCycleSlipRover;
       if (sats.gnssAvailPhase.contains(checkAvailGnss)) {
-
         // cycle slip detected by loss of lock indicator (disabled)
         lossOfLockCycleSlipRover = roverObs.getSatByIDType(satID, satType).isPossibleCycleSlip(goGPS.getFreq());
         lossOfLockCycleSlipRover = false;
 
         // cycle slip detected by Doppler predicted phase range
+        boolean dopplerCycleSlipRover;
         if (goGPS.getCycleSlipDetectionStrategy() == GoGPS.CycleSlipDetectionStrategy.DOPPLER_PREDICTED_PHASE_RANGE) {
           dopplerCycleSlipRover = rover.getDopplerPredictedPhase(satID) != 0.0 && (Math.abs(roverObs.getSatByIDType(satID, satType).getPhaseCycles(goGPS.getFreq())
               - rover.getDopplerPredictedPhase(satID)) > goGPS.getCycleSlipThreshold());
@@ -386,9 +365,9 @@ public class KF_SA_code_phase extends KalmanFilter {
         // Store estimated ambiguity combinations and their covariance
         double estimatedAmbiguity = (roverSatCodeObs - roverSatPhaseObs - 2*rover.satIonoCorr[i]) / roverObs.getSatByIDType(satID, satType).getWavelength(goGPS.getFreq());
 
-        obsCodeCycleSlip = Math.abs(KFprediction.get(i3+satID) - estimatedAmbiguity) > goGPS.getCycleSlipThreshold();
+        boolean obsCodeCycleSlip = Math.abs(KFprediction.get(i3+satID) - estimatedAmbiguity) > goGPS.getCycleSlipThreshold();
 
-        cycleSlip = (lossOfLockCycleSlipRover || dopplerCycleSlipRover || obsCodeCycleSlip);
+        boolean cycleSlip = (lossOfLockCycleSlipRover || dopplerCycleSlipRover || obsCodeCycleSlip);
 
         if (!newSatellites.contains(satID) && cycleSlip) {
 

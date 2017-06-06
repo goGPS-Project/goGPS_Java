@@ -3,6 +3,7 @@ package org.gogpsproject.positioning;
 import org.ejml.simple.SimpleMatrix;
 import org.gogpsproject.GoGPS;
 import org.gogpsproject.consumer.PositionConsumer;
+import org.gogpsproject.positioning.RoverPosition.DopType;
 import org.gogpsproject.producer.Observations;
 import org.gogpsproject.producer.ObservationsProducer;
 
@@ -256,7 +257,7 @@ public class LS_DD_code extends LS_SA_code {
                 goGPS.notifyPositionConsumerEvent(PositionConsumer.EVENT_START_OF_TRACK);
                 validPosition = true;
               }else{
-                RoverPosition coord = new RoverPosition(rover, RoverPosition.DOP_TYPE_STANDARD, rover.getpDop(), rover.gethDop(), rover.getvDop());
+                RoverPosition coord = new RoverPosition(rover, DopType.KALMAN, rover.getpDop(), rover.gethDop(), rover.getvDop());
 
                 if(goGPS.getPositionConsumers().size()>0){
                   coord.setRefTime(new Time(obsR.getRefTime().getMsec()));

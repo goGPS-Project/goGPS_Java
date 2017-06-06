@@ -29,6 +29,7 @@ import java.util.TimeZone;
 
 import org.gogpsproject.Status;
 import org.gogpsproject.positioning.RoverPosition;
+import org.gogpsproject.positioning.RoverPosition.DopType;
 
 /**
  * <p>
@@ -158,7 +159,7 @@ public class KmlProducer extends Thread implements PositionConsumer {
 //			System.out.print(" Lon:" + lon);//geod.get(0)
 //			System.out.print(" Lat:" + lat);//geod.get(1)
 			String dopLabel = "DOP";
-			if (coord.getDopType() == RoverPosition.DOP_TYPE_KALMAN)
+			if ( coord.getDopType() == DopType.KALMAN )
 				dopLabel = "KDOP";
 
 			if(timeSampleDelaySec>0 && (num++)%timeSampleDelaySec==0){

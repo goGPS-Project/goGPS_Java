@@ -8,6 +8,7 @@ import org.gogpsproject.Constants;
 import org.gogpsproject.GoGPS;
 import org.gogpsproject.Status;
 import org.gogpsproject.consumer.PositionConsumer;
+import org.gogpsproject.positioning.RoverPosition.DopType;
 import org.gogpsproject.producer.NavigationProducer;
 import org.gogpsproject.producer.ObservationSet;
 import org.gogpsproject.producer.Observations;
@@ -502,7 +503,7 @@ public class LS_SA_dopplerPos extends LS_SA_code {
             if(goGPS.isDebug()) System.out.println("Valid position? "+rover.isValidXYZ()+" x:"+rover.getX()+" y:"+rover.getY()+" z:"+rover.getZ());
             if(goGPS.isDebug()) System.out.println(" lat:"+rover.getGeodeticLatitude()+" lon:"+rover.getGeodeticLongitude() );
               
-              coord2 = new RoverPosition( rover, RoverPosition.DOP_TYPE_STANDARD, rover.getpDop(), rover.gethDop(), rover.getvDop());
+              coord2 = new RoverPosition( rover, DopType.KALMAN, rover.getpDop(), rover.gethDop(), rover.getvDop());
 //                coord2.status = true;
 //                coord2.satsInView = obsR.getNumSat();
 //                coord2.satsInUse = ((SnapshotReceiverPosition)roverPos).satsInUse;

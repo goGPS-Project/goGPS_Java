@@ -80,45 +80,45 @@ public class Satellites {
 
     double tropoCorr = 0;
 
-    if (height < 5000) {
-
-      elevation = Math.toRadians(Math.abs(elevation));
-      if (elevation == 0){
-        elevation = elevation + 0.01;
-      }
-
-      // Numerical constants and tables for Saastamoinen algorithm
-      // (troposphere correction)
-      final double hr = 50.0;
-      final int[] ha = {0, 500, 1000, 1500, 2000, 2500, 3000, 4000, 5000 };
-      final double[] ba = { 1.156, 1.079, 1.006, 0.938, 0.874, 0.813, 0.757, 0.654, 0.563 };
-
-      // Saastamoinen algorithm
-      double P = Constants.STANDARD_PRESSURE * Math.pow((1 - 0.0000226 * height), 5.225);
-      double T = Constants.STANDARD_TEMPERATURE - 0.0065 * height;
-      double H = hr * Math.exp(-0.0006396 * height);
-
-      // If height is below zero, keep the maximum correction value
-      double B = ba[0];
-      // Otherwise, interpolate the tables
-      if (height >= 0) {
-        int i = 1;
-        while (height > ha[i]) {
-          i++;
-        }
-        double m = (ba[i] - ba[i - 1]) / (ha[i] - ha[i - 1]);
-        B = ba[i - 1] + m * (height - ha[i - 1]);
-      }
-
-      double e = 0.01
-          * H
-          * Math.exp(-37.2465 + 0.213166 * T - 0.000256908
-              * Math.pow(T, 2));
-
-      tropoCorr = ((0.002277 / Math.sin(elevation))
-          * (P - (B / Math.pow(Math.tan(elevation), 2))) + (0.002277 / Math.sin(elevation))
-          * (1255 / T + 0.05) * e);
+    if (height > 5000)
+      return tropoCorr;
+      
+    elevation = Math.toRadians(Math.abs(elevation));
+    if (elevation == 0){
+      elevation = elevation + 0.01;
     }
+
+    // Numerical constants and tables for Saastamoinen algorithm
+    // (troposphere correction)
+    final double hr = 50.0;
+    final int[] ha = {0, 500, 1000, 1500, 2000, 2500, 3000, 4000, 5000 };
+    final double[] ba = { 1.156, 1.079, 1.006, 0.938, 0.874, 0.813, 0.757, 0.654, 0.563 };
+
+    // Saastamoinen algorithm
+    double P = Constants.STANDARD_PRESSURE * Math.pow((1 - 0.0000226 * height), 5.225);
+    double T = Constants.STANDARD_TEMPERATURE - 0.0065 * height;
+    double H = hr * Math.exp(-0.0006396 * height);
+
+    // If height is below zero, keep the maximum correction value
+    double B = ba[0];
+    // Otherwise, interpolate the tables
+    if (height >= 0) {
+      int i = 1;
+      while (height > ha[i]) {
+        i++;
+      }
+      double m = (ba[i] - ba[i - 1]) / (ha[i] - ha[i - 1]);
+      B = ba[i - 1] + m * (height - ha[i - 1]);
+    }
+
+    double e = 0.01
+        * H
+        * Math.exp(-37.2465 + 0.213166 * T - 0.000256908
+            * Math.pow(T, 2));
+
+    tropoCorr = ((0.002277 / Math.sin(elevation))
+        * (P - (B / Math.pow(Math.tan(elevation), 2))) + (0.002277 / Math.sin(elevation))
+        * (1255 / T + 0.05) * e);
 
     return tropoCorr;
   }
@@ -135,7 +135,9 @@ public class Satellites {
     double ionoCorr = 0;
 
     IonoGps iono = navigation.getIono(time.getMsec());
-    if(iono==null) return 0.0;
+    
+    if(iono==null) 
+      return 0.0;
 //    double a0 = navigation.getIono(time.getMsec(),0);
 //    double a1 = navigation.getIono(time.getMsec(),1);
 //    double a2 = navigation.getIono(time.getMsec(),2);
@@ -157,36 +159,49 @@ public class Satellites {
     double f = 1 + 16 * Math.pow((0.53 - elevation), 3);
     double psi = 0.0137 / (elevation + 0.11) - 0.022;
     double phi = lat + psi * Math.cos(azimuth * Math.PI);
+    
     if (phi > 0.416){
       phi = 0.416;
+    
     }
     if (phi < -0.416){
       phi = -0.416;
     }
+    
     double lambda = lon + (psi * Math.sin(azimuth * Math.PI))
         / Math.cos(phi * Math.PI);
+    
     double ro = phi + 0.064 * Math.cos((lambda - 1.617) * Math.PI);
     double t = lambda * 43200 + time.getGpsTime();
+    
     while (t >= 86400)
       t = t - 86400;
+    
     while (t < 0)
       t = t + 86400;
+    
     double p = iono.getBeta(0) + iono.getBeta(1) * ro + iono.getBeta(2) * Math.pow(ro, 2) + iono.getBeta(3) * Math.pow(ro, 3);
 
     if (p < 72000)
       p = 72000;
+    
     double a = iono.getAlpha(0) + iono.getAlpha(1) * ro + iono.getAlpha(2) * Math.pow(ro, 2) + iono.getAlpha(3) * Math.pow(ro, 3);
+    
     if (a < 0)
       a = 0;
+    
     double x = (2 * Math.PI * (t - 50400)) / p;
+    
     if (Math.abs(x) < 1.57){
       ionoCorr = Constants.SPEED_OF_LIGHT
           * f
           * (5e-9 + a
               * (1 - (Math.pow(x, 2)) / 2 + (Math.pow(x, 4)) / 24));
-    }else{
+    }
+    else{
       ionoCorr = Constants.SPEED_OF_LIGHT * f * 5e-9;
     }
+    
     return ionoCorr;
   }
   
@@ -196,6 +211,16 @@ public class Satellites {
 
     // Allocate an array to store GPS satellite positions
     pos = new SatellitePosition[nObs];
+
+    // Create a list for available satellites
+    avail = new LinkedHashMap<>();
+    typeAvail = new ArrayList<>(0);
+    gnssAvail = new ArrayList<>(0);
+
+    // Create a list for available satellites with phase
+    availPhase = new ArrayList<>(0);
+    typeAvailPhase = new ArrayList<>(0);
+    gnssAvailPhase = new ArrayList<>(0);
 
     // Allocate arrays to store receiver-satellite vectors
     rover.diffSat = new SimpleMatrix[nObs];
@@ -211,16 +236,6 @@ public class Satellites {
     master.satTropoCorr = new double[nObs];
     master.satIonoCorr = new double[nObs];
 
-    // Create a list for available satellites
-    avail = new LinkedHashMap<>();
-    typeAvail = new ArrayList<>(0);
-    gnssAvail = new ArrayList<>(0);
-
-    // Create a list for available satellites with phase
-    availPhase = new ArrayList<>(0);
-    typeAvailPhase = new ArrayList<>(0);
-    gnssAvailPhase = new ArrayList<>(0);
-
     // Allocate arrays of topocentric coordinates
     rover.topo = new TopocentricCoordinates[nObs];
     master.topo = new TopocentricCoordinates[nObs];
@@ -232,10 +247,7 @@ public class Satellites {
    * @param roverObs
    */
   public void selectStandalone( Observations roverObs ) {
-    // Retrieve options from goGPS class
-    double cutoff = goGPS.getCutoff();
-    
-    selectStandalone( roverObs, cutoff);
+    selectStandalone( roverObs, goGPS.getCutoff() );
   }
 
   /**
@@ -343,13 +355,11 @@ public class Satellites {
                               + Math.pow(master.diffSat[i].get(1), 2)
                               + Math.pow(master.diffSat[i].get(2), 2));
 
-        // Compute azimuth, elevation and distance for each satellite from
-        // rover
+        // Compute azimuth, elevation and distance for each satellite from rover
         rover.topo[i] = new TopocentricCoordinates();
         rover.topo[i].computeTopocentric(rover, pos[i]);
 
-        // Compute azimuth, elevation and distance for each satellite from
-        // master
+        // Compute azimuth, elevation and distance for each satellite from master
         master.topo[i] = new TopocentricCoordinates();
         master.topo[i].computeTopocentric(masterPos, pos[i]);
 
@@ -366,8 +376,7 @@ public class Satellites {
         master.satIonoCorr[i] = computeIonosphereCorrection(navigation,
                 masterPos, master.topo[i].getAzimuth(), master.topo[i].getElevation(), roverObs.getRefTime());
 
-        // Check if satellite is available for double differences, after
-        // cutoff
+        // Check if satellite is available for double differences, after cutoff
         if (masterObs.containsSatIDType(roverObs.getSatID(i), roverObs.getGnssType(i)) // gpsSat.get( // masterObs.gpsSat.contains(roverObs.getGpsSatID(i)
             && rover.topo[i].getElevation() > cutoff) {
 

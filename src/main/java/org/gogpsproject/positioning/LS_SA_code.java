@@ -4,6 +4,7 @@ import org.ejml.simple.SimpleMatrix;
 import org.gogpsproject.Constants;
 import org.gogpsproject.GoGPS;
 import org.gogpsproject.consumer.PositionConsumer;
+import org.gogpsproject.positioning.RoverPosition.DopType;
 import org.gogpsproject.producer.Observations;
 import org.gogpsproject.producer.ObservationsProducer;
 
@@ -207,7 +208,7 @@ public class LS_SA_code extends Core {
               }
 //              else 
               {
-                coord = new RoverPosition(rover, RoverPosition.DOP_TYPE_STANDARD, rover.getpDop(), rover.gethDop(), rover.getvDop());
+                coord = new RoverPosition(rover, DopType.KALMAN, rover.getpDop(), rover.gethDop(), rover.getvDop());
 
                 if( goGPS.getPositionConsumers().size()>0){
                   coord.setRefTime(new Time(obsR.getRefTime().getMsec()));

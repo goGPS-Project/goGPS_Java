@@ -6,6 +6,7 @@ import org.ejml.simple.SimpleMatrix;
 import org.gogpsproject.Constants;
 import org.gogpsproject.GoGPS;
 import org.gogpsproject.consumer.PositionConsumer;
+import org.gogpsproject.positioning.RoverPosition.DopType;
 import org.gogpsproject.producer.Observations;
 import org.gogpsproject.producer.ObservationsProducer;
 
@@ -477,7 +478,7 @@ public class KF_SA_code_phase extends KalmanFilter {
             validPosition = true;
           }else
             if(goGPS.getPositionConsumers().size()>0){
-              RoverPosition coord = new RoverPosition(rover, RoverPosition.DOP_TYPE_KALMAN, rover.getKpDop(), rover.getKhDop(), rover.getKvDop());
+              RoverPosition coord = new RoverPosition(rover, DopType.KALMAN, rover.getKpDop(), rover.getKhDop(), rover.getKvDop());
               coord.setRefTime(new Time(obsR.getRefTime().getMsec()));
               goGPS.notifyPositionConsumerAddCoordinate(coord);
             }

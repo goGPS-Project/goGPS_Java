@@ -159,11 +159,9 @@ public class LS_DD_code extends LS_SA_code {
     b = b.plus(ionoCorr);
 
     // Least squares solution x = ((A'*Q^-1*A)^-1)*A'*Q^-1*(y0-b);
-    x = A.transpose().mult(Q.invert()).mult(A).invert().mult(A.transpose())
-        .mult(Q.invert()).mult(y0.minus(b));
+    x = A.transpose().mult(Q.invert()).mult(A).invert().mult(A.transpose()).mult(Q.invert()).mult(y0.minus(b));
 
     // Receiver position
-    //this.coord.ecef.set(this.coord.ecef.plus(x));
     rover.setPlusXYZ(x);
 
     // Estimation of the variance of the observation error
@@ -208,15 +206,13 @@ public class LS_DD_code extends LS_SA_code {
 
       while (obsR != null && obsM != null) {
 
-        // Discard master epochs if correspondent rover epochs are
-        // not available
+        // Discard master epochs if correspondent rover epochs are not available
         double obsRtime = obsR.getRefTime().getRoundedGpsTime();
         while (obsM!=null && obsR!=null && obsRtime > obsM.getRefTime().getRoundedGpsTime()) {
           obsM = masterIn.getNextObservations();
         }
 
-        // Discard rover epochs if correspondent master epochs are
-        // not available
+        // Discard rover epochs if correspondent master epochs are not available
         double obsMtime = obsM.getRefTime().getRoundedGpsTime();
         while (obsM!=null && obsR!=null && obsR.getRefTime().getRoundedGpsTime() < obsMtime) {
           obsR = roverIn.getNextObservations();
@@ -229,6 +225,7 @@ public class LS_DD_code extends LS_SA_code {
 
             // Compute approximate positioning by iterative least-squares
             for (int iter = 0; iter < 3; iter++) {
+              
               // Select all satellites
               sats.selectStandalone( obsR, -100);
               

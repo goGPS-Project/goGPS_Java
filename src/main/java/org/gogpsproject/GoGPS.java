@@ -82,9 +82,6 @@ public class GoGPS implements Runnable{
 	/** The dynamic model. */
 	private DynamicModel dynamicModel = DynamicModel.CONST_SPEED;
 
-	/** The min num sat. */
-	private int minNumSat = 2;
-
 	/** The cycle slip threshold. */
 	private double cycleSlipThreshold = 1;
 	
@@ -307,26 +304,6 @@ public class GoGPS implements Runnable{
   public GoGPS setCutoff(double cutoff) {
   	this.cutoff = cutoff;
   	return this;
-  }
-
-  /**
-   * Gets the min num sat.
-   *
-   * @return the minNumSat
-   */
-  public int getMinNumSat() {
-  	return minNumSat;
-  }
-
-  /**
-   * Sets the min num sat.
-   *
-   * @param minNumSat the minNumSat to set
-   * @return 
-   */
-  public GoGPS setMinNumSat(int minNumSat) {
-  	this.minNumSat = minNumSat;
-    return this;
   }
 
   /**

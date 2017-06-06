@@ -9,6 +9,30 @@ import org.gogpsproject.producer.Observations;
 
 public abstract class KalmanFilter extends LS_DD_code {
 
+  /** The st dev init. */
+  private static final double stDevInit = 1;
+
+  /** The st dev e. */
+  private static final double stDevE = 0.5;
+
+  /** The st dev n. */
+  private static final double stDevN = 0.5;
+
+  /** The st dev u. */
+  private static final double stDevU = 0.1;
+
+  /** The st dev code c. */
+  private static final double stDevCodeC = 0.3;
+
+  /** The st dev code p. */
+  private static final double[] stDevCodeP = { 0.6, 0.4 };
+
+  /** The st dev phase. */
+  static final double stDevPhase = 0.003;
+
+  /** The st dev ambiguity. */
+  static final double stDevAmbiguity = 10;
+
   int o1, o2, o3;
   int i1, i2, i3;
   int nN;
@@ -22,44 +46,6 @@ public abstract class KalmanFilter extends LS_DD_code {
   SimpleMatrix KFstate;
   SimpleMatrix KFprediction;
 
-  /** The st dev init. */
-  private final double stDevInit = 1;
-
-  /** The st dev e. */
-  private double stDevE = 0.5;
-
-  /** The st dev n. */
-  private double stDevN = 0.5;
-
-  /** The st dev u. */
-  private double stDevU = 0.1;
-
-  /** The st dev code c. */
-  private double stDevCodeC = 0.3;
-
-  /** The st dev code p. */
-  private double[] stDevCodeP = { 0.6, 0.4 };
-
-
-  /** The st dev phase. */
-  double stDevPhase = 0.003;
-
-  /** The st dev ambiguity. */
-  double stDevAmbiguity = 10;
-
-  /**
-   * Gets the st dev code.
-   *
-   * @param roverObsSet the rover observation set
-   * @param masterObsSet the master observation set
-   * @param i the selected GPS frequency
-   * @return the stDevCode
-   */
-  public double getStDevCode( ObservationSet obsSet, int i) {
-    return obsSet.isPseudorangeP(i)?stDevCodeP[i]:stDevCodeC;
-  }
-
-  
   // Fields for keeping track of satellite configuration changes
   ArrayList<Integer> satOld;
   ArrayList<Character> satTypeOld;
@@ -74,13 +60,28 @@ public abstract class KalmanFilter extends LS_DD_code {
   abstract void estimateAmbiguities( Observations roverObs, Observations masterObs, Coordinates masterPos, ArrayList<Integer> satAmb, int pivotIndex, boolean init);
   abstract void checkSatelliteConfiguration( Observations roverObs, Observations masterObs, Coordinates masterPos );
 
+
+  /**
+   * Gets the st dev code.
+   *
+   * @param roverObsSet the rover observation set
+   * @param masterObsSet the master observation set
+   * @param i the selected GPS frequency
+   * @return the stDevCode
+   */
+  public double getStDevCode( ObservationSet obsSet, int i) {
+    return obsSet.isPseudorangeP(i)?stDevCodeP[i]:stDevCodeC;
+  }
+
+  
   /**
    * @param roverObs
    * @param masterObs
    */
-  void computeDopplerPredictedPhase(Observations roverObs, Observations masterObs) {
+  void computeDopplerPredictedPhase( Observations roverObs, Observations masterObs ) {
 
     rover.dopplerPredPhase = new double[32];
+    
     if (masterObs != null)
       master.dopplerPredPhase = new double[32];
 
@@ -207,6 +208,8 @@ public abstract class KalmanFilter extends LS_DD_code {
    */
   public void loop( Observations roverObs, Observations masterObs, Coordinates masterPos) {
 
+    final int minNumSat = 2;
+
     // Set linearization point (approximate coordinates by KF prediction at previous step)
     rover.setXYZ(KFprediction.get(0), KFprediction.get(i1 + 1), KFprediction.get(i2 + 1));
 
@@ -248,7 +251,7 @@ public abstract class KalmanFilter extends LS_DD_code {
       nObs = nObs + sats.availPhase.size() - obsReduction;
     }
 
-    if( sats.avail.size() >= goGPS.getMinNumSat()) {
+    if( sats.avail.size() >= minNumSat ) {
       // Allocate transformation matrix
       H = new SimpleMatrix(nObs, o3 + nN);
 
@@ -268,12 +271,10 @@ public abstract class KalmanFilter extends LS_DD_code {
       // Set variances only if dynamic model is not static
       if (o1 != 1) {
         // Allocate and build rotation matrix
-        SimpleMatrix R = new SimpleMatrix(3, 3);
-        R = Coordinates.rotationMatrix(rover);
+        SimpleMatrix R = Coordinates.rotationMatrix(rover);
 
         // Build 3x3 diagonal matrix with variances
         SimpleMatrix diagonal = new SimpleMatrix(3, 3);
-        diagonal.zero();
         diagonal.set(0, 0, Math.pow(stDevE, 2));
         diagonal.set(1, 1, Math.pow(stDevN, 2));
         diagonal.set(2, 2, Math.pow(stDevU, 2));

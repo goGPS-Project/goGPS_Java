@@ -388,15 +388,18 @@ public class LS_SA_dopplerPos extends LS_SA_code {
         e.set( 0,2, rover.diffSat[i].get(2) / rover.satAppRange[i] );
 
         /** computed satspeed: scalar product of speed vector X LOS unit vector */
-        double rodotSatSpeed   = e.mult( sats.pos[i].getSpeed() ).get(0);
+        double rhodotSatSpeed = e.mult( sats.pos[i].getSpeed() ).get(0);
         
-        float doppler = os.getDoppler(ObservationSet.L1);
-
-        /** observed range rate */
-        double rodot = doppler * Constants.SPEED_OF_LIGHT/Constants.FL1;
+        double rhodot = 0;
+        if( !Double.isNaN(os.getDoppler(ObservationSet.L1))){
+          float doppler = os.getDoppler(ObservationSet.L1);
+  
+          /** observed range rate */
+          rhodot = doppler * Constants.SPEED_OF_LIGHT/Constants.FL1;
+        }
         
         /** residuals */
-        b.set(k, 0, rodot  - rodotSatSpeed - rover.getClockErrorRate() );
+        b.set(k, 0, rhodot  - rhodotSatSpeed - rover.getClockErrorRate() );
 
         k++;
      }

@@ -862,19 +862,30 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
 //         truePos.selectSatellitesStandaloneFractional( obsR, -100, MODULO1MS );
 //       }
        
-       if( !rover.isValidXYZ() && aPrioriPos != null && aPrioriPos.isValidXYZ()){
+       if( !rover.isValidXYZ() ){
+         
+        if( aPrioriPos != null && aPrioriPos.isValidXYZ()){
          aPrioriPos.cloneInto(rover);
-       }
-       else if( !rover.isValidXYZ() && obsR.getNumSat()>0 && !Float.isNaN(obsR.getSatByIdx(0).getDoppler(0))){
+        }
+        else if( !Float.isNaN(obsR.getSatByIdx(0).getDoppler(0))){
          rover.setXYZ(0, 0, 0);
-         sa.runElevationMethod(obsR);
+//         sa.runElevationMethod(obsR);
          
          sa.dopplerPos(obsR);
          
          if( rover.isValidXYZ() )
            rover.cloneInto(aPrioriPos);
+        }
+        else {
+         rover.setXYZ(0, 0, 0);
+         sa.runElevationMethod(obsR);
+
+         sa.dopplerPos(obsR);
+
+         if( rover.isValidXYZ() )
+           rover.cloneInto(aPrioriPos);
+         }
        }
-       
        if( !rover.isValidXYZ() ){
          obsR = goGPS.getRoverIn().getNextObservations();
          rover.status = Status.None;

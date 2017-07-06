@@ -1064,7 +1064,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
         rover.computeGeodetic();
       }
       else {
-        aPrioriPos = Coordinates.globalGeodInstance(0, 0, 0);
+        aPrioriPos = Coordinates.globalXYZInstance(0, 0, 0);
         
         System.out.println("\r\nSearching for a priori position");
         
@@ -1128,6 +1128,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
         
         // apply offset
         refTime = obsR.getRefTime();
+        rover.sampleTime = refTime;
         
         // Add Leap Seconds, remove at the end
         leapSeconds = refTime.getLeapSeconds();

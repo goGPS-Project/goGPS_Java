@@ -185,26 +185,26 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
         e.set( 0,2, rover.diffSat[i].get(2) / rover.satAppRange[i] );
   
         /** range rate = scalar product of speed vector X unit vector */
-        double rodot;
+        double rhodot;
 
         /** computed satspeed: scalar product of speed vector X LOS unit vector */
-        double rodotSatSpeed   = e.mult( sats.pos[i].getSpeed() ).get(0);
+        double rhodotSatSpeed   = e.mult( sats.pos[i].getSpeed() ).get(0);
 
         if( Float.isNaN( doppler )){
-          rodot = rodotSatSpeed;
+          rhodot = rhodotSatSpeed;
         }
         else {
           // scalar product of speed vector X unit vector
-          rodot = -doppler * Constants.SPEED_OF_LIGHT/Constants.FL1;
+          rhodot = -doppler * Constants.SPEED_OF_LIGHT/Constants.FL1;
 
-          double dopplerSatSpeed = rodotSatSpeed*Constants.FL1/Constants.SPEED_OF_LIGHT;
+          double dopplerSatSpeed = rhodotSatSpeed*Constants.FL1/Constants.SPEED_OF_LIGHT;
           if( goGPS.isDebug() ) System.out.println( String.format( "%2d) doppler:%6.0f; satSpeed:%6.0f; D:%6.0f", 
               satId,
               doppler, 
               dopplerSatSpeed,
               doppler - dopplerSatSpeed ));
           
-          rodot = rodotSatSpeed;
+          rhodot = rhodotSatSpeed;
         }
         
         /** Design Matrix */
@@ -212,7 +212,7 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
         A.set( k, 1, e.get(1) ); /* Y */
         A.set( k, 2, e.get(2) ); /* Z */
         A.set( k, 3, 1 );        // clock error 
-        A.set( k, 4, -rodot );   // common bias
+        A.set( k, 4, -rhodot );  // common bias
   
         /** residuals */
         // Add the approximate pseudorange value to b
@@ -835,6 +835,9 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
     goGPS.notifyPositionConsumerEvent(PositionConsumer.EVENT_START_OF_TRACK);
     while( obsR!=null && !Thread.interrupted() ) { // buffStreamObs.ready()
      try {
+       if( obsR.getNumSat()<2 ) 
+         continue;
+         
        if(goGPS.isDebug()) System.out.println("Index: " + obsR.index );
        rover.satsInUse = 0;
 
@@ -877,9 +880,12 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
            rover.cloneInto(aPrioriPos);
         }
         else {
-         rover.setXYZ(0, 0, 0);
-         sa.runElevationMethod(obsR);
+          if( obsR.getNumSat()<5 )
+            continue;
 
+          rover.setXYZ(0, 0, 0);
+         sa.runElevationMethod(obsR);
+         
          sa.dopplerPos(obsR);
 
          if( rover.isValidXYZ() )

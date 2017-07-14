@@ -123,7 +123,7 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
       if( nObsAvail<nUnknowns ){
         if( goGPS.isDebug()) System.out.println("\r\nNot enough satellites for " + roverObs.getRefTime() );
         rover.setXYZ(0, 0, 0);
-        if( nObsAvail>0 ){
+        if( nObsAvail>1 ){
           rover.satsInUse = nObsAvail;
           rover.status = Status.NotEnoughSats;
         }
@@ -527,7 +527,7 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
 //      residCutOff = 0.0002;
       elCutOff = -5;
       
-    result = snapshotProcessPivot( roverObs, result.satIndex, 100, elCutOff, residCutOff );
+    result = snapshotProcessPivot( roverObs, result.satIndex, 100, goGPS.getCutoff(), residCutOff );
     if( result == null ){
       rover.setXYZ(0, 0, 0);
       return null;
@@ -924,7 +924,7 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
       else {
         if( rover.status == Status.None || rover.status == Status.EphNotFound 
 //           && !Float.isNaN(obsR.getSatByIdx(0).getDoppler(0))
-           && obsR.getNumSat()>5 ){
+           && obsR.getNumSat()>3 ){
           continue;
         }
         else {        

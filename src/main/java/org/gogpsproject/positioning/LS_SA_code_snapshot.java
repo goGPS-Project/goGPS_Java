@@ -476,7 +476,9 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
     // save this position before trying
     rover.cloneInto(refPos);
     Time refTime = roverObs.getRefTime();
-    
+
+    rover.status = Status.None;
+
     for( int satIdx = 0; satIdx<roverObs.getNumSat(); satIdx++ ){
       if(goGPS.isDebug()) System.out.println( "\r\n===> Try Pivot " + satIdx );
       
@@ -484,7 +486,6 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
       refPos.cloneInto(rover);
       roverObs.setRefTime(refTime);
       
-      rover.status = Status.None;
       // select a pivot with at least elCutOff elevation
       int maxIterations = 3;
 //      residCutOff = 0.001;
@@ -502,6 +503,9 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
     }
     if( result == null ){
       rover.setXYZ(0, 0, 0);
+//      System.out.println("Couldn't find pivot");
+      if( rover.status == Status.None )
+        rover.status = Status.Exception;
       return null;
     }
     if(goGPS.isDebug()) 
@@ -529,7 +533,7 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
       return null;
     }
     
-    if( result.eRes > 350 ){
+    if( result.eRes > 500 ){
 //      if(goGPS.isDebug()) 
         System.out.println("eRes too large = " + rover.eRes );
 
@@ -811,6 +815,8 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
 
   if( updatems == null )
     rover.setXYZ(0, 0, 0);
+    if( rover.status == Status.None )
+      rover.status = Status.Exception;
   }
 
   public static void run( GoGPS goGPS ) {
@@ -827,7 +833,6 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
       sa = new LS_SA_code_snapshot(goGPS);
     
     Observations obsR = null;
-    Coordinates aPrioriPos = (Coordinates) rover.clone();
 
     int leapSeconds;
     obsR = goGPS.getRoverIn().getCurrentObservations();
@@ -867,8 +872,8 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
        
        if( !rover.isValidXYZ() ){
          
-        if( aPrioriPos != null && aPrioriPos.isValidXYZ()){
-         aPrioriPos.cloneInto(rover);
+        if( goGPS.getRoverIn().getDefinedPosition() != null && goGPS.getRoverIn().getDefinedPosition().isValidXYZ()){
+          goGPS.getRoverIn().getDefinedPosition().cloneInto(rover);
         }
         else if( !Float.isNaN(obsR.getSatByIdx(0).getDoppler(0))){
          rover.setXYZ(0, 0, 0);
@@ -877,7 +882,8 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
          sa.dopplerPos(obsR);
          
          if( rover.isValidXYZ() )
-           rover.cloneInto(aPrioriPos);
+//           goGPS.getRoverIn().setDefinedPosition(rover);
+           rover.cloneInto( goGPS.getRoverIn().getDefinedPosition() );
         }
         else {
           if( obsR.getNumSat()<5 )
@@ -889,16 +895,14 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
          sa.dopplerPos(obsR);
 
          if( rover.isValidXYZ() )
-           rover.cloneInto(aPrioriPos);
+           rover.cloneInto( goGPS.getRoverIn().getDefinedPosition() );
          }
        }
        if( !rover.isValidXYZ() ){
-         obsR = goGPS.getRoverIn().getNextObservations();
-         rover.status = Status.None;
          continue;
        }
            
-       sa.tryOffset( aPrioriPos, obsR );
+       sa.tryOffset( goGPS.getRoverIn().getDefinedPosition(), obsR );
 
        if(goGPS.isDebug()) System.out.println("Valid position? "+rover.isValidXYZ()+" x:"+rover.getX()+" y:"+rover.getY()+" z:"+rover.getZ());
        if(goGPS.isDebug()) System.out.println(" lat:"+rover.getGeodeticLatitude()+" lon:"+rover.getGeodeticLongitude() );
@@ -913,16 +917,26 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
          rover.cErrMS = goGPS.getOffsetms();
          
          // update a priori location
-         rover.cloneInto(aPrioriPos);
+         rover.cloneInto(goGPS.getRoverIn().getDefinedPosition());
 
         if(goGPS.isDebug())System.out.println("-------------------- "+rover.getpDop());
       }
-      else if( rover.status != Status.EphNotFound 
-           && !Float.isNaN(obsR.getSatByIdx(0).getDoppler(0))
+      else {
+        if( rover.status == Status.None || rover.status == Status.EphNotFound 
+//           && !Float.isNaN(obsR.getSatByIdx(0).getDoppler(0))
            && obsR.getNumSat()>5 ){
-         // invalidate aPrioriPos and recompute later
-         aPrioriPos.setXYZ(0, 0, 0);
-       }
+          continue;
+        }
+        else {        
+          // invalidate aPrioriPos and recompute later
+          // goGPS.getRoverIn().getDefinedPosition().setXYZ(0, 0, 0);
+          goGPS.getRoverIn().getDefinedPosition().setXYZ(0, 0, 0);
+          
+          if( rover.status == Status.MaxCorrection ) {
+            continue;
+          }
+        }
+      }
       if(goGPS.getPositionConsumers().size()>0){
         rover.setRefTime(new Time(obsR.getRefTime().getMsec()));
         goGPS.notifyPositionConsumerAddCoordinate(rover.clone(obsR));

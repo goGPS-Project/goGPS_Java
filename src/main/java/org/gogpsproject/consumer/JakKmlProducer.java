@@ -41,8 +41,6 @@ import org.gogpsproject.positioning.RoverPosition;
 import org.gogpsproject.producer.ObservationSet;
 import org.gogpsproject.producer.Observations;
 
-import com.sun.xml.txw2.output.IndentingXMLStreamWriter;
-
 import de.micromata.opengis.kml.v_2_2_0.AltitudeMode;
 import de.micromata.opengis.kml.v_2_2_0.BalloonStyle;
 import de.micromata.opengis.kml.v_2_2_0.ColorMode;
@@ -60,6 +58,7 @@ import de.micromata.opengis.kml.v_2_2_0.Schema;
 import de.micromata.opengis.kml.v_2_2_0.SimpleField;
 import de.micromata.opengis.kml.v_2_2_0.TimeStamp;
 import de.micromata.opengis.kml.v_2_2_0.gx.Track;
+import txw2.output.IndentingXMLStreamWriter;
 
 /**
  * <p>

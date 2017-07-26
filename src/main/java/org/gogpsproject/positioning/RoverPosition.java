@@ -187,7 +187,7 @@ public class RoverPosition extends ReceiverPosition {
     r.status     = status;
     r.clockError = clockError;
     r.clockErrorRate = clockErrorRate;
-    
+    r.cErrMS = cErrMS;
     return r;
   }
 }

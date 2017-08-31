@@ -208,7 +208,7 @@ public class LS_SA_code extends Core {
               }
 //              else 
               {
-                coord = new RoverPosition(rover, DopType.KALMAN, rover.getpDop(), rover.gethDop(), rover.getvDop());
+                coord = new RoverPosition(rover, DopType.STANDARD, rover.getpDop(), rover.gethDop(), rover.getvDop());
 
                 if( goGPS.getPositionConsumers().size()>0){
                   coord.setRefTime(new Time(obsR.getRefTime().getMsec()));

@@ -824,9 +824,11 @@ public class KF_DD_code_phase extends KalmanFilter {
           System.out.println("while obsM: " + obsM);
         }
 //        System.out.println("found M "+obsRtime);
-
-        // Discard rover epochs if correspondent master epochs are
-        // not available
+        if( obsM == null ) {
+            System.out.println("Couldn't find an obsM in a valid time span: " + obsR.getRefTime() );
+        		break;
+        }
+        // Discard rover epochs if correspondent master epochs are not available
         double obsMtime = obsM.getRefTime().getRoundedGpsTime();
         System.out.println("##look for R "+obsMtime);
       

@@ -33,121 +33,121 @@ import org.gogpsproject.producer.*;
  */
 public class GoGPS implements Runnable{
 
-	// Frequency selector
-	/** The Constant FREQ_L1. */
-	public final static int FREQ_L1 = ObservationSet.L1;
+  // Frequency selector
+  /** The Constant FREQ_L1. */
+  public final static int FREQ_L1 = ObservationSet.L1;
 
-	/** The Constant FREQ_L2. */
-	public final static int FREQ_L2 = ObservationSet.L2;
+  /** The Constant FREQ_L2. */
+  public final static int FREQ_L2 = ObservationSet.L2;
 
-	/** The freq. */
-	private int freq = FREQ_L1;
+  /** The freq. */
+  private int freq = FREQ_L1;
 
-	// Double-frequency flag
-	/** The dual freq. */
-	private boolean dualFreq = false;
+  // Double-frequency flag
+  /** The dual freq. */
+  private boolean dualFreq = false;
 
-	// Weighting strategy
-	// 0 = same weight for all observations
-	// 1 = weight based on satellite elevation
-	// 2 = weight based on signal-to-noise ratio
-	// 3 = weight based on combined elevation and signal-to-noise ratio
-	public static enum WeightingStrategy{
-	  EQUAL,
-	  SAT_ELEVATION,
-	  SIGNAL_TO_NOISE_RATIO,
-	  COMBINED_ELEVATION_SNR
-	}
+  // Weighting strategy
+  // 0 = same weight for all observations
+  // 1 = weight based on satellite elevation
+  // 2 = weight based on signal-to-noise ratio
+  // 3 = weight based on combined elevation and signal-to-noise ratio
+  public static enum WeightingStrategy{
+    EQUAL,
+    SAT_ELEVATION,
+    SIGNAL_TO_NOISE_RATIO,
+    COMBINED_ELEVATION_SNR
+  }
 	
-	/** The weights. */
-	private WeightingStrategy weights = WeightingStrategy.SAT_ELEVATION;
+  /** The weights. */
+  private WeightingStrategy weights = WeightingStrategy.SAT_ELEVATION;
 
-	public static enum DynamicModel {
-	  STATIC(1),
-	  CONST_SPEED(2),
-	  CONST_ACCELERATION(3);
-	  
-	  private int order;
-	  
-	  public int getOrder(){
-	    return order;
-	  }
-	  
-	  DynamicModel( int order ){
-	    this.order = order;
-	  }
-	}
+  public static enum DynamicModel {
+    STATIC(1),
+    CONST_SPEED(2),
+    CONST_ACCELERATION(3);
+  
+    private int order;
+  
+    public int getOrder(){
+      return order;
+    }
+  
+    DynamicModel( int order ){
+      this.order = order;
+    }
+  }
 	
-	// Kalman filter parameters
-	/** The dynamic model. */
-	private DynamicModel dynamicModel = DynamicModel.CONST_SPEED;
+  // Kalman filter parameters
+  /** The dynamic model. */
+  private DynamicModel dynamicModel = DynamicModel.CONST_SPEED;
 
-	/** The cycle slip threshold. */
-	private double cycleSlipThreshold = 1;
+  /** The cycle slip threshold. */
+  private double cycleSlipThreshold = 1;
 	
-	public static enum CycleSlipDetectionStrategy {
-	  APPROX_PSEUDORANGE,
-	  DOPPLER_PREDICTED_PHASE_RANGE
-	}
+  public static enum CycleSlipDetectionStrategy {
+    APPROX_PSEUDORANGE,
+    DOPPLER_PREDICTED_PHASE_RANGE
+  }
 	
-	/** The cycle-slip detection strategy. */
-	private CycleSlipDetectionStrategy cycleSlipDetectionStrategy = CycleSlipDetectionStrategy.APPROX_PSEUDORANGE;
+  /** The cycle-slip detection strategy. */
+  private CycleSlipDetectionStrategy cycleSlipDetectionStrategy = CycleSlipDetectionStrategy.APPROX_PSEUDORANGE;
 
-	public static enum AmbiguityStrategy {
-	  OBSERV,
-	  APPROX,
-	  LS
-	}
+  public static enum AmbiguityStrategy {
+    OBSERV,
+    APPROX,
+    LS
+  }
 	
-	/** The ambiguity strategy. */
-	private AmbiguityStrategy ambiguityStrategy = AmbiguityStrategy.APPROX;
+  /** The ambiguity strategy. */
+  private AmbiguityStrategy ambiguityStrategy = AmbiguityStrategy.APPROX;
 
-	/** The Elevation cutoff. */
-	private double cutoff = 15; // Elevation cutoff
+  /** The Elevation cutoff. */
+  private double cutoff = 15; // Elevation cutoff
 
-	public static enum RunMode {
-	  CODE_STANDALONE,
-	  CODE_DOUBLE_DIFF,
-	  KALMAN_FILTER_CODE_PHASE_STANDALONE,
-	  KALMAN_FILTER_CODE_PHASE_DOUBLE_DIFF,
-	  CODE_STANDALONE_SNAPSHOT,
-	  CODE_STANDALONE_COARSETIME
-	}
+  public static enum RunMode {
+    CODE_STANDALONE,
+	CODE_DOUBLE_DIFF,
+	KALMAN_FILTER_CODE_PHASE_STANDALONE,
+	KALMAN_FILTER_CODE_PHASE_DOUBLE_DIFF,
+	CODE_STANDALONE_SNAPSHOT,
+	CODE_STANDALONE_COARSETIME
+  }
 
-	private RunMode runMode;
+  private RunMode runMode;
 	
-	private Thread runThread=null;
+  private Thread runThread=null;
 	
-	/** The navigation. */
-	private NavigationProducer navigation;
+  /** The navigation. */
+  private NavigationProducer navigation;
 
-	/** The rover in. */
-	private ObservationsProducer roverIn;
+  /** The rover in. */
+  private ObservationsProducer roverIn;
 
-	/** The master in. */
-	private ObservationsProducer masterIn;
+  /** The master in. */
+  private ObservationsProducer masterIn;
 
-	/** The rover calculated position */
-	private final RoverPosition roverPos;
+  /** The rover calculated position */
+  private final RoverPosition roverPos;
 
-	 /** The master position */
+  /** The master position */
   private final MasterPosition masterPos;
 
   /** Satellite State Information */
   private final Satellites satellites;
   
-	/** coarse time error */
+  /** coarse time error */
   private long offsetms = 0;
 
-	private Vector<PositionConsumer> positionConsumers = new Vector<PositionConsumer>();
+  private Vector<PositionConsumer> positionConsumers = new Vector<PositionConsumer>();
 
 //	private boolean debug = false;
-	private boolean debug = true;
+  private boolean debug = true;
 
-	private boolean useDTM = false;
+  private boolean useDTM = false;
 
-	/** Use Doppler observations in standalone snapshot case */
-	private boolean useDoppler = true;
+  /** Use Doppler observations in standalone snapshot case */
+  private boolean useDoppler = true;
 	
   public final static double MODULO1MS  = Constants.SPEED_OF_LIGHT /1000;     // check 1ms bit slip
   public final static double MODULO20MS = Constants.SPEED_OF_LIGHT * 20/1000; // check 20ms bit slip

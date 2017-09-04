@@ -131,9 +131,9 @@ public class TxtProducer extends Thread implements PositionConsumer {
 			double hdop = noData;
 			double khdop = noData;
 			if (coord.getDopType() == DopType.KALMAN ) {
-				khdop = coord.gethDop();
+			  khdop = coord.gethDop();
 			} else {
-				hdop = coord.gethDop();
+			  hdop = coord.gethDop();
 			}
 			
 			pw.printf("%16.3f%16.3f%n", hdop, khdop);

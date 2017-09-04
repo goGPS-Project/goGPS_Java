@@ -77,20 +77,20 @@ public class JakKmlProducer implements PositionConsumer {
   
   private DecimalFormat cf = new DecimalFormat("#.00000");
 
-	private SimpleDateFormat timeKML = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+  private SimpleDateFormat timeKML = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 
-	private String filename = null;
-	private double goodDopThreshold = 3.0;
-    private double goodEResThreshold = 10.0;
-	private String goodColorLine = "00ff00";
-	private String goodOpacity = "ff";
-	private int goodLinePixelWidth = 3;
-	private String worstColorLine = "0000ff";
-	private String worstOpacity = "ff";
-	private int worstLinePixelWidth = 3;
-	private boolean debug=false;
+  private String filename = null;
+  private double goodDopThreshold = 3.0;
+  private double goodEResThreshold = 10.0;
+  private String goodColorLine = "00ff00";
+  private String goodOpacity = "ff";
+  private int goodLinePixelWidth = 3;
+  private String worstColorLine = "0000ff";
+  private String worstOpacity = "ff";
+  private int worstLinePixelWidth = 3;
+  private boolean debug=false;
 
-	private final static TimeZone TZ = TimeZone.getTimeZone("GMT");
+  private final static TimeZone TZ = TimeZone.getTimeZone("GMT");
 
   private transient JAXBContext jc = null;
   private transient Marshaller m = null;

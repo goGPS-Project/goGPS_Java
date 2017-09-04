@@ -81,7 +81,7 @@ public class JakKmlProducer implements PositionConsumer {
 
 	private String filename = null;
 	private double goodDopThreshold = 3.0;
-  private double goodEResThreshold = 10.0;
+    private double goodEResThreshold = 10.0;
 	private String goodColorLine = "00ff00";
 	private String goodOpacity = "ff";
 	private int goodLinePixelWidth = 3;

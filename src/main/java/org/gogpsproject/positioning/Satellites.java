@@ -270,6 +270,11 @@ public class Satellites {
       
       if(pos[i]!=null){
 
+    	  	if( pos[i].equals( SatellitePosition.UnhealthySat )) {
+    	        pos[i] = null;
+    	        continue;
+    	  	}
+    	  	
         // Compute rover-satellite approximate pseudorange
         rover.diffSat[i] = rover.minusXYZ(pos[i]);
         rover.satAppRange[i] = Math.sqrt(Math.pow(rover.diffSat[i].get(0), 2)

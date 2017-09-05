@@ -174,6 +174,10 @@ public class LS_SA_code extends Core {
 
             // Compute approximate positioning by iterative least-squares
             if (!rover.isValidXYZ()) {
+            	
+            	 if( roverIn.getDefinedPosition() != null )
+           	   roverIn.getDefinedPosition().cloneInto(rover);
+
               for (int iter = 0; iter < 3; iter++) {
                 // Select all satellites
                 sats.selectStandalone( obsR, -100);

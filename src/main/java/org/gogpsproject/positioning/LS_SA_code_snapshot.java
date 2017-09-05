@@ -456,8 +456,8 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
    * return computed time offset in milliseconds
    */
   public Long snapshotPos( Observations roverObs ) {
-    Double residCutOff = 0.5;
-    double elCutOff = 5.0;
+    Double residCutOff = 0.5; // ms
+    double elCutOff = 5.0; // dg
     rover.status = Status.None;
 
     // Number of GPS observations

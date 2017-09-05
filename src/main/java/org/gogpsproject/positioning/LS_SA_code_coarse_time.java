@@ -281,7 +281,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
 
       // check again, if fails, exclude this satellite
       double dms = Math.abs(d-pivot_test)/Constants.SPEED_OF_LIGHT*1000;
-      if( Math.abs(dms) > goGPS.getResidThreshold() ){      
+      if( Math.abs(dms) > goGPS.getCodeResidThreshold() ){      
         badSat++;
       }
       else {      
@@ -329,7 +329,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
       
       // check again, if fails, exclude this satellite
       double dms = Math.abs(d-pivot)/Constants.SPEED_OF_LIGHT*1000;
-      if( Math.abs(dms) > goGPS.getResidThreshold() )
+      if( Math.abs(dms) > goGPS.getCodeResidThreshold() )
       {
         if( goGPS.isDebug() ) System.out.println( String.format( " Excluding d:%8.3f", dms));
         resid.set(k, 0);
@@ -899,7 +899,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
       
       // check again, if fails, exclude this satellite
       double dms = Math.abs(d-pivot)/Constants.SPEED_OF_LIGHT*1000;
-      if( Math.abs(dms) > goGPS.getResidThreshold() )
+      if( Math.abs(dms) > goGPS.getCodeResidThreshold() )
       {
         if( goGPS.isDebug() ) System.out.println( String.format( " Excluding d:%8.3f", dms));
         resid.set(k, 0);
@@ -1094,12 +1094,12 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
             // remember refTime
             refTime = maxSatObs.getRefTime();
             
-            double thr = goGPS.getResidThreshold();
-            goGPS.setResidThreshold(MODULO);
+            double thr = goGPS.getCodeResidThreshold();
+            goGPS.setCodeResidThreshold(MODULO);
             sa.runCoarseTime(maxSatObs, MODULO);
             // restore obsR refTime
             maxSatObs.setRefTime(refTime);
-            goGPS.setResidThreshold(thr);
+            goGPS.setCodeResidThreshold(thr);
             
             rover.cloneInto(aPrioriPos);
             rover.status = Status.None;

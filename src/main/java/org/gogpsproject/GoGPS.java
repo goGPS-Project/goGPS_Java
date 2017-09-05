@@ -164,9 +164,14 @@ public class GoGPS implements Runnable{
   /** max hdop for a valid fix */
   private double hdopLimit = 20.0;
 
-  /** max residual error to exclude a given range */
-  private double residThreshold = 3.0;
+  /** max code residual error to exclude a given range (m) */
+  private double codeResidThreshold = 30;
 
+  /** max code residual error to exclude a given range (m) */
+  private double phaseResidThreshold = 0.05;
+
+  private boolean searchForOutliers = false;
+  
   /**
    * Instantiates a new GoGPS.
    *
@@ -439,13 +444,31 @@ public class GoGPS implements Runnable{
     return this;
   }
 
-  public double getResidThreshold(){
-    return this.residThreshold;
+  public double getCodeResidThreshold(){
+    return this.codeResidThreshold;
   }
 
-  public GoGPS setResidThreshold(double residThreshold) {
-    this.residThreshold = residThreshold;
+  public GoGPS setCodeResidThreshold(double codeResidThreshold) {
+    this.codeResidThreshold = codeResidThreshold;
     return this;
+  }
+
+  public double getPhaseResidThreshold(){
+    return this.phaseResidThreshold;
+  }
+
+  public GoGPS setPhaseResidThreshold(double phaseResidThreshold) {
+    this.phaseResidThreshold = phaseResidThreshold;
+    return this;
+  }
+
+  public GoGPS searchForOutliers( boolean searchForOutliers ) {
+	this.searchForOutliers = searchForOutliers;
+	return this;
+  }
+  
+  public boolean searchForOutliers() {
+	return searchForOutliers ;
   }
 
   public double getHdopLimit(){

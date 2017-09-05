@@ -200,6 +200,11 @@ public abstract class KalmanFilter extends LS_DD_code {
     }
   }
 
+  SimpleMatrix compute_residuals( SimpleMatrix X ) {
+	  SimpleMatrix residuals = y0.minus(H.mult(X));
+	  return residuals;
+  }
+  
   /**
    * @param roverObs
    * @param masterObs
@@ -296,6 +301,7 @@ public abstract class KalmanFilter extends LS_DD_code {
       
       // Fill in Kalman filter transformation matrix, observation vector and observation error covariance matrix
       setup(roverObs, masterObs, masterPos);
+      
       // Check if satellite configuration changed since the previous epoch
       checkSatelliteConfiguration(roverObs, masterObs, masterPos);
 
@@ -305,6 +311,32 @@ public abstract class KalmanFilter extends LS_DD_code {
       // Kalman filter equations
       K = T.mult(Cee).mult(T.transpose()).plus(Cvv);
       G = K.mult(H.transpose()).mult(H.mult(K).mult(H.transpose()).plus(Cnn).invert());
+      
+      // look for outliers
+      if( goGPS.searchForOutliers() ) {
+    	  
+	      SimpleMatrix Xhat_t_t = I.minus(G.mult(H)).mult(KFprediction).plus(G.mult(y0));
+	      SimpleMatrix residuals = compute_residuals(Xhat_t_t);
+	      
+	//      remove observations with residuals exceeding thresholds
+	      int r = 0;
+	      for( ; r<residuals.getNumElements()/2; r++ ) {
+	    	  	if( Math.abs( residuals.get(r) )> goGPS.getCodeResidThreshold()) {
+	    	  		H.setRow( r, 0, new double[H.numCols()]);
+	    	  		y0.setRow( r, 0, new double[y0.numCols()]);
+	    	  		Cnn.setRow( r, 0, new double[Cnn.numCols()]);
+	    	  	}
+	      }
+	      
+	      for( ; r<residuals.getNumElements(); r++ ) {
+	  	  	if( Math.abs( residuals.get(r) )> goGPS.getPhaseResidThreshold() ) {
+		  		H.setRow( r, 0, new double[H.numCols()]);
+		  		y0.setRow( r, 0, new double[y0.numCols()]);
+		  		Cnn.setRow( r, 0, new double[Cnn.numCols()]);
+	  	  	}
+	      }
+      }
+      
       KFstate = I.minus(G.mult(H)).mult(KFprediction).plus(G.mult(y0));
       KFprediction = T.mult(KFstate);
       Cee = I.minus(G.mult(H)).mult(K);

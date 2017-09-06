@@ -216,6 +216,9 @@ public class LS_SA_code extends Core {
 
                 if( goGPS.getPositionConsumers().size()>0){
                   coord.setRefTime(new Time(obsR.getRefTime().getMsec()));
+                  coord.obs = obsR;
+                  coord.sampleTime = obsR.getRefTime();
+                  coord.status = rover.status;
                   goGPS.notifyPositionConsumerAddCoordinate(coord);
                 }
                 if(debug)System.out.println("PDOP: "+rover.getpDop());

@@ -177,11 +177,11 @@ public class JakKmlProducer implements PositionConsumer {
         Icon icon = new Icon().withHref("http://maps.google.com/mapfiles/kml/shapes/shaded_dot.png");
         IconStyle validIconStyle = new IconStyle()
                                 .withIcon( icon )
-                                .withScale(.5)
+                                .withScale(.25)
                                 .withColor(GREEN);
         IconStyle invalidIconStyle = new IconStyle()
                                 .withIcon( icon )
-                                .withScale(.5)
+                                .withScale(.25)
                                 .withColor(RED);
         
         Icon trackIcon = new Icon().withHref("http://earth.google.com/images/kml-icons/track-directional/track-0.png");

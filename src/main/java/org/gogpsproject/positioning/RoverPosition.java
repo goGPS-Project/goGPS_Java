@@ -34,7 +34,7 @@ public class RoverPosition extends ReceiverPosition {
 
   public Time sampleTime;
   public Observations obs;
-  public Status status = Status.None;
+  public Status status = Status.Valid;
 
   /** Sats in use from an observation set */
   public long satsInUse = 0;

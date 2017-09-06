@@ -432,11 +432,14 @@ public class KF_SA_code_phase extends KalmanFilter {
         // If Kalman filter was not initialized and if there are at least four satellites
         boolean valid = true;
         if (!kalmanInitialized && obsR.getNumSat() >= 4) {
+        	
+         if( roverIn.getDefinedPosition() != null )
+        	   roverIn.getDefinedPosition().cloneInto(rover);
 
           // Compute approximate positioning by iterative least-squares
           for (int iter = 0; iter < 3; iter++) {
             // Select all satellites
-            sats.selectStandalone( obsR, -100);
+            sats.selectStandalone( obsR, -100 );
             
             if (sats.getAvailNumber() >= 4) {
               kf.codeStandalone( obsR, false, true);
@@ -480,6 +483,9 @@ public class KF_SA_code_phase extends KalmanFilter {
             if(goGPS.getPositionConsumers().size()>0){
               RoverPosition coord = new RoverPosition(rover, DopType.KALMAN, rover.getKpDop(), rover.getKhDop(), rover.getKvDop());
               coord.setRefTime(new Time(obsR.getRefTime().getMsec()));
+              coord.obs = obsR;
+              coord.sampleTime = obsR.getRefTime();
+              coord.status = rover.status;
               goGPS.notifyPositionConsumerAddCoordinate(coord);
             }
 

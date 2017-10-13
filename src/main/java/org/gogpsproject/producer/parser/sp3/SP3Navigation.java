@@ -99,8 +99,8 @@ public class SP3Navigation implements NavigationProducer {
 
 	}
 
-	private String urltemplate;
-	private HashMap<String,SP3Parser> pool = new HashMap<String,SP3Parser>();
+	protected String urltemplate;
+	protected HashMap<String,SP3Parser> pool = new HashMap<String,SP3Parser>();
 
 	public SP3Navigation(String urltemplate){
 		this.urltemplate = urltemplate;
@@ -178,7 +178,7 @@ public class SP3Navigation implements NavigationProducer {
 		return null;
 	}
 
-	private SP3Parser getFromFTP(String url) throws IOException{
+	protected SP3Parser getFromFTP(String url) throws IOException{
 		SP3Parser sp3p = null;
 
 		String filename = url.replaceAll("[ ,/:]", "_");

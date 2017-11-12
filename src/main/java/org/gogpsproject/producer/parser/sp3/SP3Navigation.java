@@ -57,48 +57,6 @@ public class SP3Navigation implements NavigationProducer {
 	public String SP3_CACHE = "./sp3-cache";
 
 	private boolean waitForData = true;
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) {
-
-		TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
-
-		Calendar c = Calendar.getInstance();
-//		c.set(Calendar.YEAR, 2011);
-//		c.set(Calendar.MONTH, 0);
-//		c.set(Calendar.DAY_OF_MONTH, 9);
-//		c.set(Calendar.HOUR_OF_DAY, 1);
-//		c.set(Calendar.MINUTE, 0);
-//		c.set(Calendar.SECOND, 0);
-//		c.set(Calendar.MILLISECOND, 0);
-		c.setTimeZone(new SimpleTimeZone(0,""));
-
-		Time t = new Time(c.getTimeInMillis());
-
-		System.out.println("ts: "+t.getMsec()+" "+(new Date(t.getMsec())));
-		System.out.println("week: "+t.getGpsWeek());
-		System.out.println("week sec: "+t.getGpsWeekSec());
-		System.out.println("week day: "+t.getGpsWeekDay());
-		System.out.println("week hour in day: "+t.getGpsHourInDay());
-		System.out.println("year: "+t.getYear()+" "+t.getYear2c());
-		System.out.println("day of year: "+t.getDayOfYear());
-
-
-		System.out.println("ts2: "+(new Time(t.getGpsWeek(),t.getGpsWeekSec())).getMsec());
-
-//		SP3Navigation sp3n = new SP3Navigation(IGN_FR_ULTRARAPID);
-//		sp3n.init();
-//		SatellitePosition sp = sp3n.getGpsSatPosition(c.getTimeInMillis(), 2, 0, null);
-//		if(sp!=null){
-//			System.out.println("found "+(new Date(sp.getUtcTime()))+" "+(sp.isPredicted()?" predicted":""));
-//		}else{
-//			System.out.println("Epoch not found "+(new Date(c.getTimeInMillis())));
-//		}
-
-
-	}
-
 	protected String urltemplate;
 	protected HashMap<String,SP3Parser> pool = new HashMap<String,SP3Parser>();
 
@@ -154,19 +112,9 @@ public class SP3Navigation implements NavigationProducer {
 							return null;
 						}
 					}
-					System.out.println("Try in 10s");
-					try {
-						Thread.sleep(1000*10);
-					} catch (InterruptedException ee) {}
-				} catch (FileNotFoundException e) {
-					System.out.println("Try with previous time by 6h");
-					reqTime = reqTime - (6L*3600L*1000L);
 				}  catch (IOException e) {
-					e.printStackTrace();
-					System.out.println("Try in 10s");
-					try {
-						Thread.sleep(1000*10);
-					} catch (InterruptedException ee) {}
+          System.out.println( e.getClass().getName() + " url: " + url);
+          return null;
 				}
 
 
@@ -185,7 +133,12 @@ public class SP3Navigation implements NavigationProducer {
 		if(filename.endsWith(".Z")) filename = filename.substring(0, filename.length()-2);
 		File sp3f = new File(SP3_CACHE,filename);
 
-		if(!sp3f.exists()){
+		if(sp3f.exists()){
+      System.out.println(url+" from cache file "+ sp3f );
+      sp3p = new SP3Parser(sp3f);
+      sp3p.init();
+    }
+    else{
 			System.out.println(url+" from the net.");
 			FTPClient ftp = new FTPClient();
 
@@ -214,6 +167,9 @@ public class SP3Navigation implements NavigationProducer {
 					System.err.println("FTP server refused connection.");
 					return null;
 				}
+
+        ftp.enterLocalPassiveMode();
+        ftp.setRemoteVerificationEnabled(false);
 
 				System.out.println("cwd to "+remotePath+" "+ftp.changeWorkingDirectory(remotePath));
 				System.out.println(ftp.getReplyString());
@@ -249,10 +205,6 @@ public class SP3Navigation implements NavigationProducer {
 					}
 				}
 			}
-		}else{
-			System.out.println(url+" from cache file "+sp3f);
-			sp3p = new SP3Parser(sp3f);
-			sp3p.init();
 		}
 		return sp3p;
 	}

@@ -81,8 +81,8 @@ public class UBXFileReader extends EphemerisSystem implements ObservationsProduc
 	@Override
 	public Coordinates getDefinedPosition() {
 		Coordinates coord = Coordinates.globalXYZInstance(0.0, 0.0, 0.0); //new Coordinates(new SimpleMatrix(3, 1));
-		//coord.setXYZ(0.0, 0.0, 0.0 );
-		coord.computeGeodetic();
+		coord.setXYZ(0.0, 0.0, 0.0 );
+//		coord.computeGeodetic();
 		// TODO should return null?
 		return coord;
 	}

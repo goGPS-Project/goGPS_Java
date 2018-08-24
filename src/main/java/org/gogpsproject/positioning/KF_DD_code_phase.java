@@ -855,6 +855,8 @@ public class KF_DD_code_phase extends KalmanFilter {
           if (!kalmanInitialized && obsR.getNumSat() >= 4) {
 
             // Compute approximate positioning by iterative least-squares
+            if( roverIn.getDefinedPosition() != null )
+              roverIn.getDefinedPosition().cloneInto(rover);
             
             for (int iter = 0; iter < 3; iter++) {
               // Select all satellites

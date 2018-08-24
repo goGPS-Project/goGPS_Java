@@ -328,10 +328,10 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
       System.out.print( String.format( "  Q:%3.1f", Q.get(k,k)));
       
       // check again, if fails, exclude this satellite
-      double dms = Math.abs(d-pivot)/Constants.SPEED_OF_LIGHT*1000;
-      if( Math.abs(dms) > goGPS.getCodeResidThreshold() )
+      double diff = Math.abs(d-pivot);
+      if( Math.abs(diff) > goGPS.getCodeResidThreshold() )
       {
-        if( goGPS.isDebug() ) System.out.println( String.format( " Excluding d:%8.3f", dms));
+        if( goGPS.isDebug() ) System.out.println( String.format( " Excluding d:%8.3f", diff));
         resid.set(k, 0);
         A.set(k, 0, 0);
         A.set(k, 1, 0);
@@ -1003,7 +1003,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
       selectSatellites( obsR, -100, GoGPS.MODULO20MS );
       System.out.println();
 
-      if (sats.getAvailNumber() < 3) {
+      if (sats.getAvailNumber() <= 3) {
         if(goGPS.isDebug()) System.out.println("Not enough satellites" );
         rover.setXYZ(0, 0, 0);
         rover.status = Status.NotEnoughSats;
@@ -1016,7 +1016,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
           : codeStandaloneCoarseTime(obsR, MODULO );
         updatems = obsR.getRefTime().getMsec() - updatems;
         
-        if( Math.abs( updatems/1000 )> 12*60*60 ){
+        if( Math.abs( updatems/1000 )> /*12*60*60*/ /*goGPS.getMaxCoarseTimeUpdate()*/ 30 ){
           if(goGPS.isDebug()) System.out.println("Time update is too large: " + updatems/1000 + " s" );
           rover.setXYZ(0, 0, 0);
           if( rover.status == Status.None ){
@@ -1117,6 +1117,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
           break;
         
         index++;
+        obsR.index = index;
         
         if(goGPS.isDebug()){
           System.out.println("==========================================================================================");
@@ -1132,8 +1133,9 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
         
         // Add Leap Seconds, remove at the end
         leapSeconds = refTime.getLeapSeconds();
-        Time GPSTime = new Time( refTime.getMsec() + leapSeconds * 1000);
-        obsR.setRefTime(GPSTime);
+//        Time GPSTime = new Time( refTime.getMsec() + leapSeconds * 1000);
+//        obsR.setRefTime(GPSTime);
+        
         Time newTime = new Time( obsR.getRefTime().getMsec() + goGPS.getOffsetms() );
         obsR.setRefTime(newTime);
         long newTimeRefms = obsR.getRefTime().getMsec();
@@ -1179,7 +1181,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
           goGPS.setOffsetms( (long) (goGPS.getOffsetms() + offsetUpdate) );
 
           // remove Leap Seconds
-          obsR.setRefTime(new Time(obsR.getRefTime().getMsec() - leapSeconds * 1000));
+//          obsR.setRefTime(new Time(obsR.getRefTime().getMsec() - leapSeconds * 1000));
         
           // update aPrioriPos
           rover.cloneInto(aPrioriPos);

@@ -1255,10 +1255,10 @@ public class RinexNavigationParser extends EphemerisSystem implements Navigation
 			return null;
 					
 		EphGps eph = findEph(unixTime, satID, satType);
-		if( eph.equals( EphGps.UnhealthyEph ))
-			return SatellitePosition.UnhealthySat;
-		
 		if (eph != null) {
+
+	        if( eph.equals( EphGps.UnhealthyEph ))
+	            return SatellitePosition.UnhealthySat;
 
 			//			char satType = eph.getSatType();
 

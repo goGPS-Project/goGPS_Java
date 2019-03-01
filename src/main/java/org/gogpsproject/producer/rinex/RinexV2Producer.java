@@ -73,8 +73,10 @@ public class RinexV2Producer implements StreamEventListener {
 	private String marker;
 	private int minDOY = 0;
 	private int DOYold = -1;
+	private int hourOld = -1;
 	private String outputDir = "./test";
 	private boolean enableZip = false;
+	private boolean enableHourlyRinex = false;
 
 	private final static TimeZone TZ = TimeZone.getTimeZone("GMT");
 
@@ -135,8 +137,9 @@ public class RinexV2Producer implements StreamEventListener {
 		synchronized (this) {
 			Time epoch = o.getRefTime();
 			int DOY = epoch.getDayOfYear();
+			int hour = epoch.getGpsHourInDay();
 			if (DOY >= this.minDOY) {
-				if (this.standardFilename && (this.outFilename == null || this.DOYold != DOY)) {
+				if (this.standardFilename && (this.outFilename == null || this.DOYold != DOY || (this.enableHourlyRinex && this.hourOld != hour))) {
 					streamClosed();
 
 					if (this.enableZip && this.outFilename != null) {
@@ -181,14 +184,17 @@ public class RinexV2Producer implements StreamEventListener {
 						if(wasDirectoryMade)System.out.println("Directory "+outputDir+" created");
 						else System.out.println("Could not create directory "+outputDir);
 					}
-
-					char session = '0';
+					String session = "0";
+					char session_increment = '0';
+					if (this.enableHourlyRinex) {
+						session = epoch.getHourOfDayLetter();
+					}
 					int year = epoch.getYear2c();
 					String outFile = outputDir + "/" + marker + String.format("%03d", DOY) + session + "." + year + "o";
 					File f = new File(outFile);
 
 					while (f.exists()){
-						session++;
+						session = session + "_" + session_increment;
 						outFile = outputDir + "/" +  marker + String.format("%03d", DOY) + session + "." + year + "o";
 						f = new File(outFile);
 					}
@@ -197,6 +203,7 @@ public class RinexV2Producer implements StreamEventListener {
 					setFilename(outFile);
 
 					DOYold = DOY;
+					hourOld = hour;
 
 					headerWritten = false;
 				}
@@ -541,5 +548,9 @@ public class RinexV2Producer implements StreamEventListener {
 	
 	public void enableCompression(boolean enableZip) {
 		this.enableZip = enableZip;
+	}
+	
+	public void enableHourlyRinexOutput(boolean enableHourlyRinex) {
+		this.enableHourlyRinex  = enableHourlyRinex;
 	}
 }

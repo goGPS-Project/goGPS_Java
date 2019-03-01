@@ -24,6 +24,7 @@ import java.util.Locale;
 
 import org.gogpsproject.producer.parser.ublox.UBXFileReader;
 import org.gogpsproject.producer.rinex.RinexV2Producer;
+import org.gogpsproject.producer.rinex.RinexV3Producer;
 
 /**
  * @author Lorenzo Patocchi, cryms.com; Eugenio Realini, GReD srl
@@ -43,6 +44,14 @@ public class UBXToRinex {
 		
 		boolean singleFreq = true;
 		boolean needApproxPos = false;
+		
+		boolean gpsEnable = true;  // enable GPS data writing
+		boolean qzsEnable = true;  // enable QZSS data writing
+	    boolean gloEnable = true;  // enable GLONASS data writing	
+	    boolean galEnable = true;  // enable Galileo data writing
+	    boolean bdsEnable = false;  // enable BeiDou data writing
+
+		Boolean[] multiConstellation = {gpsEnable, qzsEnable, gloEnable, galEnable, bdsEnable};
 
 		if(args.length<3){
 			System.out.println("UBXToRinex <ubx file> <output directory> <marker name> [<min DOY>]");
@@ -59,7 +68,10 @@ public class UBXToRinex {
 		
 		System.out.println("in :"+inFile);
 		
-		RinexV2Producer rp = new RinexV2Producer(needApproxPos, singleFreq, marker, minDOY);
+//		RinexV2Producer rp = new RinexV2Producer(needApproxPos, singleFreq, marker, minDOY);
+//		rp.setOutputDir(outDir);
+		
+		RinexV3Producer rp = new RinexV3Producer(needApproxPos, singleFreq, marker, multiConstellation, minDOY);
 		rp.setOutputDir(outDir);
 
 		UBXFileReader roverIn = new UBXFileReader(new File(inFile));

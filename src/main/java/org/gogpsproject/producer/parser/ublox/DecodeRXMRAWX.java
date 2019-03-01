@@ -281,15 +281,20 @@ public class DecodeRXMRAWX {
 //			System.out.print(" satID: "
 //					+ satID + "  ");
 			
-			bits = new boolean[8];  // reserved2 (U1)
+			bits = new boolean[8];  // sigId (U1)
 			indice = 0;
 			temp1 = Bits.intToBits(data[offset + 7 + 8 + 4 + 1 + 1 + 1], 8);
 			for (int i = 0; i < 8; i++) {
 				bits[indice] = temp1[i];
 				indice++;
 			}
-//			System.out.print(" reserved2: "
+//			System.out.print(" sigId: "
 //					+ Bits.bitsToUInt(bits) + "  ");
+			
+			int sigID = (int)Bits.bitsToUInt(bits);
+			if (sigID <= 0) {
+				anomalousValues = true;
+			}
 			
 						
 			bits = new boolean[8]; //freqId (U1)

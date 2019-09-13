@@ -194,9 +194,10 @@ public class RinexV2Producer implements StreamEventListener {
 					File f = new File(outFile);
 
 					while (f.exists()){
-						session = session + "_" + session_increment;
-						outFile = outputDir + "/" +  marker + String.format("%03d", DOY) + session + "." + year + "o";
+						//session = session + "_" + session_increment;
+						outFile = outputDir + "/" +  marker + String.format("%03d", DOY) + session + "_" + session_increment + "." + year + "o";
 						f = new File(outFile);
+						session_increment++;
 					}
 
 					System.out.println("Started writing RINEX file "+outFile);

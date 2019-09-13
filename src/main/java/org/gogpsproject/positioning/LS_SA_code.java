@@ -3,7 +3,10 @@ package org.gogpsproject.positioning;
 import org.ejml.simple.SimpleMatrix;
 import org.gogpsproject.Constants;
 import org.gogpsproject.GoGPS;
+import org.gogpsproject.consumer.PositionConsumer;
+import org.gogpsproject.positioning.RoverPosition.DopType;
 import org.gogpsproject.producer.Observations;
+import org.gogpsproject.producer.ObservationsProducer;
 
 public class LS_SA_code extends Core {
 
@@ -138,4 +141,106 @@ public class LS_SA_code extends Core {
     // Compute positioning in geodetic coordinates
     rover.computeGeodetic();
   }
+  
+  /**
+   * Run code standalone.
+   *
+   * @param getNthPosition the get nth position
+   * @return the coordinates
+   * @throws Exception
+   */
+  public static void run( GoGPS goGPS, double stopAtDopThreshold ) {
+    
+    RoverPosition rover   = goGPS.getRoverPos();
+    MasterPosition master = goGPS.getMasterPos();
+    Satellites sats       = goGPS.getSats();
+    ObservationsProducer roverIn = goGPS.getRoverIn();
+    ObservationsProducer masterIn = goGPS.getMasterIn();
+    boolean debug = goGPS.isDebug();
+    boolean validPosition = false;
+    
+    LS_SA_code sa = new LS_SA_code(goGPS);
+    
+    RoverPosition coord = null;
+    try {
+      Observations obsR = roverIn.getNextObservations();
+      while( obsR!=null && !Thread.interrupted() ) { // buffStreamObs.ready()
+//        if(debug) System.out.println("OK ");
+
+        //try{
+          // If there are at least four satellites
+          if (obsR.getNumSat() >= 4) { // gps.length
+            if(debug) System.out.println("Total number of satellites: "+obsR.getNumSat());
+
+            // Compute approximate positioning by iterative least-squares
+            if (!rover.isValidXYZ()) {
+            	
+            	 if( roverIn.getDefinedPosition() != null )
+           	   roverIn.getDefinedPosition().cloneInto(rover);
+
+              for (int iter = 0; iter < 3; iter++) {
+                // Select all satellites
+                sats.selectStandalone( obsR, -100);
+                
+                if (sats.getAvailNumber() >= 4) {
+                  sa.codeStandalone( obsR, false, true);
+                }
+              }
+
+            // If an approximate position was computed
+              if(debug) System.out.println("Valid approximate position? "+rover.isValidXYZ()+ " " + rover.toString());
+            }
+            if (rover.isValidXYZ()) {
+              // Select available satellites
+              sats.selectStandalone( obsR );
+              
+              if (sats.getAvailNumber() >= 4){
+                if(debug) System.out.println("Number of selected satellites: " + sats.getAvailNumber());
+                // Compute code stand-alone positioning (epoch-by-epoch solution)
+                sa.codeStandalone( obsR, false, false);
+              }
+              else
+                // Discard approximate positioning
+                rover.setXYZ(0, 0, 0);
+            }
+
+            if(debug)System.out.println("Valid LS position? "+rover.isValidXYZ()+ " " + rover.toString() );
+            if (rover.isValidXYZ()) {
+              if(!validPosition){
+                goGPS.notifyPositionConsumerEvent(PositionConsumer.EVENT_START_OF_TRACK);
+                validPosition = true;
+              }
+//              else 
+              {
+                coord = new RoverPosition(rover, DopType.STANDARD, rover.getpDop(), rover.gethDop(), rover.getvDop());
+
+                if( goGPS.getPositionConsumers().size()>0){
+                  coord.setRefTime(new Time(obsR.getRefTime().getMsec()));
+                  coord.obs = obsR;
+                  coord.sampleTime = obsR.getRefTime();
+                  coord.status = rover.status;
+                  goGPS.notifyPositionConsumerAddCoordinate(coord);
+                }
+                if(debug)System.out.println("PDOP: "+rover.getpDop());
+                if(debug)System.out.println("------------------------------------------------------------");
+                if( stopAtDopThreshold>0.0 && rover.getpDop()<stopAtDopThreshold){
+                  return;
+                }
+              }
+            }
+          }
+//        }catch(Exception e){
+//          System.out.println("Could not complete due to "+e);
+//          e.printStackTrace();
+//        }
+        obsR = roverIn.getNextObservations();
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw e;
+    } finally {
+      goGPS.notifyPositionConsumerEvent(PositionConsumer.EVENT_END_OF_TRACK);
+    }
+  }
+  
 }

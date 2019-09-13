@@ -24,6 +24,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 import org.gogpsproject.GoGPS;
+import org.gogpsproject.GoGPS.DynamicModel;
 import org.gogpsproject.consumer.KmlProducer;
 import org.gogpsproject.positioning.Coordinates;
 import org.gogpsproject.producer.NavigationProducer;
@@ -43,7 +44,7 @@ public class ProcessRealtimeUBX {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		int dynamicModel = GoGPS.DYN_MODEL_CONST_SPEED;
+		DynamicModel dynamicModel = GoGPS.DynamicModel.CONST_SPEED;
 		try{
 			//force dot as decimal separator
 			Locale.setDefault(new Locale("en", "US"));
@@ -81,7 +82,7 @@ public class ProcessRealtimeUBX {
       String outPath = "./out/" + date1 + ".kml";
       KmlProducer kml = new KmlProducer(outPath, 2.5, 0);
 
-			GoGPS goGPS = new GoGPS(navigationIn, roverIn, null)
+			GoGPS goGPS = new GoGPS( navigationIn, roverIn )
 			                 .setDynamicModel(dynamicModel)
 			                 .addPositionConsumerListener(kml)
 
@@ -90,7 +91,7 @@ public class ProcessRealtimeUBX {
                         // .runKalmanFilterCodePhaseStandalone();
 
 			                  // run in background
-			                 .runThreadMode(GoGPS.RUN_MODE_KALMAN_FILTER_STANDALONE)
+			                 .runThreadMode( GoGPS.RunMode.KALMAN_FILTER_CODE_PHASE_STANDALONE )
 
 			                  // wait for 2 minutes
 			                 .runFor(120);

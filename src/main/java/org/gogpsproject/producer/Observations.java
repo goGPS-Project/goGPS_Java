@@ -44,7 +44,6 @@ public class Observations implements Streamable {
 	SimpleDateFormat sdfHeader = getGMTdf();
 	DecimalFormat dfX4 = new DecimalFormat("0.0000");
 
-
 	private final static int STREAM_V = 1;
 
 	private Time refTime; /* Reference time of the dataset */
@@ -52,7 +51,7 @@ public class Observations implements Streamable {
 
 	private ArrayList<ObservationSet> obsSet; /* sets of observations */
 	private int issueOfData = -1;
-  public int index;
+    public long index;
 
 	/**
 	 * The Rinex filename
@@ -83,15 +82,18 @@ public class Observations implements Streamable {
 		this.refTime = time;
 		this.eventFlag = flag;
 	}
+	
 	public Observations(DataInputStream dai, boolean oldVersion) throws IOException{
 		read(dai, oldVersion);
 	}
+	
 	public void cleanObservations(){
 		if(obsSet != null)
 			for (int i=obsSet.size()-1;i>=0;i--)
 				if(obsSet.get(i)==null || Double.isNaN(obsSet.get(i).getPseudorange(0)))
 					obsSet.remove(i);
 	}
+	
 	public int getNumSat(){
 		if(obsSet == null) return 0;
 		int nsat = 0;
@@ -99,21 +101,25 @@ public class Observations implements Streamable {
 			if(obsSet.get(i)!=null) nsat++;
 		return obsSet==null?-1:nsat;
 	}
+	
 	public ObservationSet getSatByIdx(int idx){
 		return obsSet.get(idx);
 	}
+	
 	public ObservationSet getSatByID(Integer satID){
 		if(obsSet == null || satID==null) return null;
 		for(int i=0;i<obsSet.size();i++)
 			if(obsSet.get(i)!=null && obsSet.get(i).getSatID()==satID.intValue()) return obsSet.get(i);
 		return null;
 	}
+	
 	public ObservationSet getSatByIDType(Integer satID, char satType){
 		if(obsSet == null || satID==null) return null;
 		for(int i=0;i<obsSet.size();i++)
 			if(obsSet.get(i)!=null && obsSet.get(i).getSatID()==satID.intValue() && obsSet.get(i).getSatType()==satType) return obsSet.get(i);
 		return null;
 	}
+	
 //	public ObservationSet getGpsByID(char satGnss){
 //		String sub = String.valueOf(satGnss); 
 //		String str = sub.substring(0, 1);  
@@ -126,15 +132,19 @@ public class Observations implements Streamable {
 //			if(gps.get(i)!=null && gps.get(i).getSatID()==satID.intValue() && gps.get(i).getSatType()==satType) return gps.get(i);
 //		return null;
 //	}
+	
 	public Integer getSatID(int idx){
 		return getSatByIdx(idx).getSatID();
 	}
+	
 	public char getGnssType(int idx){
 		return getSatByIdx(idx).getSatType();
 	}
+	
 	public boolean containsSatID(Integer id){
 		return getSatByID(id) != null;
 	}
+	
 	public boolean containsSatIDType(Integer id, Character satType){
 		return getSatByIDType(id, satType) != null;
 	}
@@ -224,6 +234,7 @@ public class Observations implements Streamable {
 		}
 		return size;
 	}
+	
 	public String toString(){
 
 		String lineBreak = System.getProperty("line.separator");
@@ -246,6 +257,7 @@ public class Observations implements Streamable {
 	private String fd(double n){
 		return Double.isNaN(n)?"NaN":dfX4.format(n);
 	}
+	
 	/* (non-Javadoc)
 	 * @see org.gogpsproject.Streamable#read(java.io.DataInputStream)
 	 */

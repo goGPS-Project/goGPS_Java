@@ -27,6 +27,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import org.gogpsproject.GoGPS.DynamicModel;
+import org.gogpsproject.GoGPS.RunMode;
 import org.gogpsproject.consumer.KmlProducer;
 import org.gogpsproject.producer.NavigationProducer;
 import org.gogpsproject.producer.ObservationsBuffer;
@@ -44,7 +46,6 @@ public class TestReadObsLog {
 		//force dot as decimal separator
 		Locale.setDefault(new Locale("en", "US"));
 
-		int dynamicModel = GoGPS.DYN_MODEL_CONST_SPEED;
 		double goodDopThreshold = 2.5;
 		int timeSapleDelaySec = 1;
 
@@ -84,10 +85,10 @@ public class TestReadObsLog {
 
 			GoGPS goGPS = new GoGPS(navigationIn, roverIn, masterIn)
                   			.addPositionConsumerListener(kml)
-                  			.setDynamicModel(dynamicModel)
-                  			//.runCodeStandalone();
-                  			//.runCodeDoubleDifferences();
-                  			.runKalmanFilterCodePhaseDoubleDifferences();
+                  			.setDynamicModel(DynamicModel.CONST_SPEED)
+//                  			.run( RunMode.CODE_STANDALONE );
+//                  			.run( RunMode.DOUBLE_DIFF );
+                  			.run( RunMode.KALMAN_FILTER_CODE_PHASE_DOUBLE_DIFF); 
 
 			try{
 				roverIn.release(true,10000);

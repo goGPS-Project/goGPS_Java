@@ -1,11 +1,15 @@
 package org.gogpsproject.positioning;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 
 import org.ejml.simple.SimpleMatrix;
 import org.gogpsproject.Constants;
 import org.gogpsproject.GoGPS;
 import org.gogpsproject.Status;
+import org.gogpsproject.consumer.PositionConsumer;
 import org.gogpsproject.producer.ObservationSet;
 import org.gogpsproject.producer.Observations;
 
@@ -80,7 +84,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
     for (int i = 0; i < nObs; i++) {
       id = roverObs.getSatID(i);
 
-      if( sats.pos[i] == null  || !sats.avail.contains(id) ) {//|| recpos.ecef==null || sats.pos[i].ecef==null ){
+      if( sats.pos[i] == null  || !sats.avail.keySet().contains(id) ) {//|| recpos.ecef==null || sats.pos[i].ecef==null ){
 //              l.warning( "ERROR, sats.pos[i]==null?" );
 //              this.setXYZ(0, 0, 0);
 //              return null;
@@ -262,7 +266,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
     for (int i = 0; i < nObs; i++) {
       int satId = roverObs.getSatID(i);
 
-      if( sats.pos[i] == null  || !sats.avail.contains(satId) ) {//|| recpos.ecef==null || sats.pos[i].ecef==null ){
+      if( sats.pos[i] == null  || !sats.avail.keySet().contains(satId) ) {//|| recpos.ecef==null || sats.pos[i].ecef==null ){
         continue;
       }
 
@@ -277,7 +281,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
 
       // check again, if fails, exclude this satellite
       double dms = Math.abs(d-pivot_test)/Constants.SPEED_OF_LIGHT*1000;
-      if( Math.abs(dms) > goGPS.getResidThreshold() ){      
+      if( Math.abs(dms) > goGPS.getCodeResidThreshold() ){      
         badSat++;
       }
       else {      
@@ -301,7 +305,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
     for (int i = 0; i < nObs; i++) {
       int satId = roverObs.getSatID(i);
 
-      if( sats.pos[i] == null  || !sats.avail.contains(satId) ) {//|| recpos.ecef==null || sats.pos[i].ecef==null ){
+      if( sats.pos[i] == null  || !sats.avail.keySet().contains(satId) ) {//|| recpos.ecef==null || sats.pos[i].ecef==null ){
         continue;
       }
 
@@ -324,10 +328,10 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
       System.out.print( String.format( "  Q:%3.1f", Q.get(k,k)));
       
       // check again, if fails, exclude this satellite
-      double dms = Math.abs(d-pivot)/Constants.SPEED_OF_LIGHT*1000;
-      if( Math.abs(dms) > goGPS.getResidThreshold() )
+      double diff = Math.abs(d-pivot);
+      if( Math.abs(diff) > goGPS.getCodeResidThreshold() )
       {
-        if( goGPS.isDebug() ) System.out.println( String.format( " Excluding d:%8.3f", dms));
+        if( goGPS.isDebug() ) System.out.println( String.format( " Excluding d:%8.3f", diff));
         resid.set(k, 0);
         A.set(k, 0, 0);
         A.set(k, 1, 0);
@@ -483,7 +487,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
 
       id = roverObs.getSatID(i);
 
-      if( sats.pos[i] == null  || !sats.avail.contains(id) ) {//|| recpos.ecef==null || sats.pos[i].ecef==null ){
+      if( sats.pos[i] == null  || !sats.avail.keySet().contains(id) ) {//|| recpos.ecef==null || sats.pos[i].ecef==null ){
 //              l.warning( "ERROR, sats.pos[i]==null?" );
 //              this.setXYZ(0, 0, 0);
 //              return null;
@@ -553,7 +557,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
     for( k=0; k<sats.avail.size(); k++){
       int satId = roverObs.getSatID(k);
       
-      if( !sats.avail.contains(satId) || sats.pos[k] == null || rover.topo[k] == null )
+      if( !sats.avail.keySet().contains(satId) || sats.pos[k] == null || rover.topo[k] == null )
         continue;
       
       if( Math.abs(resid.get(k)) < pivot ){
@@ -712,7 +716,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
 
       id = roverObs.getSatID(i);
 
-      if( sats.pos[i] == null  || !sats.avail.contains(id) ) {//|| recpos.ecef==null || sats.pos[i].ecef==null ){
+      if( sats.pos[i] == null  || !sats.avail.keySet().contains(id) ) {//|| recpos.ecef==null || sats.pos[i].ecef==null ){
         int satId = roverObs.getSatID(k);
         ObservationSet os = roverObs.getSatByID(satId);
         os.inUse(false);
@@ -895,7 +899,7 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
       
       // check again, if fails, exclude this satellite
       double dms = Math.abs(d-pivot)/Constants.SPEED_OF_LIGHT*1000;
-      if( Math.abs(dms) > goGPS.getResidThreshold() )
+      if( Math.abs(dms) > goGPS.getCodeResidThreshold() )
       {
         if( goGPS.isDebug() ) System.out.println( String.format( " Excluding d:%8.3f", dms));
         resid.set(k, 0);
@@ -970,4 +974,235 @@ public class LS_SA_code_coarse_time extends LS_SA_code_snapshot {
      
      return correction_mag; // return correction_mag
   }
+  
+  public void runCoarseTime(Observations obsR, final double MODULO ){
+    /** pos update limit for LMS iterations */
+    final double POS_TOL = 1.0;    // meters
+    
+    /** time update limit for LMS iterations */
+    final double TG_TOL = 1;  // milliseconds
+
+    for (int iter = 0; iter < 2000; iter++) {
+      if(goGPS.isDebug()) System.out.println("\r\n////// itr = " + iter );
+      long   updatems = obsR.getRefTime().getMsec();
+
+//      if( truePos != null ){
+//        System.out.println( String.format( "\r\n* True Pos: %8.4f, %8.4f, %8.4f", 
+//            truePos.getGeodeticLatitude(),
+//            truePos.getGeodeticLongitude(),
+//            truePos.getGeodeticHeight()
+//            ));
+//        truePos.selectSatellitesStandaloneFractional( obsR, -100, MODULO20MS );
+//      }
+      
+      System.out.println( String.format( "\r\n* Rover Pos: %8.4f, %8.4f, %8.4f", 
+          rover.getGeodeticLatitude(),
+          rover.getGeodeticLongitude(),
+          rover.getGeodeticHeight()
+          ));
+      selectSatellites( obsR, -100, GoGPS.MODULO20MS );
+      System.out.println();
+
+      if (sats.getAvailNumber() <= 3) {
+        if(goGPS.isDebug()) System.out.println("Not enough satellites" );
+        rover.setXYZ(0, 0, 0);
+        rover.status = Status.NotEnoughSats;
+        break;
+      }
+      else {
+        double correction_mag = 
+            sats.getAvailNumber() == 3?
+            codeStandaloneDTM(obsR, MODULO )
+          : codeStandaloneCoarseTime(obsR, MODULO );
+        updatems = obsR.getRefTime().getMsec() - updatems;
+        
+        if( Math.abs( updatems/1000 )> /*12*60*60*/ /*goGPS.getMaxCoarseTimeUpdate()*/ 30 ){
+          if(goGPS.isDebug()) System.out.println("Time update is too large: " + updatems/1000 + " s" );
+          rover.setXYZ(0, 0, 0);
+          if( rover.status == Status.None ){
+            rover.status = Status.MaxCorrection;
+          }
+          break;
+        }
+          
+        if( rover.status != Status.None && rover.status != Status.Valid )
+          break;
+        
+        // if correction is small enough, we're done, exit loop
+        if( correction_mag< POS_TOL && Math.abs(updatems) < TG_TOL) {
+           rover.status = Status.Valid;
+           break; 
+        }
+      }
+    }
+  }
+  
+  public static void run( GoGPS goGPS, final double MODULO ) {
+      
+    RoverPosition rover   = goGPS.getRoverPos();
+    MasterPosition master = goGPS.getMasterPos();
+    Satellites sats       = goGPS.getSats();
+    
+    LS_SA_code_coarse_time sa = new LS_SA_code_coarse_time( goGPS );
+    
+    long index = 0;
+    Observations obsR = null;
+    Time refTime;
+    int leapSeconds;
+    
+    // read the whole file
+    List<Observations> obsl = new ArrayList<Observations>();
+    do{
+      obsR = goGPS.getRoverIn().getNextObservations();
+      if( obsR!=null )
+        obsl.add(obsR);
+    } while( obsR!=null);
+    
+      Coordinates aPrioriPos = goGPS.getRoverIn().getDefinedPosition();
+      if( aPrioriPos != null && aPrioriPos.isValidXYZ() ){
+        rover.setXYZ( aPrioriPos.getX(), aPrioriPos.getY(), aPrioriPos.getZ() );
+        rover.computeGeodetic();
+      }
+      else {
+        aPrioriPos = Coordinates.globalXYZInstance(0, 0, 0);
+        
+        System.out.println("\r\nSearching for a priori position");
+        
+        long maxNumSat = 0;
+        index = 0;
+        long maxSatIdx = 0;
+        Observations maxSatObs = null;
+        // find the observation set with most satellites
+        Iterator<Observations> it = obsl.iterator();
+        while( it.hasNext() ) { // buffStreamObs.ready()
+          obsR = it.next();
+          if( obsR==null)
+            break;
+          // search for an observation with at least 6 satellites to produce an a priori position using the elevation method
+          if( obsR.getNumSat()>maxNumSat){
+            maxNumSat = obsR.getNumSat();
+            maxSatObs = obsR;
+            maxSatIdx = index;
+          }
+          index++;
+        }
+  
+        rover.status = Status.NoAprioriPos;
+        sa.runElevationMethod(maxSatObs);
+            
+        if( rover.status == Status.Valid){
+            // remember refTime
+            refTime = maxSatObs.getRefTime();
+            
+            double thr = goGPS.getCodeResidThreshold();
+            goGPS.setCodeResidThreshold(MODULO);
+            sa.runCoarseTime(maxSatObs, MODULO);
+            // restore obsR refTime
+            maxSatObs.setRefTime(refTime);
+            goGPS.setCodeResidThreshold(thr);
+            
+            rover.cloneInto(aPrioriPos);
+            rover.status = Status.None;
+          }
+      }
+
+    // now process all the observation sets from the top of the file
+    Iterator<Observations> it = obsl.iterator();
+    goGPS.notifyPositionConsumerEvent(PositionConsumer.EVENT_START_OF_TRACK);
+    index = 0;
+    try {
+      while( it.hasNext() ) { 
+        obsR = it.next();
+        if( obsR == null )
+          break;
+        
+        index++;
+        obsR.index = index;
+        
+        if(goGPS.isDebug()){
+          System.out.println("==========================================================================================");
+          System.out.println("Index = " + index );
+          System.out.println("Processing " + obsR);
+        }
+        
+        rover.status = Status.None;
+        
+        // apply offset
+        refTime = obsR.getRefTime();
+        rover.sampleTime = refTime;
+        
+        // Add Leap Seconds, remove at the end
+        leapSeconds = refTime.getLeapSeconds();
+//        Time GPSTime = new Time( refTime.getMsec() + leapSeconds * 1000);
+//        obsR.setRefTime(GPSTime);
+        
+        Time newTime = new Time( obsR.getRefTime().getMsec() + goGPS.getOffsetms() );
+        obsR.setRefTime(newTime);
+        long newTimeRefms = obsR.getRefTime().getMsec();
+        
+        if( !rover.isValidXYZ() ){
+          if( obsR.getNumSat()<6){
+            rover.status = Status.NoAprioriPos;
+          }
+          else {
+            sa.runElevationMethod(obsR);
+          }
+        }
+
+        // If an approximate position was computed
+        if( !rover.isValidXYZ() ){
+          if(goGPS.isDebug()) System.out.println("Couldn't compute an approximate position at " + obsR.getRefTime());
+          if( rover.status == Status.None ){
+            rover.status = Status.NoAprioriPos;
+          }
+          continue;
+        }
+        else{
+          
+          if(goGPS.isDebug()) System.out.println("Approximate position at " + obsR.getRefTime() +"\r\n" + rover );
+          
+          sa.runCoarseTime(obsR, MODULO);
+        }
+
+        if( !rover.isValidXYZ() || rover.gethDop()> goGPS.getHdopLimit() ){
+          rover.sampleTime = refTime;
+          
+          if( rover.isValidXYZ() && rover.gethDop()>goGPS.getHdopLimit() ){
+            System.out.println( String.format( "Excluding fix hdop = %3.1f > %3.1f (limit)", rover.gethDop(), goGPS.getHdopLimit() ));
+            rover.status = Status.MaxHDOP;
+          }
+          // restore a priori location
+          if( aPrioriPos != null && aPrioriPos.isValidXYZ() ){
+            aPrioriPos.cloneInto(rover);
+          } 
+        }
+        else {
+          double offsetUpdate = obsR.getRefTime().getMsec() - newTimeRefms;
+          goGPS.setOffsetms( (long) (goGPS.getOffsetms() + offsetUpdate) );
+
+          // remove Leap Seconds
+//          obsR.setRefTime(new Time(obsR.getRefTime().getMsec() - leapSeconds * 1000));
+        
+          // update aPrioriPos
+          rover.cloneInto(aPrioriPos);
+
+          if(goGPS.isDebug()) System.out.println("Valid position? "+ rover.isValidXYZ() + "\r\n" + rover );
+          if(goGPS.isDebug()) System.out.println(" lat:"+rover.getGeodeticLatitude()+" lon:"+rover.getGeodeticLongitude() );
+          if(goGPS.isDebug()) System.out.println(" time offset update (ms): " +  offsetUpdate + "; Total time offset (ms): " + goGPS.getOffsetms() );  
+        
+          rover.cErrMS = obsR.getRefTime().getMsec() - rover.sampleTime.getMsec();
+        }
+        if( goGPS.getPositionConsumers().size()>0){
+          rover.setRefTime(new Time(obsR.getRefTime().getMsec()));
+          goGPS.notifyPositionConsumerAddCoordinate(rover.clone(obsR));
+        }
+      }
+    }
+    catch (Throwable e) {
+      e.printStackTrace();
+    } finally {
+      goGPS.notifyPositionConsumerEvent(PositionConsumer.EVENT_END_OF_TRACK);
+    }
+  }
+  
 }

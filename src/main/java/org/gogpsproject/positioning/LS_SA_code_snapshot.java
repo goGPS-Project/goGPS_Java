@@ -1,10 +1,13 @@
 package org.gogpsproject.positioning;
 
 
+import java.text.ParseException;
+
 import org.ejml.simple.SimpleMatrix;
 import org.gogpsproject.Constants;
 import org.gogpsproject.GoGPS;
 import org.gogpsproject.Status;
+import org.gogpsproject.consumer.PositionConsumer;
 import org.gogpsproject.producer.ObservationSet;
 import org.gogpsproject.producer.Observations;
 
@@ -120,14 +123,14 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
       if( nObsAvail<nUnknowns ){
         if( goGPS.isDebug()) System.out.println("\r\nNot enough satellites for " + roverObs.getRefTime() );
         rover.setXYZ(0, 0, 0);
-        if( nObsAvail>0 ){
+        if( nObsAvail>1 ){
           rover.satsInUse = nObsAvail;
           rover.status = Status.NotEnoughSats;
         }
         return null;
       }
     
-      if( sats.pos[savedIndex]==null || rover.topo[savedIndex] == null  || !sats.avail.contains(pivotSatId)) {
+      if( sats.pos[savedIndex]==null || rover.topo[savedIndex] == null  || !sats.avail.keySet().contains(pivotSatId)) {
         if( goGPS.isDebug()) System.out.println("\r\nCan't use pivot with satId " + pivotSatId );
         return null; 
       }
@@ -162,7 +165,7 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
       for (int i = 0; i < nObs; i++) {
         int satId = roverObs.getSatID(i);
 
-        if (sats.pos[i]==null || !sats.avail.contains(satId)) 
+        if (sats.pos[i]==null || !sats.avail.keySet().contains(satId)) 
           continue; // i loop
       
         float doppler = roverObs.getSatByID(satId).getDoppler(ObservationSet.L1);
@@ -182,26 +185,26 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
         e.set( 0,2, rover.diffSat[i].get(2) / rover.satAppRange[i] );
   
         /** range rate = scalar product of speed vector X unit vector */
-        double rodot;
+        double rhodot;
 
         /** computed satspeed: scalar product of speed vector X LOS unit vector */
-        double rodotSatSpeed   = e.mult( sats.pos[i].getSpeed() ).get(0);
+        double rhodotSatSpeed   = e.mult( sats.pos[i].getSpeed() ).get(0);
 
         if( Float.isNaN( doppler )){
-          rodot = rodotSatSpeed;
+          rhodot = rhodotSatSpeed;
         }
         else {
           // scalar product of speed vector X unit vector
-          rodot = -doppler * Constants.SPEED_OF_LIGHT/Constants.FL1;
+          rhodot = -doppler * Constants.SPEED_OF_LIGHT/Constants.FL1;
 
-          double dopplerSatSpeed = rodotSatSpeed*Constants.FL1/Constants.SPEED_OF_LIGHT;
+          double dopplerSatSpeed = rhodotSatSpeed*Constants.FL1/Constants.SPEED_OF_LIGHT;
           if( goGPS.isDebug() ) System.out.println( String.format( "%2d) doppler:%6.0f; satSpeed:%6.0f; D:%6.0f", 
               satId,
               doppler, 
               dopplerSatSpeed,
               doppler - dopplerSatSpeed ));
           
-          rodot = rodotSatSpeed;
+          rhodot = rhodotSatSpeed;
         }
         
         /** Design Matrix */
@@ -209,7 +212,7 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
         A.set( k, 1, e.get(1) ); /* Y */
         A.set( k, 2, e.get(2) ); /* Z */
         A.set( k, 3, 1 );        // clock error 
-        A.set( k, 4, -rodot );   // common bias
+        A.set( k, 4, -rhodot );  // common bias
   
         /** residuals */
         // Add the approximate pseudorange value to b
@@ -263,7 +266,7 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
           Integer satId = roverObs.getSatID(k);
           os = roverObs.getSatByID(satId);
     
-          if( !sats.avail.contains(satId) || sats.pos[k] == null || rover.topo[k] == null )
+          if( !sats.avail.keySet().contains(satId) || sats.pos[k] == null || rover.topo[k] == null )
             continue;
     
           os.el = rover.topo[k].getElevation();
@@ -453,8 +456,8 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
    * return computed time offset in milliseconds
    */
   public Long snapshotPos( Observations roverObs ) {
-    Double residCutOff = 0.5;
-    double elCutOff = 5.0;
+    Double residCutOff = 0.5; // ms
+    double elCutOff = 5.0; // dg
     rover.status = Status.None;
 
     // Number of GPS observations
@@ -473,7 +476,9 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
     // save this position before trying
     rover.cloneInto(refPos);
     Time refTime = roverObs.getRefTime();
-    
+
+    rover.status = Status.None;
+
     for( int satIdx = 0; satIdx<roverObs.getNumSat(); satIdx++ ){
       if(goGPS.isDebug()) System.out.println( "\r\n===> Try Pivot " + satIdx );
       
@@ -481,7 +486,6 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
       refPos.cloneInto(rover);
       roverObs.setRefTime(refTime);
       
-      rover.status = Status.None;
       // select a pivot with at least elCutOff elevation
       int maxIterations = 3;
 //      residCutOff = 0.001;
@@ -499,6 +503,9 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
     }
     if( result == null ){
       rover.setXYZ(0, 0, 0);
+//      System.out.println("Couldn't find pivot");
+      if( rover.status == Status.None )
+        rover.status = Status.Exception;
       return null;
     }
     if(goGPS.isDebug()) 
@@ -520,13 +527,13 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
 //      residCutOff = 0.0002;
       elCutOff = -5;
       
-    result = snapshotProcessPivot( roverObs, result.satIndex, 100, elCutOff, residCutOff );
+    result = snapshotProcessPivot( roverObs, result.satIndex, 100, goGPS.getCutoff(), residCutOff );
     if( result == null ){
       rover.setXYZ(0, 0, 0);
       return null;
     }
     
-    if( result.eRes > 350 ){
+    if( result.eRes > 500 ){
 //      if(goGPS.isDebug()) 
         System.out.println("eRes too large = " + rover.eRes );
 
@@ -562,6 +569,156 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
     long offsetms = result.unixTime - refTime.getMsec();
     
     return offsetms;
+  }
+
+  /**
+   * Update roverPos to that observed satellites become visible
+   * @param roverObs
+   * @return 
+   */
+  public double selectPositionUpdate( Observations roverObs ) {
+    
+    sats.init( roverObs );
+
+    // Satellite ID
+    int id = 0;
+    
+    int nObs = roverObs.getNumSat();
+    
+    // Least squares design matrix
+    SimpleMatrix A  = new SimpleMatrix( nObs+1, 3 );
+    SimpleMatrix y0 = new SimpleMatrix( nObs+1, 1 );
+    SimpleMatrix x  = new SimpleMatrix(3, 1);
+
+    // Compute topocentric coordinates and
+    // select satellites above the cutoff level
+    System.out.println("Satellite Elevation");
+    System.out.println( roverObs.getRefTime() );
+    for (int i = 0; i < nObs; i++) {
+      id = roverObs.getSatID(i);
+      ObservationSet os = roverObs.getSatByID(id);
+      char satType = roverObs.getGnssType(i);
+
+      sats.pos[i] = goGPS.getNavigation().getGpsSatPosition( roverObs, id, 'G', 0 );
+
+      if( sats.pos[i] == null  || Double.isNaN(sats.pos[i].getX() )) {
+        rover.status = Status.EphNotFound;
+        continue;
+      }
+
+      // Compute rover-satellite approximate pseudorange
+      rover.diffSat[i]     = rover.minusXYZ(sats.pos[i]); // negative, for LOS vectors
+
+      rover.satAppRange[i] = Math.sqrt(Math.pow(rover.diffSat[i].get(0), 2)
+                                    + Math.pow(rover.diffSat[i].get(1), 2)
+                                    + Math.pow(rover.diffSat[i].get(2), 2));
+
+      // Compute azimuth, elevation and distance for each satellite
+      rover.topo[i] = new TopocentricCoordinates();
+      rover.topo[i].computeTopocentric(rover, sats.pos[i]);
+
+      double el = rover.topo[i].getElevation();
+      
+      // Correct approximate pseudorange for troposphere
+      rover.satTropoCorr[i] = Satellites.computeTroposphereCorrection(rover.topo[i].getElevation(), rover.getGeodeticHeight());
+
+      // Correct approximate pseudorange for ionosphere
+      rover.satIonoCorr[i] = Satellites.computeIonosphereCorrection( goGPS.getNavigation(), rover, rover.topo[i].getAzimuth(), rover.topo[i].getElevation(), roverObs.getRefTime());
+
+      sats.avail.put(id, sats.pos[i]);
+      sats.typeAvail.add(satType);
+      sats.gnssAvail.add(String.valueOf(satType) + String.valueOf(id));
+
+      SimpleMatrix R = Coordinates.rotationMatrix(rover);
+      SimpleMatrix enu = R.mult(sats.pos[i].minusXYZ(rover));
+      
+      double U = enu.get(2);
+      System.out.println( String.format( "%2d) C:%12.3f %5.1f(dg) %9.0f(up)", 
+          id, 
+          roverObs.getSatByID(id).getCodeC(0),
+          el, 
+          U));
+/*
+      System.out.println( String.format( "%2d) SR:%8.5f C:%8.5f D:%9.5f", 
+          id, 
+          R, 
+          C,
+          C-R));
+ */
+      
+      A.set(i, 0, rover.diffSat[i].get(0) / rover.satAppRange[i]); /* X */
+      A.set(i, 1, rover.diffSat[i].get(1) / rover.satAppRange[i]); /* Y */
+      A.set(i, 2, rover.diffSat[i].get(2) / rover.satAppRange[i]); /* Z */
+
+      if( U>0){
+        y0.set(i, 0, 0);
+      }
+      else {
+        y0.set(i, 0, U);
+//        y0.set(i, 0, Constants.EARTH_RADIUS);
+      }
+    }
+    System.out.println("");
+
+  // Add height soft constraint
+    double lam = Math.toRadians(rover.getGeodeticLongitude());
+    double phi = Math.toRadians(rover.getGeodeticLatitude());
+    double hR_app = rover.getGeodeticHeight();
+      
+    double h_dtm = hR_app>0? hR_app : 30; // initialize to something above sea level
+    if( h_dtm > 3000 )
+      h_dtm = 3000;
+      
+    double cosLam = Math.cos(lam);
+    double cosPhi = Math.cos(phi);
+    double sinLam = Math.sin(lam);
+    double sinPhi = Math.sin(phi);
+
+    // it's like row[2], UP, of rotationMatrix(this)
+    A.set(nObs, 0, cosPhi * cosLam );
+    A.set(nObs, 1, cosPhi * sinLam ); 
+    A.set(nObs, 2, sinPhi ); 
+
+//    %Y0 vector computation for DTM constraint
+    double y0_dtm = h_dtm  - hR_app;
+    y0.set(nObs, 0, y0_dtm );
+    
+    x = A.transpose().mult(A).invert().mult(A.transpose()).mult(y0);
+
+   double correction_mag = Math.sqrt( Math.pow( x.get(0), 2 ) + 
+                                      Math.pow( x.get(1), 2 ) +
+                                      Math.pow( x.get(2), 2 ) );
+
+   System.out.println( String.format( "pos update:  %5.1f, %5.1f, %5.1f; Mag: %5d(m)", x.get(0), x.get(1), x.get(2), (long)correction_mag ));
+
+   // apply correction to Rx position estimate
+   rover.setPlusXYZ(x.extractMatrix(0, 3, 0, 1));
+   rover.computeGeodetic();
+
+   System.out.println( "recpos: " + rover );
+   
+   return correction_mag; // return correction_mag
+  }
+
+  
+  public void runElevationMethod(Observations obsR){
+    rover.setGeod(0, 0, 0);
+    rover.computeECEF();
+    for (int iter = 0; iter < 500; iter++) {
+      // Select all satellites
+      System.out.println("////// Itr = " + iter);
+      
+      double correctionMag = selectPositionUpdate(obsR);
+      if (sats.getAvailNumber() < 6) {
+        rover.status = Status.NoAprioriPos;
+        break;
+      }
+      rover.status = Status.Valid;
+
+//        if( correctionMag<MODULO/2)
+      if( correctionMag<1)
+        break;
+    }
   }
   
   Long runOffset( Observations obsR, long offsetms ){
@@ -658,8 +815,143 @@ public class LS_SA_code_snapshot extends LS_SA_dopplerPos {
 
   if( updatems == null )
     rover.setXYZ(0, 0, 0);
-}
+    if( rover.status == Status.None )
+      rover.status = Status.Exception;
+  }
 
-  
+  public static void run( GoGPS goGPS ) {
+    
+    RoverPosition rover   = goGPS.getRoverPos();
+    MasterPosition master = goGPS.getMasterPos();
+    Satellites sats       = goGPS.getSats();
+    
+    LS_SA_code_snapshot sa = null;
+    
+    if( goGPS.useDoppler() )
+      sa = new LS_SA_code_dopp_snapshot(goGPS);
+    else
+      sa = new LS_SA_code_snapshot(goGPS);
+    
+    Observations obsR = null;
+
+    int leapSeconds;
+    obsR = goGPS.getRoverIn().getCurrentObservations();
+    
+    goGPS.notifyPositionConsumerEvent(PositionConsumer.EVENT_START_OF_TRACK);
+    while( obsR!=null && !Thread.interrupted() ) { // buffStreamObs.ready()
+     try {
+       if( obsR.getNumSat()<2 ) 
+         continue;
+         
+       if(goGPS.isDebug()) System.out.println("Index: " + obsR.index );
+       rover.satsInUse = 0;
+
+       if( goGPS.useDoppler() && Float.isNaN( obsR.getSatByIdx(0).getDoppler(0) )){
+         sa = new LS_SA_code_snapshot(goGPS);
+       }
+
+       // apply time offset
+       rover.sampleTime = obsR.getRefTime();
+       obsR.setRefTime(new Time(obsR.getRefTime().getMsec() + goGPS.getOffsetms() ));
+
+       // Add Leap Seconds, remove at the end
+       leapSeconds = rover.sampleTime.getLeapSeconds();
+       Time GPSTime = new Time( rover.sampleTime.getMsec() + leapSeconds * 1000);
+       
+       obsR.setRefTime(GPSTime);
+       long refTimeMs = obsR.getRefTime().getMsec();
+
+//       if( truePos != null ){
+//         if(debug) System.out.println( String.format( "\r\n* True Pos: %8.4f, %8.4f, %8.4f", 
+//             truePos.getGeodeticLatitude(),
+//             truePos.getGeodeticLongitude(),
+//             truePos.getGeodeticHeight()
+//             ));
+//         truePos.selectSatellitesStandaloneFractional( obsR, -100, MODULO1MS );
+//       }
+       
+       if( !rover.isValidXYZ() ){
+         
+        if( goGPS.getRoverIn().getDefinedPosition() != null && goGPS.getRoverIn().getDefinedPosition().isValidXYZ()){
+          goGPS.getRoverIn().getDefinedPosition().cloneInto(rover);
+        }
+        else if( !Float.isNaN(obsR.getSatByIdx(0).getDoppler(0))){
+         rover.setXYZ(0, 0, 0);
+//         sa.runElevationMethod(obsR);
+         
+         sa.dopplerPos(obsR);
+         
+         if( rover.isValidXYZ() )
+//           goGPS.getRoverIn().setDefinedPosition(rover);
+           rover.cloneInto( goGPS.getRoverIn().getDefinedPosition() );
+        }
+        else {
+          if( obsR.getNumSat()<5 )
+            continue;
+
+          rover.setXYZ(0, 0, 0);
+         sa.runElevationMethod(obsR);
+         
+         sa.dopplerPos(obsR);
+
+         if( rover.isValidXYZ() )
+           rover.cloneInto( goGPS.getRoverIn().getDefinedPosition() );
+         }
+       }
+       if( !rover.isValidXYZ() ){
+         continue;
+       }
+           
+       sa.tryOffset( goGPS.getRoverIn().getDefinedPosition(), obsR );
+
+       if(goGPS.isDebug()) System.out.println("Valid position? "+rover.isValidXYZ()+" x:"+rover.getX()+" y:"+rover.getY()+" z:"+rover.getZ());
+       if(goGPS.isDebug()) System.out.println(" lat:"+rover.getGeodeticLatitude()+" lon:"+rover.getGeodeticLongitude() );
+       
+       if( rover.isValidXYZ() ){
+         
+         goGPS.setOffsetms( obsR.getRefTime().getMsec()-refTimeMs );
+
+         // remove Leap Seconds
+         obsR.setRefTime(new Time(obsR.getRefTime().getMsec() - leapSeconds * 1000));
+         rover.status = Status.Valid;
+         rover.cErrMS = goGPS.getOffsetms();
+         
+         // update a priori location
+         rover.cloneInto(goGPS.getRoverIn().getDefinedPosition());
+
+        if(goGPS.isDebug())System.out.println("-------------------- "+rover.getpDop());
+      }
+      else {
+        if( rover.status == Status.None || rover.status == Status.EphNotFound 
+//           && !Float.isNaN(obsR.getSatByIdx(0).getDoppler(0))
+           && obsR.getNumSat()>3 ){
+          continue;
+        }
+        else {        
+          // invalidate aPrioriPos and recompute later
+          // goGPS.getRoverIn().getDefinedPosition().setXYZ(0, 0, 0);
+          goGPS.getRoverIn().getDefinedPosition().setXYZ(0, 0, 0);
+          
+          if( rover.status == Status.MaxCorrection ) {
+            continue;
+          }
+        }
+      }
+      if(goGPS.getPositionConsumers().size()>0){
+        rover.setRefTime(new Time(obsR.getRefTime().getMsec()));
+        goGPS.notifyPositionConsumerAddCoordinate(rover.clone(obsR));
+      }
+
+     } catch (Throwable e) {
+       e.printStackTrace();
+     } 
+     finally {
+      obsR = goGPS.getRoverIn().getNextObservations();
+      rover.status = Status.None;
+    } 
+  }
+  goGPS.notifyPositionConsumerEvent(PositionConsumer.EVENT_END_OF_TRACK);
+    
+  }
   
 }

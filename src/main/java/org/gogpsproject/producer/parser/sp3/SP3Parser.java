@@ -355,6 +355,18 @@ public class SP3Parser implements NavigationProducer{
 
 						//System.out.println(""+satid+" "+(new Date(sp.getTime())));
 					}
+	         else if(epoc != null && line.charAt(0) == 'V'){
+	            String satid = line.substring(1,4).trim();
+	            satid = satid.replace(' ', '0');
+	            SatellitePosition sp = epoc.get(satid);
+	            double xdot = Double.parseDouble(line.substring(4, 18).trim())*1000.0;  // transform to meter
+	            double ydot = Double.parseDouble(line.substring(18, 32).trim())*1000.0; // transform to meter
+	            double zdot = Double.parseDouble(line.substring(32, 46).trim())*1000.0; // transform to meter
+	            
+	            // The clock rate-of-change units are 10**-4 microseconds/second.
+	            double clockRate = Double.parseDouble(line.substring(46, 60).trim())/1000000.0; // transform to seconds
+	            sp.setSpeed(xdot, ydot, zdot);
+	          }
 
 
 				} catch (StringIndexOutOfBoundsException e) {

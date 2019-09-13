@@ -34,7 +34,7 @@ public class RoverPosition extends ReceiverPosition {
 
   public Time sampleTime;
   public Observations obs;
-  public Status status = Status.None;
+  public Status status = Status.Valid;
 
   /** Sats in use from an observation set */
   public long satsInUse = 0;
@@ -69,11 +69,18 @@ public class RoverPosition extends ReceiverPosition {
 	/** Kalman-derived vertical dilution of precision (KVDOP) */
 	double kvDop; 
 	
-  private int dopType = DOP_TYPE_NONE;
-  public final static int DOP_TYPE_NONE = 0;
-  public final static int DOP_TYPE_STANDARD = 1; /* Standard DOP values (satellite geometry only) */
-  public final static int DOP_TYPE_KALMAN = 2; /* Kalman DOP values (KDOP), based on the Kalman filter error covariance matrix */
-  
+  public static enum DopType{
+    NONE, 
+    
+    /** Standard DOP values (satellite geometry only) */
+    STANDARD, 
+
+    /** Kalman DOP values (KDOP), based on the Kalman filter error covariance matrix */
+    KALMAN
+  }
+
+  private DopType dopType = DopType.NONE;
+
 	public RoverPosition(){
 		super();
 		this.setXYZ(0.0, 0.0, 0.0);
@@ -81,10 +88,10 @@ public class RoverPosition extends ReceiverPosition {
 	}
 
   public RoverPosition(Coordinates c) {
-    this(c,DOP_TYPE_NONE,0.0,0.0,0.0);
+    this( c, DopType.NONE, 0.0, 0.0, 0.0 );
   }
 
-  public RoverPosition(Coordinates c, int dopType, double pDop, double hDop, double vDop) {
+  public RoverPosition(Coordinates c, DopType dopType, double pDop, double hDop, double vDop) {
     super();
     c.cloneInto(this);
     this.dopType = dopType;
@@ -160,19 +167,19 @@ public class RoverPosition extends ReceiverPosition {
   /**
    * @return the dopType
    */
-  public int getDopType() {
+  public DopType getDopType() {
     return dopType;
   }
 
   /**
    * @param dopType the dopType to set
    */
-  public void setDopType(int dopType) {
+  public void setDopType(DopType dopType) {
     this.dopType = dopType;
   }
   
   public RoverPosition clone( Observations obs ){
-    RoverPosition r = new RoverPosition( this, RoverPosition.DOP_TYPE_STANDARD, pDop, hDop, vDop );
+    RoverPosition r = new RoverPosition( this, DopType.STANDARD, pDop, hDop, vDop );
     r.obs        = obs;
     r.sampleTime = sampleTime;
     r.satsInUse  = satsInUse;
@@ -180,7 +187,7 @@ public class RoverPosition extends ReceiverPosition {
     r.status     = status;
     r.clockError = clockError;
     r.clockErrorRate = clockErrorRate;
-    
+    r.cErrMS = cErrMS;
     return r;
   }
 }

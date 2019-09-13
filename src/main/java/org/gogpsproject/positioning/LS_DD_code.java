@@ -2,7 +2,10 @@ package org.gogpsproject.positioning;
 
 import org.ejml.simple.SimpleMatrix;
 import org.gogpsproject.GoGPS;
+import org.gogpsproject.consumer.PositionConsumer;
+import org.gogpsproject.positioning.RoverPosition.DopType;
 import org.gogpsproject.producer.Observations;
+import org.gogpsproject.producer.ObservationsProducer;
 
 public class LS_DD_code extends LS_SA_code {
 
@@ -156,11 +159,9 @@ public class LS_DD_code extends LS_SA_code {
     b = b.plus(ionoCorr);
 
     // Least squares solution x = ((A'*Q^-1*A)^-1)*A'*Q^-1*(y0-b);
-    x = A.transpose().mult(Q.invert()).mult(A).invert().mult(A.transpose())
-        .mult(Q.invert()).mult(y0.minus(b));
+    x = A.transpose().mult(Q.invert()).mult(A).invert().mult(A.transpose()).mult(Q.invert()).mult(y0.minus(b));
 
     // Receiver position
-    //this.coord.ecef.set(this.coord.ecef.plus(x));
     rover.setPlusXYZ(x);
 
     // Estimation of the variance of the observation error
@@ -183,4 +184,96 @@ public class LS_DD_code extends LS_SA_code {
     // Compute positioning in geodetic coordinates
     rover.computeGeodetic();
   }
+  
+  /**
+   * Run code double differences.
+   */
+  public static void run( GoGPS goGPS ) {
+    
+    RoverPosition rover   = goGPS.getRoverPos();
+    MasterPosition master = goGPS.getMasterPos();
+    Satellites sats       = goGPS.getSats();
+    ObservationsProducer roverIn = goGPS.getRoverIn();
+    ObservationsProducer masterIn = goGPS.getMasterIn();
+    boolean debug = goGPS.isDebug();
+    boolean validPosition = false;
+    
+    try {
+      LS_DD_code dd = new LS_DD_code(goGPS);
+
+      Observations obsR = roverIn.getNextObservations();
+      Observations obsM = masterIn.getNextObservations();
+
+      while (obsR != null && obsM != null) {
+
+        // Discard master epochs if correspondent rover epochs are not available
+        double obsRtime = obsR.getRefTime().getRoundedGpsTime();
+        while (obsM!=null && obsR!=null && obsRtime > obsM.getRefTime().getRoundedGpsTime()) {
+          obsM = masterIn.getNextObservations();
+        }
+
+        // Discard rover epochs if correspondent master epochs are not available
+        double obsMtime = obsM.getRefTime().getRoundedGpsTime();
+        while (obsM!=null && obsR!=null && obsR.getRefTime().getRoundedGpsTime() < obsMtime) {
+          obsR = roverIn.getNextObservations();
+        }
+
+
+        // If there are at least four satellites
+        if (obsM!=null && obsR!=null){
+          if(obsR.getNumSat() >= 4) {
+
+            // Compute approximate positioning by iterative least-squares
+            for (int iter = 0; iter < 3; iter++) {
+              
+              // Select all satellites
+              sats.selectStandalone( obsR, -100);
+              
+              if (sats.getAvailNumber() >= 4) {
+                dd.codeStandalone( obsR, false, true);
+              }
+            }
+
+            // If an approximate position was computed
+            if (rover.isValidXYZ()) {
+
+              // Select satellites available for double differences
+              sats.selectDoubleDiff( obsR, obsM, masterIn.getDefinedPosition());
+
+              if (sats.getAvailNumber() >= 4)
+                // Compute code double differences positioning
+                // (epoch-by-epoch solution)
+                dd.codeDoubleDifferences( obsR, obsM, masterIn.getDefinedPosition());
+              else
+                // Discard approximate positioning
+                rover.setXYZ(0, 0, 0);
+            }
+
+            if (rover.isValidXYZ()) {
+              if(!validPosition){
+                goGPS.notifyPositionConsumerEvent(PositionConsumer.EVENT_START_OF_TRACK);
+                validPosition = true;
+              }else{
+                RoverPosition coord = new RoverPosition(rover, DopType.KALMAN, rover.getpDop(), rover.gethDop(), rover.getvDop());
+
+                if(goGPS.getPositionConsumers().size()>0){
+                  coord.setRefTime(new Time(obsR.getRefTime().getMsec()));
+                  goGPS.notifyPositionConsumerAddCoordinate(coord);
+                }
+                if(debug)System.out.println("-------------------- "+rover.getpDop());
+              }
+            }
+          }
+        }
+        // get next epoch
+        obsR = roverIn.getNextObservations();
+        obsM = masterIn.getNextObservations();
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      goGPS.notifyPositionConsumerEvent(PositionConsumer.EVENT_END_OF_TRACK);
+    }
+  }
+  
 }

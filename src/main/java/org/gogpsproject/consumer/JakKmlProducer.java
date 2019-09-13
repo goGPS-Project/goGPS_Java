@@ -41,8 +41,6 @@ import org.gogpsproject.positioning.RoverPosition;
 import org.gogpsproject.producer.ObservationSet;
 import org.gogpsproject.producer.Observations;
 
-import com.sun.xml.txw2.output.IndentingXMLStreamWriter;
-
 import de.micromata.opengis.kml.v_2_2_0.AltitudeMode;
 import de.micromata.opengis.kml.v_2_2_0.BalloonStyle;
 import de.micromata.opengis.kml.v_2_2_0.ColorMode;
@@ -60,6 +58,7 @@ import de.micromata.opengis.kml.v_2_2_0.Schema;
 import de.micromata.opengis.kml.v_2_2_0.SimpleField;
 import de.micromata.opengis.kml.v_2_2_0.TimeStamp;
 import de.micromata.opengis.kml.v_2_2_0.gx.Track;
+import txw2.output.IndentingXMLStreamWriter;
 
 /**
  * <p>
@@ -78,20 +77,20 @@ public class JakKmlProducer implements PositionConsumer {
   
   private DecimalFormat cf = new DecimalFormat("#.00000");
 
-	private SimpleDateFormat timeKML = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+  private SimpleDateFormat timeKML = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 
-	private String filename = null;
-	private double goodDopThreshold = 3.0;
+  private String filename = null;
+  private double goodDopThreshold = 3.0;
   private double goodEResThreshold = 10.0;
-	private String goodColorLine = "00ff00";
-	private String goodOpacity = "ff";
-	private int goodLinePixelWidth = 3;
-	private String worstColorLine = "0000ff";
-	private String worstOpacity = "ff";
-	private int worstLinePixelWidth = 3;
-	private boolean debug=false;
+  private String goodColorLine = "00ff00";
+  private String goodOpacity = "ff";
+  private int goodLinePixelWidth = 3;
+  private String worstColorLine = "0000ff";
+  private String worstOpacity = "ff";
+  private int worstLinePixelWidth = 3;
+  private boolean debug=false;
 
-	private final static TimeZone TZ = TimeZone.getTimeZone("GMT");
+  private final static TimeZone TZ = TimeZone.getTimeZone("GMT");
 
   private transient JAXBContext jc = null;
   private transient Marshaller m = null;
@@ -178,11 +177,11 @@ public class JakKmlProducer implements PositionConsumer {
         Icon icon = new Icon().withHref("http://maps.google.com/mapfiles/kml/shapes/shaded_dot.png");
         IconStyle validIconStyle = new IconStyle()
                                 .withIcon( icon )
-                                .withScale(.5)
+                                .withScale(.25)
                                 .withColor(GREEN);
         IconStyle invalidIconStyle = new IconStyle()
                                 .withIcon( icon )
-                                .withScale(.5)
+                                .withScale(.25)
                                 .withColor(RED);
         
         Icon trackIcon = new Icon().withHref("http://earth.google.com/images/kml-icons/track-directional/track-0.png");

@@ -1250,10 +1250,15 @@ public class RinexNavigationParser extends EphemerisSystem implements Navigation
 	public SatellitePosition getGpsSatPosition(Observations obs, int satID, char satType, double receiverClockError) {
 		long unixTime = obs.getRefTime().getMsec();
 		double range = obs.getSatByIDType(satID, satType).getPseudorange(0);
-
+		
+		if( range == 0 )
+			return null;
+					
 		EphGps eph = findEph(unixTime, satID, satType);
-
 		if (eph != null) {
+
+	        if( eph.equals( EphGps.UnhealthyEph ))
+	            return SatellitePosition.UnhealthySat;
 
 			//			char satType = eph.getSatType();
 

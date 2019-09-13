@@ -29,6 +29,7 @@ import java.util.TimeZone;
 
 import org.gogpsproject.Status;
 import org.gogpsproject.positioning.RoverPosition;
+import org.gogpsproject.positioning.RoverPosition.DopType;
 
 /**
  * <p>
@@ -158,7 +159,7 @@ public class KmlProducer extends Thread implements PositionConsumer {
 //			System.out.print(" Lon:" + lon);//geod.get(0)
 //			System.out.print(" Lat:" + lat);//geod.get(1)
 			String dopLabel = "DOP";
-			if (coord.getDopType() == RoverPosition.DOP_TYPE_KALMAN)
+			if ( coord.getDopType() == DopType.KALMAN )
 				dopLabel = "KDOP";
 
 			if(timeSampleDelaySec>0 && (num++)%timeSampleDelaySec==0){
@@ -196,7 +197,7 @@ public class KmlProducer extends Thread implements PositionConsumer {
 				"  <Style id=\"LineStyle_worst\"><LineStyle><color>"+worstOpacity+worstColorLine+"</color><width>"+worstLinePixelWidth+"</width></LineStyle><PolyStyle><color>"+worstOpacity+worstColorLine+"</color></PolyStyle></Style>\n"+
 				"  <Style id=\"LineStyle_good\"><LineStyle><color>"+goodOpacity+goodColorLine+"</color><width>"+goodLinePixelWidth+"</width></LineStyle><PolyStyle><color>"+goodOpacity+goodColorLine+"</color></PolyStyle></Style>\n"+
 				"  <Style id=\"CircleStyle\"><LineStyle><color>"+circleOpacity+circleColorLine+"</color><width>"+circlePixelWidth+"</width></LineStyle><PolyStyle><color>"+circleOpacity+circleColorLine+"</color></PolyStyle></Style>\n"+
-				"  <Style id=\"dot-icon\"><IconStyle><Icon><href>http://www.eriadne.org/icons/MapPointer.png</href></Icon></IconStyle></Style>\n"+
+				"  <Style id=\"dot-icon\"><IconStyle><Icon><href>https://storage.googleapis.com/support-kms-prod/SNP_2752129_en_v0</href></Icon><scale>0.3</scale></IconStyle></Style>\n"+
 				"  <Folder><Placemark>\n"+
 				"    <name></name>\n"+
 				"    <description></description>\n"+

@@ -29,6 +29,7 @@ import java.util.Date;
 import java.util.TimeZone;
 
 import org.gogpsproject.positioning.RoverPosition;
+import org.gogpsproject.positioning.RoverPosition.DopType;
 /**
  * <p>
  * Produces TXT file
@@ -129,10 +130,10 @@ public class TxtProducer extends Thread implements PositionConsumer {
 			//HDOP, KHDOP
 			double hdop = noData;
 			double khdop = noData;
-			if (coord.getDopType() == RoverPosition.DOP_TYPE_KALMAN) {
-				khdop = coord.gethDop();
+			if (coord.getDopType() == DopType.KALMAN ) {
+			  khdop = coord.gethDop();
 			} else {
-				hdop = coord.gethDop();
+			  hdop = coord.gethDop();
 			}
 			
 			pw.printf("%16.3f%16.3f%n", hdop, khdop);

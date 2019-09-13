@@ -3,6 +3,7 @@ package org.gogpsproject.positioning;
 import org.ejml.simple.SimpleMatrix;
 import org.gogpsproject.Constants;
 import org.gogpsproject.GoGPS;
+import org.gogpsproject.GoGPS.WeightingStrategy;
 
 //import com.google.maps.ElevationApi;
 //import com.google.maps.GeoApiContext;
@@ -45,21 +46,21 @@ public abstract class Core {
     float S0 = Constants.SNR_0;
     float S1 = Constants.SNR_1;
 
-    if (Float.isNaN(snr) && (goGPS.getWeights() == GoGPS.WEIGHT_SIGNAL_TO_NOISE_RATIO ||
-        goGPS.getWeights() == GoGPS.WEIGHT_COMBINED_ELEVATION_SNR)) {
+    if (Float.isNaN(snr) && (goGPS.getWeights() == WeightingStrategy.SIGNAL_TO_NOISE_RATIO ||
+        goGPS.getWeights() == WeightingStrategy.COMBINED_ELEVATION_SNR)) {
       if(goGPS.isDebug()) System.out.println("SNR not available: forcing satellite elevation-based weights...");
-      goGPS.setWeights(GoGPS.WEIGHT_SAT_ELEVATION);
+      goGPS.setWeights(WeightingStrategy.SAT_ELEVATION);
     }
 
     switch (goGPS.getWeights()) {
 
       // Weight based on satellite elevation
-      case GoGPS.WEIGHT_SAT_ELEVATION:
+      case SAT_ELEVATION:
         weight = 1 / Math.pow(Math.sin(elevation * Math.PI / 180), 2);
         break;
 
       // Weight based on signal-to-noise ratio
-      case GoGPS.WEIGHT_SIGNAL_TO_NOISE_RATIO:
+      case SIGNAL_TO_NOISE_RATIO:
         if (snr >= S1) {
           weight = 1;
         } else {
@@ -70,7 +71,7 @@ public abstract class Core {
         break;
 
       // Weight based on combined elevation and signal-to-noise ratio
-      case GoGPS.WEIGHT_COMBINED_ELEVATION_SNR:
+      case COMBINED_ELEVATION_SNR:
         if (snr >= S1) {
           weight = 1;
         } else {
@@ -82,7 +83,7 @@ public abstract class Core {
         break;
 
       // Same weight for all observations or default
-      case GoGPS.WEIGHT_EQUAL:
+      case EQUAL:
       default:
         weight = 1;
     }

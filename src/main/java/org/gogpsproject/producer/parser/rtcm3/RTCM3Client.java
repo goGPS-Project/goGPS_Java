@@ -148,9 +148,9 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 			throw new Exception(e);
 		}
 		for (int j = 1; j < s.size(); j++) {
-			if (j % 2 == 0){
+			//if (j % 2 == 0){
 				mountpoints.add(s.get(j));
-			}
+			//}
 		}
 		if(_mountpoint == null){
 			if(ldebug) System.out.println("Available Mountpoints:");
@@ -276,17 +276,17 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 
 					//System.out.println(lines.elementAt(i));
 
-					// We excpect the correct source to be the first token after
-					// "STR" to through the token wich specifies the RTCM
+					// We expect the correct source to be the first token after
+					// "STR" to through the token which specifies the RTCM
 					// version
 					// starting with "RTCM "
 					// We haven't seen any specification of the sourcetable, but
 					// according to what we can see from it it should be correct
 					String s = token.nextToken();
-					while (!s.startsWith("RTCM 3")) {
+					//while (!s.startsWith("RTCM 3")) {
 						sources.add(s);
-						s = token.nextToken();
-					}
+					//	s = token.nextToken();
+					//}
 
 				}
 			} catch (NoSuchElementException ex) {/* The line is ignored */

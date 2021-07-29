@@ -94,7 +94,7 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 
 	private String NtripGGA = null;
 	private long lastNtripGGAsent = 0;
-	private long NtripGGAsendDelay = 10*1000; // 10 sec
+	private long NtripGGAsendDelay = 3600*1000; // 3600 sec
 
 	public final static int CONNECTION_POLICY_LEAVE = 0;
 	public final static int CONNECTION_POLICY_RECONNECT = 1;
@@ -111,6 +111,8 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 	private double previousTime = -1;
 	private String outputDir = "./test";
 	private String markerName = "MMMM";
+	private long lastStreamLoggerCreated = 0;
+	private long StreamLoggerCreateDelay = 5400*1000; // 5400 sec
 	
 	/**
 	 * @return the exitPolicy
@@ -334,8 +336,8 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 		SimpleDateFormat sdfFile = new SimpleDateFormat("yyyy-MM-dd_HHmmss");
 		String dateFile = sdfFile.format(date);
 
-		System.out.println(date1 + " - Logging RTCM3 stream in "+outputDir+"/" + markerName + "_" + dateFile + ".rtcm");
-		setStreamFileLogger(outputDir+"/" + markerName + "_" + dateFile + ".rtcm");
+		System.out.println(date1 + " - Logging binary stream in "+outputDir+"/" + markerName + "_" + dateFile + ".bin");
+		setStreamFileLogger(outputDir+"/" + markerName + "_" + dateFile + ".bin");
 
 		try {
 			// Socket for receiving data are created
@@ -554,6 +556,7 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 			FileOutputStream fos = null;
 			try {
 				if (streamFileLogger != null) {
+					lastStreamLoggerCreated = System.currentTimeMillis();
 					fos = new FileOutputStream(streamFileLogger);
 				}
 			} catch (FileNotFoundException e) {
@@ -779,6 +782,28 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 						+ computeNMEACheckSum(NtripGGA);
 				
 				System.out.println("refresh ntripGGA:" + NtripGGA);
+			}
+			
+			FileOutputStream fos = null;
+			if(streamFileLogger != null && System.currentTimeMillis()-lastStreamLoggerCreated > StreamLoggerCreateDelay) {
+				
+				TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+				Calendar cal = Calendar.getInstance();
+				cal.setTime(new Date());
+				Date date = cal.getTime(); 
+				
+				SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+				String date1 = sdf1.format(date);
+				SimpleDateFormat sdfFile = new SimpleDateFormat("yyyy-MM-dd_HHmmss");
+				String dateFile = sdfFile.format(date);
+
+				System.out.println(date1 + " - Logging binary stream in "+outputDir+"/" + markerName + "_" + dateFile + ".bin");
+				setStreamFileLogger(outputDir+"/" + markerName + "_" + dateFile + ".bin");
+				
+				lastStreamLoggerCreated = System.currentTimeMillis();
+				fos = new FileOutputStream(streamFileLogger);
+				//in.close();
+				in = new InputStreamCounter(in, fos);
 			}
 		}
 	}

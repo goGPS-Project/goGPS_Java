@@ -76,7 +76,6 @@ public class InputStreamCounter extends InputStream{
 	@Override
 	public void close() throws IOException {
 		is.close();
-		os.close();
 	}
 
 	/* (non-Javadoc)
@@ -174,4 +173,7 @@ public class InputStreamCounter extends InputStream{
 		return markCount;
 	}
 
+	public void closeOutput() throws IOException {
+		os.close();
+	}
 }

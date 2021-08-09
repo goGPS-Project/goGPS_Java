@@ -788,9 +788,10 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 				
 				System.out.println("refresh ntripGGA:" + NtripGGA);
 			}
-			
-			FileOutputStream fos = null;
+
 			if(streamFileLogger != null && System.currentTimeMillis()-lastStreamLoggerCreated > StreamLoggerCreateDelay) {
+				
+				FileOutputStream fos = null;
 				
 				TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
 				Calendar cal = Calendar.getInstance();
@@ -806,8 +807,8 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 				setStreamFileLogger(outputDir+"/" + markerName + "_" + dateFile + ".bin");
 				
 				lastStreamLoggerCreated = System.currentTimeMillis();
+				((InputStreamCounter) in).closeOutput();
 				fos = new FileOutputStream(streamFileLogger);
-				//in.close();
 				in = new InputStreamCounter(in, fos);
 			}
 		}

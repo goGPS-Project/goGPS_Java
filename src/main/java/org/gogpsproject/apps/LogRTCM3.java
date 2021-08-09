@@ -96,6 +96,9 @@ public class LogRTCM3 {
 		parser.addArgument("-n", "--nontrip")
 				.action(Arguments.storeTrue())
 				.help("even if NTRIP is not available, attempt connecting.");
+		parser.addArgument("-nr", "--nortcm")
+			.action(Arguments.storeTrue())
+			.help("do not attempt to decode RTCM messages (i.e. just log the incoming binary data stream).");
 		parser.addArgument("-d", "--debug")
         		.action(Arguments.storeTrue())
         		.help("show warning messages for debugging purposes.");
@@ -133,6 +136,7 @@ public class LogRTCM3 {
 					.setExitPolicy(RTCM3Client.EXIT_NEVER)
 					.setReconnectionWaitingTime((Integer) ns.get("waitingtime"))
 					.setNoNTRIP(ns.getBoolean("nontrip"))
+					.setNoRTCM(ns.getBoolean("nortcm"))
 					.setDebug(ns.getBoolean("debug"));
 
 			rtcm.init();

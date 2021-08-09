@@ -114,6 +114,7 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 	private long lastStreamLoggerCreated = 0;
 	private long StreamLoggerCreateDelay = 5400*1000; // 5400 sec
 	private boolean noNtrip=false;
+	private boolean noRtcm=false;
 	
 	/**
 	 * @return the exitPolicy
@@ -738,7 +739,7 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 //			Object o = null;
 //			if (header) {
 				//if(debug) System.out.println("Header : " + c);
-				if (c == 211) { // header
+				if (!noRtcm && c == 211) { // header
 					readMessage(in);
 				}
 //			}
@@ -755,7 +756,7 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 //				}
 //			}
 			
-			if(out!=null && System.currentTimeMillis()-lastNtripGGAsent > NtripGGAsendDelay){
+			if(!noNtrip && out!=null && System.currentTimeMillis()-lastNtripGGAsent > NtripGGAsendDelay){
 				out.print(NtripGGA+"\r\n");
 				out.flush();
 				lastNtripGGAsent = System.currentTimeMillis();
@@ -789,7 +790,7 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 				System.out.println("refresh ntripGGA:" + NtripGGA);
 			}
 
-			if(streamFileLogger != null && System.currentTimeMillis()-lastStreamLoggerCreated > StreamLoggerCreateDelay) {
+			if(streamFileLogger!=null && System.currentTimeMillis()-lastStreamLoggerCreated > StreamLoggerCreateDelay) {
 				
 				FileOutputStream fos = null;
 				
@@ -1150,5 +1151,10 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 	public RTCM3Client setNoNTRIP(Boolean noNtrip) {
 		this.noNtrip = noNtrip;
 	return this;
+	}
+
+	public RTCM3Client setNoRTCM(Boolean noRtcm) {
+		this.noRtcm = noRtcm;
+		return this;
 	}
 }

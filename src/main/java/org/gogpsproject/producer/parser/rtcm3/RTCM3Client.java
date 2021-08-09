@@ -113,6 +113,7 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 	private String markerName = "MMMM";
 	private long lastStreamLoggerCreated = 0;
 	private long StreamLoggerCreateDelay = 5400*1000; // 5400 sec
+	private boolean noNtrip=false;
 	
 	/**
 	 * @return the exitPolicy
@@ -132,57 +133,59 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 
 	public static RTCM3Client getInstance(String _host, int _port, String _username,
 			String _password, String _mountpoint) throws Exception{
-		return getInstance(_host, _port, _username, _password, _mountpoint, false);
+		return getInstance(_host, _port, _username, _password, _mountpoint, false, false);
 	}
 	public static RTCM3Client getInstance(String _host, int _port, String _username,
-			String _password, String _mountpoint, boolean ldebug) throws Exception{
+			String _password, String _mountpoint, boolean ldebug, boolean lnontrip) throws Exception{
 
 		ArrayList<String> s = new ArrayList<String>();
 		ConnectionSettings settings = new ConnectionSettings(_host, _port, _username, _password);
 		ArrayList<String> mountpoints = new ArrayList<String>();
 		RTCM3Client net = new RTCM3Client(settings);
-		try {
-			//System.out.println("Get sources");
-			s = net.getSources();
-			//System.out.println("Got sources");
-		} catch (IOException e) {
-			e.printStackTrace();
-			throw new Exception(e);
-		}
-		for (int j = 1; j < s.size(); j++) {
-			//if (j % 2 == 0){
-				mountpoints.add(s.get(j));
-			//}
-		}
-		if(_mountpoint == null){
-			if(ldebug) System.out.println("Available Mountpoints:");
-		}
-		for (int j = 0; j < mountpoints.size(); j++) {
-			if(_mountpoint == null){
-				if(ldebug) System.out.println("\t[" + mountpoints.get(j)+"]");
-			}else{
-				if(ldebug) System.out.print("\t[" + mountpoints.get(j)+"]["+_mountpoint+"]");
-				if(_mountpoint.equalsIgnoreCase(mountpoints.get(j))){
-					settings.setSource(mountpoints.get(j));
-					if(ldebug) System.out.print(" found");
-				}
+		if (!lnontrip) {
+			try {
+				//System.out.println("Get sources");
+				s = net.getSources();
+				//System.out.println("Got sources");
+			} catch (IOException e) {
+				e.printStackTrace();
+				throw new Exception(e);
 			}
-			if(ldebug) System.out.println();
-		}
-		if(settings.getSource() == null){
-			System.out.println("Select a valid mountpoint!");
-			return null;
+			for (int j = 1; j < s.size(); j++) {
+				//if (j % 2 == 0){
+				mountpoints.add(s.get(j));
+				//}
+			}
+			if(_mountpoint == null){
+				if(ldebug) System.out.println("Available Mountpoints:");
+			}
+			for (int j = 0; j < mountpoints.size(); j++) {
+				if(_mountpoint == null){
+					if(ldebug) System.out.println("\t[" + mountpoints.get(j)+"]");
+				}else{
+					if(ldebug) System.out.print("\t[" + mountpoints.get(j)+"]["+_mountpoint+"]");
+					if(_mountpoint.equalsIgnoreCase(mountpoints.get(j))){
+						settings.setSource(mountpoints.get(j));
+						if(ldebug) System.out.print(" found");
+					}
+				}
+				if(ldebug) System.out.println();
+			}
+			if(settings.getSource() == null){
+				System.out.println("Select a valid mountpoint!");
+				return null;
+			}
 		}
 		return net;
 	}
 	public static RTCM3Client getVRSInstance(String _host, int _port, String _username,
 			String _password, String _mountpoint, Coordinates vrsPosition) throws Exception{
-		return getVRSInstance(_host, _port, _username, _password, _mountpoint, vrsPosition, false);
+		return getVRSInstance(_host, _port, _username, _password, _mountpoint, vrsPosition, false, false);
 	}
 	public static RTCM3Client getVRSInstance(String _host, int _port, String _username,
-			String _password, String _mountpoint, Coordinates vrsPosition, boolean debug) throws Exception{
+			String _password, String _mountpoint, Coordinates vrsPosition, boolean debug, boolean nontrip) throws Exception{
 
-		RTCM3Client rtcm = getInstance(_host, _port, _username, _password, _mountpoint, debug);
+		RTCM3Client rtcm = getInstance(_host, _port, _username, _password, _mountpoint, debug, nontrip);
 		rtcm.setVirtualReferenceStationPosition(vrsPosition);
 		return rtcm;
 	}
@@ -379,137 +382,139 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 			// The input and output streams are created
 			out = new PrintWriter(sck.getOutputStream(), true);
 			in = sck.getInputStream();
-			// The data request containing the logon and password is sent
-			out.print("GET /" + settings.getSource() + " HTTP/1.1\r\n");
-			out.print("Host: " + settings.getHost() + "\r\n");
-			// out.print("Ntrip-Version: Ntrip/2.0\r\n");
-			out.print("Accept: rtk/rtcm, dgps/rtcm\r\n");
-			out.print("User-Agent: NTRIP goGPSprojectJava\r\n");
-			if (virtualReferenceStationPosition != null) {
-				virtualReferenceStationPosition.computeGeodetic();
-				String hhmmss = (new SimpleDateFormat("HHmmss"))
-						.format(new Date());
+			int state = 5;
+			if (!noNtrip) {
+				// The data request containing the logon and password is sent
+				out.print("GET /" + settings.getSource() + " HTTP/1.1\r\n");
+				out.print("Host: " + settings.getHost() + "\r\n");
+				// out.print("Ntrip-Version: Ntrip/2.0\r\n");
+				out.print("Accept: rtk/rtcm, dgps/rtcm\r\n");
+				out.print("User-Agent: NTRIP goGPSprojectJava\r\n");
+				if (virtualReferenceStationPosition != null) {
+					virtualReferenceStationPosition.computeGeodetic();
+					String hhmmss = (new SimpleDateFormat("HHmmss"))
+							.format(new Date());
 
-				int h = (int) virtualReferenceStationPosition.getGeodeticHeight();
-				double lon = virtualReferenceStationPosition.getGeodeticLongitude();
-				double lat = virtualReferenceStationPosition.getGeodeticLatitude();
+					int h = (int) virtualReferenceStationPosition.getGeodeticHeight();
+					double lon = virtualReferenceStationPosition.getGeodeticLongitude();
+					double lat = virtualReferenceStationPosition.getGeodeticLatitude();
 
-				int lon_deg = (int) lon;
-				double lon_min = (lon - lon_deg) * 60;
-				double lon_nmea = lon_deg * 100 + lon_min;
-				String lonn = (new DecimalFormat("00000.000")).format(lon_nmea);
-				int lat_deg = (int) lat;
-				double lat_min = (lat - lat_deg) * 60;
-				double lat_nmea = lat_deg * 100 + lat_min;
-				String latn = (new DecimalFormat("0000.000")).format(lat_nmea);
-				NtripGGA = "$GPGGA," + hhmmss + "," + latn + ","
-						+ (lat < 0 ? "S" : "N") + "," + lonn + ","
-						+ (lon < 0 ? "W" : "E") + ",1,10,1.00," + (h < 0 ? 0 : h)
-						+ ",M,1,M,,";
-				// String NtripGGA =
-				// "$GPGGA,"+hhmmss+".00,"+latn+","+(lat<0?"S":"N")+","+lonn+","+(lon<0?"W":"E")+",1,10,1.00,"+(h<0?0:h)+",M,37.3,M,,";
-				// NtripGGA =
-				// "$GPGGA,214833.00,3500.40000000,N,13900.10000000,E,1,10,1,-17.3,M,,M,,";
+					int lon_deg = (int) lon;
+					double lon_min = (lon - lon_deg) * 60;
+					double lon_nmea = lon_deg * 100 + lon_min;
+					String lonn = (new DecimalFormat("00000.000")).format(lon_nmea);
+					int lat_deg = (int) lat;
+					double lat_min = (lat - lat_deg) * 60;
+					double lat_nmea = lat_deg * 100 + lat_min;
+					String latn = (new DecimalFormat("0000.000")).format(lat_nmea);
+					NtripGGA = "$GPGGA," + hhmmss + "," + latn + ","
+							+ (lat < 0 ? "S" : "N") + "," + lonn + ","
+							+ (lon < 0 ? "W" : "E") + ",1,10,1.00," + (h < 0 ? 0 : h)
+							+ ",M,1,M,,";
+					// String NtripGGA =
+					// "$GPGGA,"+hhmmss+".00,"+latn+","+(lat<0?"S":"N")+","+lonn+","+(lon<0?"W":"E")+",1,10,1.00,"+(h<0?0:h)+",M,37.3,M,,";
+					// NtripGGA =
+					// "$GPGGA,214833.00,3500.40000000,N,13900.10000000,E,1,10,1,-17.3,M,,M,,";
 
-				NtripGGA = /* "Ntrip-GAA: "+ */NtripGGA + "*"
-						+ computeNMEACheckSum(NtripGGA);
-				if (debug) System.out.println(NtripGGA);
+					NtripGGA = /* "Ntrip-GAA: "+ */NtripGGA + "*"
+							+ computeNMEACheckSum(NtripGGA);
+					if (debug) System.out.println(NtripGGA);
 
-				// out.print(NtripGGA+"\r\n");
-			}
-			out.print("Connection: close\r\n");
-			out.print("Authorization: Basic " + settings.getAuthbase64()
-					+ "\r\n");
-
-			// out.println("User-Agent: NTRIP goGps");
-			// out.println("Ntrip-GAA: $GPGGA,200530,4600,N,00857,E,4,10,1,200,M,1,M,3,0*65");
-			// out.println("User-Agent: NTRIP GoGps");
-			// out.println("Accept: */*\r\nConnection: close");
-			out.print("\r\n");
-			if (NtripGGA != null) {
-				out.print(NtripGGA + "\r\n");
-				lastNtripGGAsent = System.currentTimeMillis();
-			}
-			out.flush();
-			// System.out.println(" \n %%%%%%%%%%%%%%%%%%%%% \n password >>> "
-			// + settings.getAuthbase64());
-			// *****************
-			// Reading the data
-
-			// /First we read the HTTP header using a small state machine
-			// The end of the header is received when a double end line
-			// consisting
-			// of a "new line" and a "carriage return" character has been received
-			int state = 0;
-			// First the HTTP header type is read. It should be "ICY 200 OK"
-			// But Since we receive integers not characters the correct header is
-			// numeric: 73 = 'I', 67 = 'C' and so on.
-
-			int[] header = new int[11];
-			int[] correctHeader = { 73, 67, 89, 32, 50, 48, 48, 32, 79, 75, 13 };
-			int hindex = 0;
-			// when 'running' is changed to false the loop is stopped
-
-			while (running && state == 0) {
-				int c = in.read();
-				if (debug)
-					System.out.print((char) c);
-				if (c < 0) {
-					break;
+					// out.print(NtripGGA+"\r\n");
 				}
-				// break;
-				// tester.write(c);
-				state = transition(state, c);
-				if (hindex > 10) {
-					// The header should only be 11 characters long
-					running = false;
-				} else {
-					header[hindex] = c;
-					hindex++;
-				}
-			}
+				out.print("Connection: close\r\n");
+				out.print("Authorization: Basic " + settings.getAuthbase64()
+						+ "\r\n");
 
-			for (int i = 0; i < 11 && running; i++) {
-				if (header[i] != correctHeader[i]) {
-					running = false;
+				// out.println("User-Agent: NTRIP goGps");
+				// out.println("Ntrip-GAA: $GPGGA,200530,4600,N,00857,E,4,10,1,200,M,1,M,3,0*65");
+				// out.println("User-Agent: NTRIP GoGps");
+				// out.println("Accept: */*\r\nConnection: close");
+				out.print("\r\n");
+				if (NtripGGA != null) {
+					out.print(NtripGGA + "\r\n");
+					lastNtripGGAsent = System.currentTimeMillis();
 				}
-			}
-			if (header[0] == 0) {
-				if (debug) System.out.println("Waiting for connection acknowledgment message (\"ICY 200 OK\")...");
-				running = true;
-			}
-			if (!running) {
-				for (int i = 0; i < header.length; i++)
+				out.flush();
+				// System.out.println(" \n %%%%%%%%%%%%%%%%%%%%% \n password >>> "
+				// + settings.getAuthbase64());
+				// *****************
+				// Reading the data
+
+				// /First we read the HTTP header using a small state machine
+				// The end of the header is received when a double end line
+				// consisting
+				// of a "new line" and a "carriage return" character has been received
+				state = 0;
+				// First the HTTP header type is read. It should be "ICY 200 OK"
+				// But Since we receive integers not characters the correct header is
+				// numeric: 73 = 'I', 67 = 'C' and so on.
+
+				int[] header = new int[11];
+				int[] correctHeader = { 73, 67, 89, 32, 50, 48, 48, 32, 79, 75, 13 };
+				int hindex = 0;
+				// when 'running' is changed to false the loop is stopped
+
+				while (running && state == 0) {
+					int c = in.read();
 					if (debug)
-						System.out.print((char) header[i]);
-				int c = in.read();
-				while (c != -1) {
+						System.out.print((char) c);
+					if (c < 0) {
+						break;
+					}
+					// break;
+					// tester.write(c);
+					state = transition(state, c);
+					if (hindex > 10) {
+						// The header should only be 11 characters long
+						running = false;
+					} else {
+						header[hindex] = c;
+						hindex++;
+					}
+				}
+
+				for (int i = 0; i < 11 && running; i++) {
+					if (header[i] != correctHeader[i]) {
+						running = false;
+					}
+				}
+				if (header[0] == 0) {
+					if (debug) System.out.println("Waiting for connection acknowledgment message (\"ICY 200 OK\")...");
+					running = true;
+				}
+				if (!running) {
+					for (int i = 0; i < header.length; i++)
+						if (debug)
+							System.out.print((char) header[i]);
+					int c = in.read();
+					while (c != -1) {
+						if (debug)
+							System.out.println(((int) c) + " " + (char) c);
+
+						c = in.read();
+					}
 					if (debug)
 						System.out.println(((int) c) + " " + (char) c);
 
-					c = in.read();
-				}
-				if (debug)
-					System.out.println(((int) c) + " " + (char) c);
-
-				//if (debug)
+					//if (debug)
 					//System.out.println();
-				if (debug)
-					System.out.println(settings.getSource() + " invalid header");
+					if (debug)
+						System.out.println(settings.getSource() + " invalid header");
 
-				closeAll();
-				if (!askForStop && reconnectionPolicy == CONNECTION_POLICY_RECONNECT) {
-					System.out.println("Sleep " + reconnectionWaitingTime/1000 + " s before retry");
-					Thread.sleep(reconnectionWaitingTime);
-					start();
-				} else {
-					for (StreamEventListener sel : streamEventListeners) {
-						sel.streamClosed();
+					closeAll();
+					if (!askForStop && reconnectionPolicy == CONNECTION_POLICY_RECONNECT) {
+						System.out.println("Sleep " + reconnectionWaitingTime/1000 + " s before retry");
+						Thread.sleep(reconnectionWaitingTime);
+						start();
+					} else {
+						for (StreamEventListener sel : streamEventListeners) {
+							sel.streamClosed();
+						}
 					}
+					return;
 				}
-				return;
 			}
-
 			while (state != 5) {
 				int c = in.read();
 				if (debug)
@@ -520,9 +525,9 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 				// tester.write(c);
 				state = transition(state, c);
 			}
-			// When HTTP header is read, the GPS data are recived and parsed:
+			// When HTTP header is read, the GPS data are received and parsed:
 
-			// The data is buffered as it is recived. When the buffer has size 6
+			// The data is buffered as it is received. When the buffer has size 6
 			// There is a full word + a byte. The extra byte (first in buffer)
 			// is
 			// used for parity check.
@@ -1139,5 +1144,10 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 	public RTCM3Client setReconnectionWaitingTime(Integer waitingTime) {
 		this.reconnectionWaitingTime = waitingTime * 1000;
     return this;
+	}
+
+	public RTCM3Client setNoNTRIP(Boolean noNtrip) {
+		this.noNtrip = noNtrip;
+	return this;
 	}
 }

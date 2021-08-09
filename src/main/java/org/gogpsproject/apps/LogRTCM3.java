@@ -51,7 +51,7 @@ public class LogRTCM3 {
 		parser.addArgument("-p", "--port")
 				.setDefault(2101)
 				.type(Integer.class)
-				.help("NTRIP caster port");
+				.help("NTRIP caster/TCPIP port");
 		parser.addArgument("-u", "--username")
 				.setDefault("")
 				.help("NTRIP username");
@@ -68,7 +68,7 @@ public class LogRTCM3 {
 				.action(Arguments.storeTrue())
 				.help("if RINEX output is enabled, save hourly RINEX files instead of daily ones.");
 		parser.addArgument("url").nargs(1)
-				.help("NTRIP caster URL (e.g. 111.20.31.4)");
+				.help("NTRIP caster/TCPIP URL (e.g. 111.20.31.4)");
 		parser.addArgument("mountpoint").nargs(1)
 				.help("Mountpoint (e.g. VRS-01)");
 		parser.addArgument("latitude").nargs(1)
@@ -93,6 +93,9 @@ public class LogRTCM3 {
 				.type(Integer.class)
 				.metavar("WTIME")
 				.help("waiting time in seconds before attempting to reconnect (used only with the RECONNECT policy).");
+		parser.addArgument("-n", "--nontrip")
+				.action(Arguments.storeTrue())
+				.help("even if NTRIP is not available, attempt connecting.");
 		parser.addArgument("-d", "--debug")
         		.action(Arguments.storeTrue())
         		.help("show warning messages for debugging purposes.");
@@ -121,18 +124,19 @@ public class LogRTCM3 {
 		try {
 
 			Coordinates coordinates = Coordinates.globalGeodInstance(ns.<Double> getList("latitude").get(0),ns.<Double> getList("longitude").get(0),ns.<Double> getList("height").get(0));
-      RTCM3Client rtcm = RTCM3Client.getInstance(NTRIPurl.trim(), NTRIPport, NTRIPuser.trim(), NTRIPpass.trim(), NTRIPmountpoint.trim())
-          .setVirtualReferenceStationPosition(coordinates)
-          .setMarkerName(markerName)
-          .setOutputDir(ns.getString("outdir"))
-			
-          .setReconnectionPolicy(chosenReconnectionPolicy)
-          .setExitPolicy(RTCM3Client.EXIT_NEVER)
-          .setReconnectionWaitingTime((Integer) ns.get("waitingtime"))
-          .setDebug(ns.getBoolean("debug"));
-      
-      rtcm.init();
-			
+			RTCM3Client rtcm = RTCM3Client.getInstance(NTRIPurl.trim(), NTRIPport, NTRIPuser.trim(), NTRIPpass.trim(), NTRIPmountpoint.trim(), ns.getBoolean("debug"), ns.getBoolean("nontrip"))
+					.setVirtualReferenceStationPosition(coordinates)
+					.setMarkerName(markerName)
+					.setOutputDir(ns.getString("outdir"))
+
+					.setReconnectionPolicy(chosenReconnectionPolicy)
+					.setExitPolicy(RTCM3Client.EXIT_NEVER)
+					.setReconnectionWaitingTime((Integer) ns.get("waitingtime"))
+					.setNoNTRIP(ns.getBoolean("nontrip"))
+					.setDebug(ns.getBoolean("debug"));
+
+			rtcm.init();
+
 			if (ns.getBoolean("rinexobs")) {
 				boolean singleFreq = false;
 				boolean needApproxPos = true;

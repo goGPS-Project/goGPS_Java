@@ -176,4 +176,8 @@ public class InputStreamCounter extends InputStream{
 	public void closeOutput() throws IOException {
 		os.close();
 	}
+	
+	public void setOutputStream(OutputStream os) throws IOException {
+		this.os = os;
+	}
 }

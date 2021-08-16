@@ -99,7 +99,7 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 	public final static int CONNECTION_POLICY_LEAVE = 0;
 	public final static int CONNECTION_POLICY_RECONNECT = 1;
 	public final static int CONNECTION_POLICY_WAIT = 2;
-	private int reconnectionPolicy = CONNECTION_POLICY_RECONNECT;
+	private int reconnectionPolicy = CONNECTION_POLICY_LEAVE;
 	private long reconnectionWaitingTime = 300*1000; // 5 minutes
 
 	public final static int EXIT_NEVER = 0;
@@ -112,7 +112,7 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 	private String outputDir = "./test";
 	private String markerName = "MMMM";
 	private long lastStreamLoggerCreated = 0;
-	private long StreamLoggerCreateDelay = 5400*1000; // 5400 sec
+	private long StreamLoggerCreateDelay = 5400*1000; // 1.5 hours
 	private boolean noNtrip=false;
 	private boolean noRtcm=false;
 	
@@ -367,16 +367,7 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 				// } else {
 				// messages.showErrorMessage(settings.getSource(), msg);
 				// }
-				closeAll();
-				if (!askForStop && reconnectionPolicy == CONNECTION_POLICY_RECONNECT) {
-					if (debug) System.out.println("Sleep " + reconnectionWaitingTime/1000 + " s before retry");
-					Thread.sleep(reconnectionWaitingTime);
-					start();
-				} else {
-					for (StreamEventListener sel : streamEventListeners) {
-						sel.streamClosed();
-					}
-				}
+				terminateConnection();
 				return;
 			}
 
@@ -503,16 +494,7 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 					if (debug)
 						System.out.println(settings.getSource() + " invalid header");
 
-					closeAll();
-					if (!askForStop && reconnectionPolicy == CONNECTION_POLICY_RECONNECT) {
-						System.out.println("Sleep " + reconnectionWaitingTime/1000 + " s before retry");
-						Thread.sleep(reconnectionWaitingTime);
-						start();
-					} else {
-						for (StreamEventListener sel : streamEventListeners) {
-							sel.streamClosed();
-						}
-					}
+					terminateConnection();
 					return;
 				}
 			}
@@ -542,16 +524,7 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 				// showErrorMessage(settings.getSource(), "Error");
 				if (debug)
 					System.out.println(settings.getSource() + " not connected");
-				closeAll();
-				if (!askForStop && reconnectionPolicy == CONNECTION_POLICY_RECONNECT) {
-					if (debug) System.out.println("Sleep " + reconnectionWaitingTime/1000 + " s before retry");
-					Thread.sleep(reconnectionWaitingTime);
-					start();
-				} else {
-					for (StreamEventListener sel : streamEventListeners) {
-						sel.streamClosed();
-					}
-				}
+				terminateConnection();
 				return;
 			}
 			// The read loop is started
@@ -577,38 +550,46 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 
 		} catch (IOException ex) {
 			ex.printStackTrace();
+			
+			//terminateConnection();
+			
 		} catch (Exception ex) {
 			ex.printStackTrace();
+			
+			//terminateConnection();
 
 		} finally {
-			// Connection was either terminated or an IOError occurred
+			terminateConnection();
+		}
+	}
 
-			if (running) {
-				if (debug)System.out.println(settings.getSource()
-						+ " connection error: the data stream stopped");
-			} else {
-				if (debug)
-					System.out.println(settings.getSource()
-							+ " connection closed by client");
+	private void terminateConnection() {
+		// Connection was either terminated or an IOError occurred
+		if (running) {
+			if (debug)System.out.println(settings.getSource()
+					+ " connection error: the data stream stopped");
+		} else {
+			if (debug)
+				System.out.println(settings.getSource()
+						+ " connection closed by client");
+		}
+
+		running = false;
+
+		closeAll();
+
+		// reconnect if needed
+		if (!askForStop && reconnectionPolicy == CONNECTION_POLICY_RECONNECT) {
+			if (debug) System.out.println("Sleep " + reconnectionWaitingTime/1000 + " s before retry");
+			try {
+				Thread.sleep(reconnectionWaitingTime);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
 			}
-
-			running = false;
-			
-			closeAll();
-
-			// reconnect if needed
-			if (!askForStop && reconnectionPolicy == CONNECTION_POLICY_RECONNECT) {
-				if (debug) System.out.println("Sleep " + reconnectionWaitingTime/1000 + " s before retry");
-				try {
-					Thread.sleep(reconnectionWaitingTime);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-				start();
-			} else {
-				for (StreamEventListener sel : streamEventListeners) {
-					sel.streamClosed();
-				}
+			start();
+		} else {
+			for (StreamEventListener sel : streamEventListeners) {
+				sel.streamClosed();
 			}
 		}
 	}
@@ -639,7 +620,7 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 	private void closeAll() {
 		// All connections are closed
 		if (out != null) try {out.close();} catch (Exception ex) {}
-		if (in  != null) try { in.close();} catch (Exception ex) {}
+		if (in  != null) try { in.close(); ((InputStreamCounter) in).closeOutput();} catch (Exception ex) {}
 		if (sck != null) try {sck.close();} catch (Exception ex) {}
 	}
 
@@ -810,7 +791,8 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 				lastStreamLoggerCreated = System.currentTimeMillis();
 				((InputStreamCounter) in).closeOutput();
 				fos = new FileOutputStream(streamFileLogger);
-				in = new InputStreamCounter(in, fos);
+				((InputStreamCounter) in).setOutputStream(fos);
+				//in = new InputStreamCounter(in, fos);
 			}
 		}
 	}

@@ -86,7 +86,7 @@ public class LogRTCM3 {
         		.setDefault("./out")
         		.help("specify a directory for the output files.");
 		parser.addArgument("-rp", "--policy")
-				.choices("WAIT", "RECONNECT", "LEAVE").setDefault("WAIT")
+				.choices("WAIT", "RECONNECT", "LEAVE").setDefault("LEAVE")
 				.help("reconnection policy when data reception stops (WAIT = wait indefinitely for new data; RECONNECT = close current connection and try to reconnect to NTRIP caster after WTIME seconds; LEAVE = stop logging and quit).");
 		parser.addArgument("-wt", "--waitingtime")
 				.setDefault(300)
@@ -117,11 +117,11 @@ public class LogRTCM3 {
 		String NTRIPmountpoint = ns.<String> getList("mountpoint").get(0);
 		String markerName = ns.<String> getList("marker").get(0);
 		String reconnectionPolicy = ns.getString("policy");
-		int chosenReconnectionPolicy = RTCM3Client.CONNECTION_POLICY_WAIT;
+		int chosenReconnectionPolicy = RTCM3Client.CONNECTION_POLICY_LEAVE;
 		if (reconnectionPolicy.equals("RECONNECT")) {
 			chosenReconnectionPolicy = RTCM3Client.CONNECTION_POLICY_RECONNECT;
-		} else if (reconnectionPolicy.equals("LEAVE")) {
-			chosenReconnectionPolicy = RTCM3Client.CONNECTION_POLICY_LEAVE;
+		} else if (reconnectionPolicy.equals("WAIT")) {
+			chosenReconnectionPolicy = RTCM3Client.CONNECTION_POLICY_WAIT;
 		}
 
 		try {

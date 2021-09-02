@@ -449,8 +449,8 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 
 				while (running && state == 0) {
 					int c = in.read();
-					if (debug)
-						System.out.print((char) c);
+//					if (debug)
+//						System.out.print((char) c);
 					if (c < 0) {
 						break;
 					}
@@ -476,18 +476,18 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 					running = true;
 				}
 				if (!running) {
-					for (int i = 0; i < header.length; i++)
-						if (debug)
-							System.out.print((char) header[i]);
+//					for (int i = 0; i < header.length; i++)
+//						if (debug)
+//							System.out.print((char) header[i]);
 					int c = in.read();
 					while (c != -1) {
-						if (debug)
-							System.out.println(((int) c) + " " + (char) c);
+//						if (debug)
+//							System.out.println(((int) c) + " " + (char) c);
 
 						c = in.read();
 					}
-					if (debug)
-						System.out.println(((int) c) + " " + (char) c);
+//					if (debug)
+//						System.out.println(((int) c) + " " + (char) c);
 
 					//if (debug)
 					//System.out.println();
@@ -500,8 +500,8 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 			}
 			while (state != 5) {
 				int c = in.read();
-				if (debug)
-					System.out.println(((int) c) + " " + (char) c);
+//				if (debug)
+//					System.out.println(((int) c) + " " + (char) c);
 				if (c < 0) {
 					break;
 				}
@@ -591,6 +591,7 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 			for (StreamEventListener sel : streamEventListeners) {
 				sel.streamClosed();
 			}
+			System.exit(0);
 		}
 	}
 
@@ -709,7 +710,10 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 			c = in.read();
 
 			if (c < 0){
-				if(reconnectionPolicy != CONNECTION_POLICY_WAIT && System.currentTimeMillis()-start >10*1000) break;
+				if(reconnectionPolicy != CONNECTION_POLICY_WAIT && System.currentTimeMillis()-start >60*1000) {
+					terminateConnection();
+					break;
+				}
 				try {
 					Thread.sleep(1000);
 				} catch (InterruptedException e) {
@@ -814,16 +818,16 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 			}
 		}
 		messagelength = (int)Bits.bitsToUInt(Bits.subset(bits, 6, 10));
-		if(debug){
-			System.out.println();
-			System.out.println("Debug message length : " + messagelength);
-		}
+//		if(debug){
+//			System.out.println();
+//			System.out.println("Debug message length : " + messagelength);
+//		}
 
 		if (messagelength >= 12) {
 			setBits(in, messagelength);
 			int msgtype = (int)Bits.bitsToUInt(Bits.subset(bits, 0, 12));
 
-			if(debug) System.out.println("message type : " + msgtype);
+//			if(debug) System.out.println("message type : " + msgtype);
 			messagelength = 0;
 			
 			Date date = new Date();

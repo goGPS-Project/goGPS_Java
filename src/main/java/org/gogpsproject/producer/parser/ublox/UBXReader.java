@@ -110,7 +110,7 @@ public class UBXReader implements StreamEventProducer {
 					return o;
 				}
 				else if(data == 0x14){ //MEASX
-					// RMX-RAWX
+					// RMX-MEASX
 					DecodeRXMMEASX decodegnss = new DecodeRXMMEASX(in, multiConstellation);
 					parsed = true;
 		

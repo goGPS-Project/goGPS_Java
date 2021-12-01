@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 Eugenio Realini, Mirko Reguzzoni, Cryms sagl, Daisuke Yoshida. All Rights Reserved.
+ * Copyright (c) 2010 Eugenio Realini, Mirko Reguzzoni, Cryms sagl, Daisuke Yoshida, Emanuele Ziglioli. All Rights Reserved.
  *
  * This file is part of goGPS Project (goGPS).
  *
@@ -28,6 +28,7 @@ import java.util.Calendar;
 //import java.util.Date;
 import java.util.TimeZone;
 
+import org.gogpsproject.Constants;
 import org.gogpsproject.positioning.Time;
 import org.gogpsproject.producer.ObservationSet;
 import org.gogpsproject.producer.Observations;
@@ -82,6 +83,8 @@ public class DecodeRXMMEASX {
 			throw new UBXException("Zero-length RXM-RAWX message");
 		}
 
+		System.out.println("Length : " + len);
+
 		int ver = in.read();
 		System.out.println("ver:  " + ver );
 		
@@ -103,7 +106,7 @@ public class DecodeRXMMEASX {
 			}
 		}
 		int gpsTow = UnsignedOperation.toInt(Bits.tobytes(bits));
-		System.out.println("gpstow:  " + gpsTow );
+		System.out.println("gpsTow:  " + gpsTow );
 
 		data = new int[4]; // gloTow (U4)
 		for (int i = 0; i < 4; i++) {
@@ -154,7 +157,7 @@ public class DecodeRXMMEASX {
 		System.out.println("qzssTOW:  " + qzssTOW );
 
 		for (int i = 0; i < 4; i++) { // reserved2
-			in.read(); 
+			System.out.println( in.read()); 
 		}
 	
 		data = new int[2]; // gpsTOWacc (U2)
@@ -239,292 +242,154 @@ public class DecodeRXMMEASX {
 		int numSV = (int)Bits.bitsToUInt(bits);
 		System.out.println("numSV :  " + numSV );
 		
-		for (int i = 0; i < 2; i++) { // reserved4
+		int flags = in.read();
+		System.out.println("flags :  " + Integer.toString(flags,2) );
+
+		for (int i = 0; i < 8; i++) { // reserved4
 			in.read(); 
 		}
 
-		int flags = in.read();
-		System.out.println("flags :  " + Integer.toString(flags,2) );
+		boolean anomalousValues = false;
+		int gpsCounter = 0;
+
+		Observations o = new Observations(new Time(0, gpsTow),0);
 		
-		bits = new boolean[8 * 2]; // week (U2)
-		indice = 0;
-		for (int j = 9; j >= 8; j--) {
-			temp1 = Bits.intToBits(data[j], 8);
+		for (int k = 0; k < numSV; k++) {
+
+			int gnssId = in.read();
+			System.out.println("gnssId:  " + gnssId );
+
+			int svId = in.read();
+			System.out.println("svId:  " + svId );
+
+			int cNo = in.read();
+			System.out.println("cNo:  " + cNo );
+
+			int mpathIndic = in.read();
+			System.out.println("mpathIndic:  " + mpathIndic );
+			
+			data = new int[4]; // dopplerMS [m/s] (I4)
+			for (int i = 0; i < 4; i++) {
+				data[i] = in.read();
+			}
+			bits = new boolean[4 * 8]; 
+			indice = 0;
+			for (int j = 3; j >= 0 ; j--) {
+				temp1 = Bits.intToBits(data[j], 8);
+				for (int i = 0; i < 8; i++) {
+					bits[indice] = temp1[i];
+					indice++;
+				}
+			}
+			int dopplerMS = UnsignedOperation.toInt(Bits.tobytes(bits));
+			dopplerMS *= 0.04;
+			System.out.println("dopplerMS:  " + dopplerMS );
+
+			data = new int[4]; // dopplerHz (I4)
+			for (int i = 0; i < 4; i++) {
+				data[i] = in.read();
+			}
+			bits = new boolean[4 * 8]; 
+			indice = 0;
+			for (int j = 3; j >= 0 ; j--) {
+				temp1 = Bits.intToBits(data[j], 8);
+				for (int i = 0; i < 8; i++) {
+					bits[indice] = temp1[i];
+					indice++;
+				}
+			}
+			int dopplerHz = UnsignedOperation.toInt(Bits.tobytes(bits));
+			dopplerHz *= 0.2;
+			System.out.println("dopplerHz:  " + dopplerHz );
+
+			data = new int[2]; // wholeChips [0..1022] (U2)
+			for (int i = 0; i < 2; i++) {
+				data[i] = in.read();
+			}
+			bits = new boolean[8 * 2];  
+			indice = 0;
+			for (int j = 1; j >= 0; j--) {
+				temp1 = Bits.intToBits(data[j], 8);
+				for (int i = 0; i < 8; i++) {
+					bits[indice] = temp1[i];
+					indice++;
+				}
+			}
+			int wholeChips = (int)Bits.bitsTwoComplement(bits);
+			System.out.println("wholeChips :  " + wholeChips );
+
+			data = new int[2]; // fracChips [0..1023] (U2)
+			for (int i = 0; i < 2; i++) {
+				data[i] = in.read();
+			}
+			bits = new boolean[8 * 2];  
+			indice = 0;
+			for (int j = 1; j >= 0; j--) {
+				temp1 = Bits.intToBits(data[j], 8);
+				for (int i = 0; i < 8; i++) {
+					bits[indice] = temp1[i];
+					indice++;
+				}
+			}
+			int fracChips = (int)Bits.bitsTwoComplement(bits);
+			System.out.println("fracChips :  " + fracChips );
+
+			data = new int[4]; // codePhase [ms] (U4)
+			for (int i = 0; i < 4; i++) {
+				data[i] = in.read();
+			}
+			bits = new boolean[4 * 8]; 
+			indice = 0;
+			for (int j = 3; j >= 0 ; j--) {
+				temp1 = Bits.intToBits(data[j], 8);
+				for (int i = 0; i < 8; i++) {
+					bits[indice] = temp1[i];
+					indice++;
+				}
+			}
+			float codePhase = UnsignedOperation.toInt(Bits.tobytes(bits));
+			codePhase *= Math.pow(2,-21);
+			System.out.println("codePhase:  " + codePhase );
+		
+			bits = new boolean[8]; // intCodePhase [ms] (U1)
+			indice = 0;
+			temp1 = Bits.intToBits(in.read(), 8);
 			for (int i = 0; i < 8; i++) {
 				bits[indice] = temp1[i];
 				indice++;
+			}		
+			int intCodePhase = (int)Bits.bitsToUInt(bits);
+			System.out.println("intCodePhase :  " + intCodePhase );
+
+			bits = new boolean[8]; // pseuRangeRMSErr [0..63] (U1)
+			indice = 0;
+			temp1 = Bits.intToBits(in.read(), 8);
+			for (int i = 0; i < 8; i++) {
+				bits[indice] = temp1[i];
+				indice++;
+			}		
+			int pseuRangeRMSErr = (int)Bits.bitsToUInt(bits);
+			System.out.println("pseuRangeRMSErr :  " + pseuRangeRMSErr );
+
+			for (int i = 0; i < 2; i++) { //reserved5
+				in.read();
 			}
-		}
-		int week = (int)Bits.bitsTwoComplement(bits);
-//		System.out.println("Week :  " + week );
-		
-		bits = new boolean[8]; // leapS (I1)
-		indice = 0;
-		temp1 = Bits.intToBits(data[10], 8);
-		for (int i = 0; i < 8; i++) {
-			bits[indice] = temp1[i];
-			indice++;
-		}			
-		long leapS = Bits.bitsTwoComplement(bits);
-		leapS = leapS * 1000; // convert to milliseconds 
-//		tow = tow - leapS ;
-//		System.out.println("leapS :  " + leapS );
-		
-		bits = new boolean[8]; // numMeas (U1)
-		indice = 0;
-		temp1 = Bits.intToBits(data[11], 8);
-		for (int i = 0; i < 8; i++) {
-			bits[indice] = temp1[i];
-			indice++;
-		}		
-		int numMeas = (int)Bits.bitsToUInt(bits);
-//		System.out.println("numMeas :  " + numMeas + " S ");
-
-		bits = new boolean[8]; // recStat (X1)
-		indice = 0;
-		temp1 = Bits.intToBits(data[12], 8);
-		for (int i = 0; i < 8; i++) {
-			bits[indice] = temp1[i];
-			indice++;
-		}
-
-		bits = new boolean[8]; // reserved1 (U1)
-		indice = 0;
-		temp1 = Bits.intToBits(data[13], 8);
-		for (int i = 0; i < 8; i++) {
-			bits[indice] = temp1[i];
-			indice++;
-		}
-//		System.out.println("Res1 :  " + Bits.bitsToUInt(bits) + "  ");
-		
-		bits = new boolean[8]; // reserved2 (U1)
-		indice = 0;
-		temp1 = Bits.intToBits(data[14], 8);
-		for (int i = 0; i < 8; i++) {
-			bits[indice] = temp1[i];
-			indice++;
-		}
-//		System.out.println("Res2 :  " + Bits.bitsToUInt(bits) + "  ");
-		
-		bits = new boolean[8]; // reserved3 (U1)
-		indice = 0;
-		temp1 = Bits.intToBits(data[15], 8);
-		for (int i = 0; i < 8; i++) {
-			bits[indice] = temp1[i];
-			indice++;
-		}
-//		System.out.println("Res3 :  " + Bits.bitsToUInt(bits) + "  ");
-		
-		data = new int[len - 16];
-
-		for (int i = 0; i < len - 16; i++) {
-			data[i] = in.read();
-			CH_A += data[i];CH_B += CH_A;
-			if(logos!=null) logos.write(data[i]);
-			//System.out.print("0x" + Integer.toHexString(data[i]) + " ");
-		}
-		//System.out.println();
-
-//		long gmtTS = getGMTTS((long) tow, week);
-//		gmtTS = gmtTS - leapS ;
-//		Observations o = new Observations(new Time(gmtTS),0);
-		Observations o = new Observations(new Time(week, gpsTow),0);
-//		Time refTime = new Time((int)week, tow/1000);
-//		Observations o = new Observations(refTime,0);
-
-		//System.out.println(gmtTS+" GPS time "+o.getRefTime().getGpsTime());
-		//ubx.log( o.getRefTime().getGpsTime()+" "+tow+"\n\r");
-
-		boolean anomalousValues = false;
-
-		int gpsCounter = 0;
-
-		for (int k = 0; k < (len - 16) / 32; k++) {
 
 			ObservationSet os = new ObservationSet();
 
-			int offset = k * 32;
+			double pseudoRange = (intCodePhase + codePhase)/ 1000.0 * Constants.SPEED_OF_LIGHT;
+					
+//			System.out.print("SV" + k +"\tPhase: " + carrierPhase + "  ");
+			double carrierPhase = 0;
 			
-			bits = new boolean[8 * 8]; // preMes (R8)
-			indice = 0;
-			for (int j = offset + 7; j >= 0 + offset; j--) {
-				temp1 = Bits.intToBits(data[j], 8);
-				for (int i = 0; i < 8; i++) {
-					bits[indice] = temp1[i];
-					indice++;
-				}
-			}
-			double pseudoRange = UnsignedOperation.toDouble(Bits.tobytes(bits));
-			if (pseudoRange < 1e6 || pseudoRange > 6e7) {
-				anomalousValues = true;
-			}
-//			System.out.print("SV" + k +"\tPhase: "
-//					+ carrierPhase + "  ");
-			
-			bits = new boolean[8 * 8]; // cpMes (R8)
-			indice = 0;
-			for (int j = offset + 7 + 8; j >= 8 + offset; j--) {
-				temp1 = Bits.intToBits(data[j], 8);
-				for (int i = 0; i < 8; i++) {
-					bits[indice] = temp1[i];
-					indice++;
-				}
-			}
-			double carrierPhase = UnsignedOperation.toDouble(Bits.tobytes(bits));
-//			System.out.print(" Code: "
-//					+ pseudoRange + "  ");
-
-			
-			bits = new boolean[8 * 4]; // doMes (R4)
-			indice = 0;
-			for (int j = offset + 7 + 8 + 4; j >= 8 + 8 + offset; j--) {
-				temp1 = Bits.intToBits(data[j], 8);
-				for (int i = 0; i < 8; i++) {
-					bits[indice] = temp1[i];
-					indice++;
-				}
-			}
-			float d1 = UnsignedOperation.toFloat(Bits.tobytes(bits));
-//			System.out.print(" Doppler: "
-//					+ d1 + "  ");
-			
-			bits = new boolean[8]; // gnssId (U1)
-			indice = 0;
-			temp1 = Bits.intToBits(data[offset + 7 + 8 + 4 + 1], 8);
-			for (int i = 0; i < 8; i++) {
-				bits[indice] = temp1[i];
-				indice++;
-			}
-			int satType = (int)Bits.bitsToUInt(bits) ;		
-//			System.out.print(" gnssID: "
-//					+ satType + "  ");		
-			
-
-			bits = new boolean[8];  // svId (U1)
-			indice = 0;
-			temp1 = Bits.intToBits(data[offset + 7 + 8 + 4 + 1 + 1], 8);
-			for (int i = 0; i < 8; i++) {
-				bits[indice] = temp1[i];
-				indice++;
-			}
-
-			int satID = (int)Bits.bitsToUInt(bits);
-			if (satID <= 0) {
-				anomalousValues = true;
-			}
-//			System.out.print(" satID: "
-//					+ satID + "  ");
-			
-			bits = new boolean[8];  // sigId (U1)
-			indice = 0;
-			temp1 = Bits.intToBits(data[offset + 7 + 8 + 4 + 1 + 1 + 1], 8);
-			for (int i = 0; i < 8; i++) {
-				bits[indice] = temp1[i];
-				indice++;
-			}
-//			System.out.print(" sigId: "
-//					+ Bits.bitsToUInt(bits) + "  ");
-			
-			int sigID = (int)Bits.bitsToUInt(bits);
-			if (sigID <= 0) {
-				anomalousValues = true;
-			}
-			
-						
-			bits = new boolean[8]; //freqId (U1)
-			indice = 0;
-			temp1 = Bits.intToBits(data[offset + 7 + 8 + 4 + 1 + 1 + 1 + 1], 8);
-			for (int i = 0; i < 8; i++) {
-				bits[indice] = temp1[i];
-				indice++;
-			}
-//			System.out.print(" freqId: "
-//					+ Bits.bitsToUInt(bits) + "  ");
-
-			
-			bits = new boolean[8 * 2]; // locktime (U2)
-			indice = 0;
-			temp1 = Bits.intToBits(data[offset + 7 + 8 + 4 + 1 + 1 + 1 + 1 + 2], 8);			
-			for (int j = offset + 7 + 8 + 4 + 1 + 1 + 1 + 1 + 2; j >=  1 + 1 + 1 + 1 + 4 + 8 + 8 + offset; j--) {
-				temp1 = Bits.intToBits(data[j], 8);
-				for (int i = 0; i < 8; i++) {
-					bits[indice] = temp1[i];
-					indice++;
-				}
-			}
-//			System.out.print(" locktime: "
-//					+ (int)Bits.bitsTwoComplement(bits) + "  ");
-			
-			
-			bits = new boolean[8]; // cno (U1)
-			indice = 0;
-			temp1 = Bits.intToBits(data[offset + 7 + 8 + 4 + 1 + 1 + 1 + 1 + 2 + 1], 8);
-			for (int i = 0; i < 8; i++) {
-				bits[indice] = temp1[i];
-				indice++;
-			}
-			long snr = Bits.bitsToUInt(bits);	
-//			System.out.print(" cno: "
-//					+ snr + "  ");
-			
-			
-			bits = new boolean[8]; // prStdev (X1)
-			indice = 0;
-			temp1 = Bits.intToBits(data[offset + 7 + 8 + 4 + 1 + 1 + 1 + 1 + 2 + 1], 8);
-			for (int i = 0; i < 8; i++) {
-				bits[indice] = temp1[i];
-				indice++;
-			}
-			
-			
-			bits = new boolean[8]; // cpStdev (X1)
-			indice = 0;
-			temp1 = Bits.intToBits(data[offset + 7 + 8 + 4 + 1 + 1 + 1 + 1 + 2 + 1 + 1], 8);
-			for (int i = 0; i < 8; i++) {
-				bits[indice] = temp1[i];
-				indice++;
-			}
-			
-			
-			bits = new boolean[8]; // doStdev (X1)
-			indice = 0;
-			temp1 = Bits.intToBits(data[offset + 7 + 8 + 4 + 1 + 1 + 1 + 1 + 2 + 1 + 1 + 1], 8);
-			for (int i = 0; i < 8; i++) {
-				bits[indice] = temp1[i];
-				indice++;
-			}
-			
-			
-			bits = new boolean[8]; // trkStat (X1)
-			indice = 0;
-			temp1 = Bits.intToBits(data[offset + 7 + 8 + 4 + 1 + 1 + 1 + 1 + 2 + 1 + 1 + 1 + 1], 8);
-			for (int i = 0; i < 8; i++) {
-				bits[indice] = temp1[i];
-				indice++;
-			}
-			
-			
-			bits = new boolean[8]; // prStdev (U1)
-			indice = 0;
-			temp1 = Bits.intToBits(data[offset + 7 + 8 + 4 + 1 + 1 + 1 + 1 + 2 + 1 + 1 + 1 + 1 + 1], 8);
-			for (int i = 0; i < 8; i++) {
-				bits[indice] = temp1[i];
-				indice++;
-			}
-			
-			int total = offset + 7 + 8 + 4 + 1 + 1 + 1 + 1 + 2 + 1 + 1 + 1 + 1 + 1;
-			//System.out.println("Offset " + total);
-//			System.out.println();
-			
-			
-			if (satType == 0 && gpsEnable == true && !anomalousValues){ 
+			if (gnssId == 0 && gpsEnable == true && !anomalousValues){ 
 				/* GPS */
 				os.setSatType('G');
-				os.setSatID(satID);
+				os.setSatID(svId);
 				os.setCodeC(ObservationSet.L1, pseudoRange);
 				os.setPhaseCycles(ObservationSet.L1, carrierPhase);
-				os.setDoppler(ObservationSet.L1, d1);
-				os.setSignalStrength(ObservationSet.L1, snr);
+				os.setDoppler(ObservationSet.L1, dopplerHz);
+				os.setSignalStrength(ObservationSet.L1, cNo);
 				o.setGps(gpsCounter, os);
 				gpsCounter++;
 				
@@ -536,47 +401,47 @@ public class DecodeRXMMEASX {
 //				os.setSatType('I');
 //				os.setSatID(satId);
 			
-			} else if (satType == 2 && galEnable == true && !anomalousValues) { 
+			} else if (gnssId == 2 && galEnable == true && !anomalousValues) { 
 				/* Galileo */
 				os.setSatType('E');
-				os.setSatID(satID);
+				os.setSatID(svId);
 				os.setCodeC(ObservationSet.L1, pseudoRange);
 				os.setPhaseCycles(ObservationSet.L1, carrierPhase);
-				os.setDoppler(ObservationSet.L1, d1);
-				os.setSignalStrength(ObservationSet.L1, snr);
+				os.setDoppler(ObservationSet.L1, dopplerHz);
+				os.setSignalStrength(ObservationSet.L1, cNo);
 				o.setGps(gpsCounter, os);
 				gpsCounter++;
 				
-			} else if (satType == 3 && bdsEnable == true && !anomalousValues) { 
+			} else if (gnssId == 3 && bdsEnable == true && !anomalousValues) { 
 				/* BeiDou */
 				os.setSatType('C');
-				os.setSatID(satID);
+				os.setSatID(svId);
 				os.setCodeC(ObservationSet.L1, pseudoRange);
 				os.setPhaseCycles(ObservationSet.L1, carrierPhase);
-				os.setDoppler(ObservationSet.L1, d1);
-				os.setSignalStrength(ObservationSet.L1, snr);
+				os.setDoppler(ObservationSet.L1, dopplerHz);
+				os.setSignalStrength(ObservationSet.L1, cNo);
 				o.setGps(gpsCounter, os);
 				gpsCounter++;
 				
-			} else if (satType == 5 && qzsEnable == true && !anomalousValues) { 
+			} else if (gnssId == 5 && qzsEnable == true && !anomalousValues) { 
 				/* QZSS*/
 				os.setSatType('J');
-				os.setSatID(satID);
+				os.setSatID(svId);
 				os.setCodeC(ObservationSet.L1, pseudoRange);
 				os.setPhaseCycles(ObservationSet.L1, carrierPhase);
-				os.setDoppler(ObservationSet.L1, d1);
-				os.setSignalStrength(ObservationSet.L1, snr);
+				os.setDoppler(ObservationSet.L1, dopplerHz);
+				os.setSignalStrength(ObservationSet.L1, cNo);
 				o.setGps(gpsCounter, os);
 				gpsCounter++;
 						
-			} else if (satType == 6 && gloEnable == true && !anomalousValues) { 
+			} else if (gnssId == 6 && gloEnable == true && !anomalousValues) { 
 				/* GLONASS */
 				os.setSatType('R');
-				os.setSatID(satID);
+				os.setSatID(svId);
 				os.setCodeC(ObservationSet.L1, pseudoRange);
 				os.setPhaseCycles(ObservationSet.L1, carrierPhase);
-				os.setDoppler(ObservationSet.L1, d1);
-				os.setSignalStrength(ObservationSet.L1, snr);
+				os.setDoppler(ObservationSet.L1, dopplerHz);
+				os.setSignalStrength(ObservationSet.L1,cNo);
 				o.setGps(gpsCounter, os);
 				gpsCounter++;
 				

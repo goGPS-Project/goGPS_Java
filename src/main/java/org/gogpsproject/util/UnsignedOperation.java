@@ -23,6 +23,7 @@ package org.gogpsproject.util;
 public class UnsignedOperation {
 	public static final int SIZEOF_LONG = Long.SIZE / Byte.SIZE;
 	public static final int SIZEOF_INT = Integer.SIZE / Byte.SIZE;
+	public static final int SIZEOF_SHORT = Short.SIZE / Byte.SIZE;
 
 	private static IllegalArgumentException explainWrongLengthOrOffset(
 			final byte[] bytes, final int offset, final int length,
@@ -106,6 +107,22 @@ public class UnsignedOperation {
 		return Float.intBitsToFloat(toInt(bytes, offset, SIZEOF_INT));
 	}
 
+	public static short toShort(byte[] bytes) {
+		return toShort(bytes, 0, SIZEOF_SHORT);
+	}
+
+	public static short toShort(byte[] bytes, int offset, final int length) {
+		if (length != SIZEOF_SHORT || offset + length > bytes.length) {
+			throw explainWrongLengthOrOffset(bytes, offset, length, SIZEOF_SHORT);
+		}
+		short n = 0;
+		for (int i = offset; i < (offset + length); i++) {
+			n <<= 8;
+			n ^= bytes[i] & 0xFF;
+		}
+		return n;
+	}
+	
 	public static int toInt(byte[] bytes) {
 		return toInt(bytes, 0, SIZEOF_INT);
 	}

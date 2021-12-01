@@ -108,9 +108,24 @@ public class UBXReader implements StreamEventProducer {
 						}
 					}
 					return o;
-									
-					
 				}
+				else if(data == 0x14){ //MEASX
+					// RMX-RAWX
+					DecodeRXMMEASX decodegnss = new DecodeRXMMEASX(in, multiConstellation);
+					parsed = true;
+		
+					Observations o = decodegnss.decode(null);
+					if (o!=null && this.debugModeEnabled) {
+						System.out.println("Decoded observations");
+					}
+					if(streamEventListeners!=null && o!=null){
+						for(StreamEventListener sel:streamEventListeners){
+							Observations oc = (Observations)o.clone();
+							sel.addObservations(oc);
+						}
+					}
+					return o;
+			}
 				
 			}else
 				if (data == 0x0B) { // AID

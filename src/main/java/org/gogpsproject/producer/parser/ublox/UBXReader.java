@@ -44,11 +44,11 @@ public class UBXReader implements StreamEventProducer {
 
 	boolean gpsEnable = true;  // enable GPS data reading
 	boolean qzsEnable = true;  // enable QZSS data reading
-    boolean gloEnable = true;  // enable GLONASS data reading	
-    boolean galEnable = true;  // enable Galileo data reading
-    boolean bdsEnable = false;  // enable BeiDou data reading
+  boolean gloEnable = true;  // enable GLONASS data reading	
+  boolean galEnable = true;  // enable Galileo data reading
+  boolean bdsEnable = false;  // enable BeiDou data reading
 
-    private Boolean[] multiConstellation = {gpsEnable, qzsEnable, gloEnable, galEnable, bdsEnable};
+  private Boolean[] multiConstellation = {gpsEnable, qzsEnable, gloEnable, galEnable, bdsEnable};
 	
 	public UBXReader(InputStream is){
 		this(is,null);
@@ -68,14 +68,15 @@ public class UBXReader implements StreamEventProducer {
 
 	//	int data = in.read();
 	//	if(data == 0xB5){
-		int data = in.read();
-		if(data == 0x62){
+		int usynch2 = in.read();
+		if(usynch2 == 0x62){ //Preamble
 
-			data = in.read(); // Class
+			int uclass = in.read(); // Class
 			boolean parsed = false;
-			if (data == 0x02) { // RXM
-				data = in.read(); // ID
-				if (data == 0x10) { // RAW
+			
+			if (uclass == 0x02) { // RXM
+				int uid = in.read(); // ID
+				if (uid == 0x10) { // RAW
 					// RMX-RAW
 					DecodeRXMRAW decodegps = new DecodeRXMRAW(in);
 					parsed = true;
@@ -92,7 +93,7 @@ public class UBXReader implements StreamEventProducer {
 					}
 					return o;
 					
-				}else if(data == 0x15){ //RAWX
+				}else if(uid == 0x15){ //RAWX
 					// RMX-RAWX
 					DecodeRXMRAWX decodegnss = new DecodeRXMRAWX(in, multiConstellation);
 					parsed = true;
@@ -109,7 +110,7 @@ public class UBXReader implements StreamEventProducer {
 					}
 					return o;
 				}
-				else if(data == 0x14){ //MEASX
+				else if(uid == 0x14){ //MEASX
 					// RMX-MEASX
 					DecodeRXMMEASX decodegnss = new DecodeRXMMEASX(in, multiConstellation);
 					parsed = true;
@@ -125,13 +126,13 @@ public class UBXReader implements StreamEventProducer {
 						}
 					}
 					return o;
-			}
+			 }
 				
-			}else
-				if (data == 0x0B) { // AID
-					data = in.read(); // ID
+			}
+			else if (uclass == 0x0B) { // AID
+					int uid = in.read(); // ID
 					try{
-						if (data == 0x02) { // HUI
+						if (uid == 0x02) { // HUI
 							// AID-HUI (sat. Health / UTC / Ionosphere)
 							DecodeAIDHUI decodegps = new DecodeAIDHUI(in);
 							parsed = true;
@@ -146,8 +147,8 @@ public class UBXReader implements StreamEventProducer {
 								}
 							}
 							return iono;
-						}else
-							if (data == 0x31) { // EPH
+						}
+						else if (uid == 0x31) { // EPH
 								// AID-EPH (ephemerides)
 								DecodeAIDEPH decodegps = new DecodeAIDEPH(in);
 								parsed = true;
@@ -168,7 +169,14 @@ public class UBXReader implements StreamEventProducer {
 							System.out.println(ubxe);
 						}
 					}
-				}else{
+				}
+				else if (uclass == 0x03) { // TRK
+					int uid = in.read(); // ID
+					if (uid == 0x10) { // MEAS
+						System.out.println("TRK MEAS");
+					}
+				}
+				else{
 					in.read(); // ID
 				}
 			if(!parsed){
@@ -180,7 +188,7 @@ public class UBXReader implements StreamEventProducer {
 
 				int len = length[0]*256+length[1];
 				if (this.debugModeEnabled) {
-					System.out.println("Warning: UBX message not decoded; skipping "+len+" bytes");
+					System.out.println("Warning: UBX message class 0x" +  Integer.toHexString(uclass) + " not decoded; skipping "+len+" bytes");
 				}
 				for (int b = 0; b < len+2; b++) {
 					in.read();
@@ -188,7 +196,7 @@ public class UBXReader implements StreamEventProducer {
 			}
 		}else{
 			if (this.debugModeEnabled) {
-				System.out.println("Warning: wrong sync char 2 "+data+" "+Integer.toHexString(data)+" ["+((char)data)+"]");
+				System.out.println("Warning: wrong sync char 2 "+ usynch2 +" "+Integer.toHexString(usynch2)+" ["+((char)usynch2)+"]");
 			}
 		}
 	//	}else{
@@ -224,6 +232,7 @@ public class UBXReader implements StreamEventProducer {
 		if(streamEventListeners.contains(streamEventListener))
 			this.streamEventListeners.remove(streamEventListener);
 	}
+
 	public void enableDebugMode(Boolean enableDebug) {
 		this.debugModeEnabled = enableDebug;
 	}

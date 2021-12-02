@@ -36,7 +36,7 @@ import org.gogpsproject.util.Bits;
 import org.gogpsproject.util.UnsignedOperation;
 
 
-public class TRKMEAS {
+public class DecodeTRKMEAS {
 	private InputStream in;
 
 //	private int[] fdata;
@@ -45,15 +45,25 @@ public class TRKMEAS {
 	
 	private Boolean[] multiConstellation;
 
-	public TRKMEAS(InputStream in) {
+	public DecodeTRKMEAS(InputStream in) {
 		this.in = in;
 	}
 
-	public TRKMEAS(InputStream in, Boolean[] multiConstellation) throws IOException {
+	public DecodeTRKMEAS(InputStream in, Boolean[] multiConstellation) throws IOException {
 		this.in = in;		
 		this.multiConstellation = multiConstellation;
 	}
 	
+	/**
+	 * See https://github.com/tomojitakasu/RTKLIB/blob/master/src/rcv/ublox.c
+	 * and https://github.com/rtklibexplorer/RTKLIB/blob/demo5/src/rcv/ublox.c
+	 * static int decode_trkmeas(raw_t *raw)
+	 * 
+	 * @param logos
+	 * @return
+	 * @throws IOException
+	 * @throws UBXException
+	 */
 	public Observations decode(OutputStream logos) throws IOException, UBXException {
 		// parse little Endian data
 		int[] length = new int[2];
@@ -78,13 +88,34 @@ public class TRKMEAS {
 		boolean galEnable = multiConstellation[3];
 		boolean bdsEnable = multiConstellation[4];
 		
-		
 		if (len == 0) {
-			throw new UBXException("Zero-length RXM-RAWX message");
+			throw new UBXException("Zero-length TRK-MEAS message");
 		}
 
-		System.out.println("Length : " + len);
+		System.out.println("TRK-MEAS message Length : " + len);
 
+		int indice;
+		boolean[] bits;
+		boolean temp1[];
+		
+		for (int i = 0; i < 2; i++) { // reserved
+			System.out.println( in.read()); 
+		}
+		
+		bits = new boolean[8]; // numSV (U1)
+		indice = 0;
+		temp1 = Bits.intToBits(in.read(), 8);
+		for (int i = 0; i < 8; i++) {
+			bits[indice] = temp1[i];
+			indice++;
+		}		
+		int numSV = (int)Bits.bitsToUInt(bits);
+		System.out.println("numSV :  " + numSV );
+		
+		if( len< 112 + numSV*56 ) {
+			throw new UBXException("Length error TRK-MEAS message");
+    }
+		
 		int ver = in.read();
 		System.out.println("ver:  " + ver );
 		
@@ -96,10 +127,10 @@ public class TRKMEAS {
 		for (int i = 0; i < 4; i++) {
 			data[i] = in.read();
 		}
-		boolean[] bits = new boolean[4 * 8]; 
-		int indice = 0;
+		bits = new boolean[4 * 8]; 
+		indice = 0;
 		for (int j = 3; j >= 0 ; j--) {
-			boolean[] temp1 = Bits.intToBits(data[j], 8);
+			temp1 = Bits.intToBits(data[j], 8);
 			for (int i = 0; i < 8; i++) {
 				bits[indice] = temp1[i];
 				indice++;
@@ -107,54 +138,6 @@ public class TRKMEAS {
 		}
 		int gpsTow = UnsignedOperation.toInt(Bits.tobytes(bits));
 		System.out.println("gpsTow:  " + gpsTow );
-
-		data = new int[4]; // gloTow (U4)
-		for (int i = 0; i < 4; i++) {
-			data[i] = in.read();
-		}
-		bits = new boolean[4 * 8]; 
-		indice = 0;
-		for (int j = 3; j >= 0 ; j--) {
-			boolean[] temp1 = Bits.intToBits(data[j], 8);
-			for (int i = 0; i < 8; i++) {
-				bits[indice] = temp1[i];
-				indice++;
-			}
-		}
-		int gloTow = UnsignedOperation.toInt(Bits.tobytes(bits));
-		System.out.println("gloTow:  " + gloTow );
-		
-		data = new int[4]; // bdsTOW (U4)
-		for (int i = 0; i < 4; i++) {
-			data[i] = in.read();
-		}
-		bits = new boolean[4 * 8]; 
-		indice = 0;
-		for (int j = 3; j >= 0 ; j--) {
-			boolean[] temp1 = Bits.intToBits(data[j], 8);
-			for (int i = 0; i < 8; i++) {
-				bits[indice] = temp1[i];
-				indice++;
-			}
-		}
-		int bdsTOW = UnsignedOperation.toInt(Bits.tobytes(bits));
-		System.out.println("bdsTOW:  " + bdsTOW );
-		
-		data = new int[4]; // qzssTOW (U4)
-		for (int i = 0; i < 4; i++) {
-			data[i] = in.read();
-		}
-		bits = new boolean[4 * 8]; 
-		indice = 0;
-		for (int j = 3; j >= 0 ; j--) {
-			boolean[] temp1 = Bits.intToBits(data[j], 8);
-			for (int i = 0; i < 8; i++) {
-				bits[indice] = temp1[i];
-				indice++;
-			}
-		}
-		int qzssTOW = UnsignedOperation.toInt(Bits.tobytes(bits));
-		System.out.println("qzssTOW:  " + qzssTOW );
 
 		for (int i = 0; i < 4; i++) { // reserved2
 			System.out.println( in.read()); 
@@ -167,7 +150,7 @@ public class TRKMEAS {
 		bits = new boolean[2 * 8];  
 		indice = 0;
 		for (int j = 1; j >= 0; j--) {
-			boolean[] temp1 = Bits.intToBits(data[j], 8);
+			temp1 = Bits.intToBits(data[j], 8);
 			for (int i = 0; i < 8; i++) {
 				bits[indice] = temp1[i];
 				indice++;
@@ -184,7 +167,7 @@ public class TRKMEAS {
 		bits = new boolean[2 * 8];  
 		indice = 0;
 		for (int j = 1; j >= 0; j--) {
-			boolean[] temp1 = Bits.intToBits(data[j], 8);
+			temp1 = Bits.intToBits(data[j], 8);
 			for (int i = 0; i < 8; i++) {
 				bits[indice] = temp1[i];
 				indice++;
@@ -201,7 +184,7 @@ public class TRKMEAS {
 		bits = new boolean[2 * 8];  
 		indice = 0;
 		for (int j = 1; j >= 0; j--) {
-			boolean[] temp1 = Bits.intToBits(data[j], 8);
+			temp1 = Bits.intToBits(data[j], 8);
 			for (int i = 0; i < 8; i++) {
 				bits[indice] = temp1[i];
 				indice++;
@@ -218,7 +201,7 @@ public class TRKMEAS {
 		bits = new boolean[2 * 8];  
 		indice = 0;
 		for (int j = 1; j >= 0; j--) {
-			boolean[] temp1 = Bits.intToBits(data[j], 8);
+			temp1 = Bits.intToBits(data[j], 8);
 			for (int i = 0; i < 8; i++) {
 				bits[indice] = temp1[i];
 				indice++;
@@ -231,16 +214,6 @@ public class TRKMEAS {
 		for (int i = 0; i < 2; i++) { // reserved3
 			in.read(); 
 		}
-		
-		bits = new boolean[8]; // numSV (U1)
-		indice = 0;
-		boolean temp1[] = Bits.intToBits(in.read(), 8);
-		for (int i = 0; i < 8; i++) {
-			bits[indice] = temp1[i];
-			indice++;
-		}		
-		int numSV = (int)Bits.bitsToUInt(bits);
-		System.out.println("numSV :  " + numSV );
 		
 		int flags = in.read();
 		System.out.println("flags :  " + Integer.toString(flags,2) );

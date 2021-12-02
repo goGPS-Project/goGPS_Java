@@ -72,10 +72,11 @@ public class UBXReader implements StreamEventProducer {
 		if(usynch2 == 0x62){ //Preamble
 
 			int uclass = in.read(); // Class
+			int uid;
 			boolean parsed = false;
 			
 			if (uclass == 0x02) { // RXM
-				int uid = in.read(); // ID
+				uid = in.read(); // ID
 				if (uid == 0x10) { // RAW
 					// RMX-RAW
 					DecodeRXMRAW decodegps = new DecodeRXMRAW(in);
@@ -130,7 +131,7 @@ public class UBXReader implements StreamEventProducer {
 				
 			}
 			else if (uclass == 0x0B) { // AID
-					int uid = in.read(); // ID
+					uid = in.read(); // ID
 					try{
 						if (uid == 0x02) { // HUI
 							// AID-HUI (sat. Health / UTC / Ionosphere)
@@ -171,29 +172,44 @@ public class UBXReader implements StreamEventProducer {
 					}
 				}
 				else if (uclass == 0x03) { // TRK
-					int uid = in.read(); // ID
+					uid = in.read(); // ID
 					if (uid == 0x10) { // MEAS
-						System.out.println("TRK MEAS");
+						// RMX-MEASX
+						DecodeTRKMEAS decodegnss = new DecodeTRKMEAS(in, multiConstellation);
+						parsed = true;
+			
+						Observations o = decodegnss.decode(null);
+						if (o!=null && this.debugModeEnabled) {
+							System.out.println("Decoded observations");
+						}
+						if(streamEventListeners!=null && o!=null){
+							for(StreamEventListener sel:streamEventListeners){
+								Observations oc = (Observations)o.clone();
+								sel.addObservations(oc);
+							}
+						}
+						return o;
 					}
 				}
-				else{
-					in.read(); // ID
+				else {
+					uid = in.read(); // ID
 				}
-			if(!parsed){
-
-				// read non parsed message length
-				int[] length = new int[2];
-				length[1] = in.read();
-				length[0] = in.read();
-
-				int len = length[0]*256+length[1];
-				if (this.debugModeEnabled) {
-					System.out.println("Warning: UBX message class 0x" +  Integer.toHexString(uclass) + " not decoded; skipping "+len+" bytes");
+					
+				if(!parsed){
+					// read non parsed message length
+					int[] length = new int[2];
+					length[1] = in.read();
+					length[0] = in.read();
+		
+					int len = length[0]*256+length[1];
+					if (this.debugModeEnabled) {
+						System.out.println("Warning: Message 0x" +  Integer.toHexString(uclass) + 
+								" 0x" + Integer.toHexString(uid) + " not decoded; skipping "+len+" bytes");
+					}
+					for (int b = 0; b < len+2; b++) {
+						in.read();
+					}
 				}
-				for (int b = 0; b < len+2; b++) {
-					in.read();
-				}
-			}
 		}else{
 			if (this.debugModeEnabled) {
 				System.out.println("Warning: wrong sync char 2 "+ usynch2 +" "+Integer.toHexString(usynch2)+" ["+((char)usynch2)+"]");

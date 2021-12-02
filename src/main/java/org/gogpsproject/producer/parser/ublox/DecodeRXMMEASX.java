@@ -140,6 +140,10 @@ public class DecodeRXMMEASX {
 		int bdsTOW = UnsignedOperation.toInt(Bits.tobytes(bits));
 		System.out.println("bdsTOW:  " + bdsTOW );
 		
+		for (int i = 0; i < 4; i++) { // reserved2
+			in.read(); 
+		}
+	
 		data = new int[4]; // qzssTOW (U4)
 		for (int i = 0; i < 4; i++) {
 			data[i] = in.read();
@@ -156,10 +160,6 @@ public class DecodeRXMMEASX {
 		int qzssTOW = UnsignedOperation.toInt(Bits.tobytes(bits));
 		System.out.println("qzssTOW:  " + qzssTOW );
 
-		for (int i = 0; i < 4; i++) { // reserved2
-			System.out.println( in.read()); 
-		}
-	
 		data = new int[2]; // gpsTOWacc (U2)
 		for (int i = 0; i < 2; i++) {
 			data[i] = in.read();
@@ -281,7 +281,7 @@ public class DecodeRXMMEASX {
 					indice++;
 				}
 			}
-			int dopplerMS = UnsignedOperation.toInt(Bits.tobytes(bits));
+			float dopplerMS = (float)UnsignedOperation.toInt(Bits.tobytes(bits));
 			dopplerMS *= 0.04;
 			System.out.println("dopplerMS:  " + dopplerMS );
 
@@ -298,7 +298,7 @@ public class DecodeRXMMEASX {
 					indice++;
 				}
 			}
-			int dopplerHz = UnsignedOperation.toInt(Bits.tobytes(bits));
+			float dopplerHz = (float)UnsignedOperation.toInt(Bits.tobytes(bits));
 			dopplerHz *= 0.2;
 			System.out.println("dopplerHz:  " + dopplerHz );
 
@@ -377,7 +377,9 @@ public class DecodeRXMMEASX {
 
 			ObservationSet os = new ObservationSet();
 
+			// TODO Check conversion with constellations other than GPS
 			double pseudoRange = (intCodePhase + codePhase)/ 1000.0 * Constants.SPEED_OF_LIGHT;
+		  System.out.println("Range " + pseudoRange );
 					
 //			System.out.print("SV" + k +"\tPhase: " + carrierPhase + "  ");
 			double carrierPhase = 0;

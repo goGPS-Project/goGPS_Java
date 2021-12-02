@@ -46,8 +46,8 @@ public class UBXToRinex {
 		boolean needApproxPos = false;
 		
 		boolean gpsEnable = true;  // enable GPS data writing
-		boolean qzsEnable = true;  // enable QZSS data writing
-	    boolean gloEnable = true;  // enable GLONASS data writing	
+		boolean qzsEnable = false;  // enable QZSS data writing
+	    boolean gloEnable = false;  // enable GLONASS data writing	
 	    boolean galEnable = true;  // enable Galileo data writing
 	    boolean bdsEnable = false;  // enable BeiDou data writing
 

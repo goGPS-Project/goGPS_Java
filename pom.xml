@@ -9,7 +9,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<javaVersion>1.7</javaVersion>
+		<javaVersion>1.8</javaVersion>
 		<documentationURL />
 	</properties>
 
@@ -39,12 +39,12 @@
 			<artifactId>rxtx</artifactId>
 			<version>2.2pre1</version>
 			<scope>system</scope>
-			<systemPath>${basedir}/libs/RXTX/RXTXcomm.jar</systemPath>
+			<systemPath>${basedir}/libs/RXTX_64/RXTXcomm.jar</systemPath>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>4.13.1</version>
+			<version>4.13.2</version>
 			<scope>test</scope>
 		</dependency>
 	    <!--dependency>

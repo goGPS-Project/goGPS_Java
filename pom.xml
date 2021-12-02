@@ -39,7 +39,7 @@
 			<artifactId>rxtx</artifactId>
 			<version>2.2pre1</version>
 			<scope>system</scope>
-			<systemPath>${basedir}/libs/RXTX_64/RXTXcomm.jar</systemPath>
+			<systemPath>${basedir}/libs/RXTX/RXTXcomm.jar</systemPath>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>

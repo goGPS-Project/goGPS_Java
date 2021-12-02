@@ -36,7 +36,7 @@ import org.gogpsproject.util.Bits;
 import org.gogpsproject.util.UnsignedOperation;
 
 
-public class DecodeRXMMEASX {
+public class TRKMEAS {
 	private InputStream in;
 
 //	private int[] fdata;
@@ -45,11 +45,11 @@ public class DecodeRXMMEASX {
 	
 	private Boolean[] multiConstellation;
 
-	public DecodeRXMMEASX(InputStream in) {
+	public TRKMEAS(InputStream in) {
 		this.in = in;
 	}
 
-	public DecodeRXMMEASX(InputStream in, Boolean[] multiConstellation) throws IOException {
+	public TRKMEAS(InputStream in, Boolean[] multiConstellation) throws IOException {
 		this.in = in;		
 		this.multiConstellation = multiConstellation;
 	}
@@ -80,7 +80,7 @@ public class DecodeRXMMEASX {
 		
 		
 		if (len == 0) {
-			throw new UBXException("Zero-length RXM-MEASX message");
+			throw new UBXException("Zero-length RXM-RAWX message");
 		}
 
 		System.out.println("Length : " + len);

@@ -34,7 +34,7 @@ import org.gogpsproject.producer.ObservationSet;
 import org.gogpsproject.producer.Observations;
 import org.gogpsproject.util.Bits;
 import org.gogpsproject.util.UnsignedOperation;
-
+import static org.gogpsproject.util.UnsignedOperation.U2;
 
 public class DecodeTRKMEAS {
 	private InputStream in;
@@ -97,260 +97,101 @@ public class DecodeTRKMEAS {
 		int indice;
 		boolean[] bits;
 		boolean temp1[];
-		
-		for (int i = 0; i < 2; i++) { // reserved
-			System.out.println( in.read()); 
-		}
-		
-		bits = new boolean[8]; // numSV (U1)
-		indice = 0;
-		temp1 = Bits.intToBits(in.read(), 8);
-		for (int i = 0; i < 8; i++) {
-			bits[indice] = temp1[i];
-			indice++;
-		}		
-		int numSV = (int)Bits.bitsToUInt(bits);
+	
+/*0*/in.skip(2); //  *p=raw->buff+6
+
+/*2*/int numSV = in.read() | (in.read()<<8); // nch=U1(p+2);
 		System.out.println("numSV :  " + numSV );
 		
-		if( len< 112 + numSV*56 ) {
+		if( len< 112 + numSV*56 - 8) {
 			throw new UBXException("Length error TRK-MEAS message");
     }
+
+/*4*/for (int i = 0; i < 5; i++) { // reserved
+			System.out.print(  Integer.toHexString(in.read()) + " " );
+		}
+		for (int i = 5; i < 100; i++) { // reserved
+			System.out.print(  Integer.toHexString(in.read()) + " " );
+			if( (i + 5)  %16 == 0 )
+				System.out.println();
+		}
+		System.out.println();
 		
-		int ver = in.read();
-		System.out.println("ver:  " + ver );
-		
-		for (int i = 0; i < 3; i++) { // reserved1
-			in.read(); 
-		}
-
-		data = new int[4]; // gpsTow (U4)
-		for (int i = 0; i < 4; i++) {
-			data[i] = in.read();
-		}
-		bits = new boolean[4 * 8]; 
-		indice = 0;
-		for (int j = 3; j >= 0 ; j--) {
-			temp1 = Bits.intToBits(data[j], 8);
-			for (int i = 0; i < 8; i++) {
-				bits[indice] = temp1[i];
-				indice++;
-			}
-		}
-		int gpsTow = UnsignedOperation.toInt(Bits.tobytes(bits));
-		System.out.println("gpsTow:  " + gpsTow );
-
-		for (int i = 0; i < 4; i++) { // reserved2
-			System.out.println( in.read()); 
-		}
-	
-		data = new int[2]; // gpsTOWacc (U2)
-		for (int i = 0; i < 2; i++) {
-			data[i] = in.read();
-		}
-		bits = new boolean[2 * 8];  
-		indice = 0;
-		for (int j = 1; j >= 0; j--) {
-			temp1 = Bits.intToBits(data[j], 8);
-			for (int i = 0; i < 8; i++) {
-				bits[indice] = temp1[i];
-				indice++;
-			}
-		}
-		float gpsTOWacc = UnsignedOperation.toShort(Bits.tobytes(bits));
-		gpsTOWacc *= Math.pow(2, -4);
-		System.out.println("gpsTOWacc:  " + gpsTOWacc );
-		
-		data = new int[2]; // gloTOWacc (U2)
-		for (int i = 0; i < 2; i++) {
-			data[i] = in.read();
-		}
-		bits = new boolean[2 * 8];  
-		indice = 0;
-		for (int j = 1; j >= 0; j--) {
-			temp1 = Bits.intToBits(data[j], 8);
-			for (int i = 0; i < 8; i++) {
-				bits[indice] = temp1[i];
-				indice++;
-			}
-		}
-		float gloTOWacc = UnsignedOperation.toShort(Bits.tobytes(bits));
-		gloTOWacc *= Math.pow(2, -4);
-		System.out.println("gloTOWacc:  " + gloTOWacc );
-
-		data = new int[2]; // bdsTOWacc (U2)
-		for (int i = 0; i < 2; i++) {
-			data[i] = in.read();
-		}
-		bits = new boolean[2 * 8];  
-		indice = 0;
-		for (int j = 1; j >= 0; j--) {
-			temp1 = Bits.intToBits(data[j], 8);
-			for (int i = 0; i < 8; i++) {
-				bits[indice] = temp1[i];
-				indice++;
-			}
-		}
-		float bdsTOWacc = UnsignedOperation.toShort(Bits.tobytes(bits));
-		bdsTOWacc *= Math.pow(2, -4);
-		System.out.println("bdsTOWacc:  " + bdsTOWacc );
-
-		data = new int[2]; // qzssTOWacc (U2)
-		for (int i = 0; i < 2; i++) {
-			data[i] = in.read();
-		}
-		bits = new boolean[2 * 8];  
-		indice = 0;
-		for (int j = 1; j >= 0; j--) {
-			temp1 = Bits.intToBits(data[j], 8);
-			for (int i = 0; i < 8; i++) {
-				bits[indice] = temp1[i];
-				indice++;
-			}
-		}
-		float qzssTOWacc = UnsignedOperation.toShort(Bits.tobytes(bits));
-		qzssTOWacc *= Math.pow(2, -4);
-		System.out.println("qzssTOWacc:  " + qzssTOWacc );
-		
-		for (int i = 0; i < 2; i++) { // reserved3
-			in.read(); 
-		}
-		
-		int flags = in.read();
-		System.out.println("flags :  " + Integer.toString(flags,2) );
-
-		for (int i = 0; i < 8; i++) { // reserved4
-			in.read(); 
-		}
-
 		boolean anomalousValues = false;
 		int gpsCounter = 0;
+		Observations o = null;
+		for (int k = 0; k < numSV; k++) { // p=raw->buff+110
 
-		Observations o = new Observations(new Time(0, gpsTow),0);
-		
-		for (int k = 0; k < numSV; k++) {
+/*0*/	int chNum = in.read(); 
+			System.out.println("chNum:  " + chNum );
+			
+/*1*/	int mesQI = in.read();  
+			System.out.println("mesQI:  " + mesQI );
+			if( mesQI<4 || mesQI >7) {
+				System.out.println("Invalid");
+				in.skip(53);
+				continue;
+			}
+			in.skip(2);
 
-			int gnssId = in.read();
+/*4*/	int gnssId = in.read();
 			System.out.println("gnssId:  " + gnssId );
-
-			int svId = in.read();
+			
+/*5*/	int svId = in.read();
 			System.out.println("svId:  " + svId );
 
-			int cNo = in.read();
-			System.out.println("cNo:  " + cNo );
-
-			int mpathIndic = in.read();
-			System.out.println("mpathIndic:  " + mpathIndic );
+/*7*/	int fcn = in.read();
+			System.out.println("fcn:  " + fcn );
 			
-			data = new int[4]; // dopplerMS [m/s] (I4)
-			for (int i = 0; i < 4; i++) {
-				data[i] = in.read();
-			}
-			bits = new boolean[4 * 8]; 
-			indice = 0;
-			for (int j = 3; j >= 0 ; j--) {
-				temp1 = Bits.intToBits(data[j], 8);
-				for (int i = 0; i < 8; i++) {
-					bits[indice] = temp1[i];
-					indice++;
-				}
-			}
-			int dopplerMS = UnsignedOperation.toInt(Bits.tobytes(bits));
-			dopplerMS *= 0.04;
-			System.out.println("dopplerMS:  " + dopplerMS );
+/*8*/	int status = in.read();
+			System.out.println("status:  " + status );
+			in.skip(7);
 
-			data = new int[4]; // dopplerHz (I4)
-			for (int i = 0; i < 4; i++) {
-				data[i] = in.read();
+/*16*/int lock1 = in.read();
+			System.out.println("lock1:  " + lock1 );
+
+/*17*/int lock2 = in.read();
+			System.out.println("lock2:  " + lock2 );
+			in.skip(2);
+
+/*20*/float cNo = U2(in);
+			if( cNo <=0 ) {
+				System.out.println("Invalid" );
+				in.skip(35);
+				continue;
 			}
-			bits = new boolean[4 * 8]; 
-			indice = 0;
-			for (int j = 3; j >= 0 ; j--) {
-				temp1 = Bits.intToBits(data[j], 8);
-				for (int i = 0; i < 8; i++) {
-					bits[indice] = temp1[i];
-					indice++;
-				}
+				
+			cNo /= Math.pow(2, 8);
+			System.out.println("cNo:  " + cNo );
+			in.skip(2);
+
+			if( true ) {
+				in.skip(33);
+				continue;
 			}
-			int dopplerHz = UnsignedOperation.toInt(Bits.tobytes(bits));
-			dopplerHz *= 0.2;
+			
+/*24*/double gpsTow = in.read() | (in.read()<< 8) | (in.read()<<16) | (in.read()<<24) |
+					      (in.read()<<32) | (in.read()<<40) | (in.read()<<48) | (in.read()<<56);
+			
+			gpsTow *= Math.pow(2, -32);
+			System.out.println("gpsTow:  " + gpsTow );
+
+/*32*/double adr = in.read() | (in.read()<< 8) | (in.read()<<16) | (in.read()<<24) |
+		         (in.read()<<32) | (in.read()<<40) | (in.read()<<48) | (in.read()<<56);
+			adr *= Math.pow(2, -32);
+			System.out.println("adr:  " + adr );
+			
+/*40*/float dopplerHz = in.read() | (in.read()<< 8) | (in.read()<<16) | (in.read()<<24);
+			dopplerHz *= 10*Math.pow(2, -32);
 			System.out.println("dopplerHz:  " + dopplerHz );
+	
+/*48*/in.skip(8);
 
-			data = new int[2]; // wholeChips [0..1022] (U2)
-			for (int i = 0; i < 2; i++) {
-				data[i] = in.read();
-			}
-			bits = new boolean[8 * 2];  
-			indice = 0;
-			for (int j = 1; j >= 0; j--) {
-				temp1 = Bits.intToBits(data[j], 8);
-				for (int i = 0; i < 8; i++) {
-					bits[indice] = temp1[i];
-					indice++;
-				}
-			}
-			int wholeChips = (int)Bits.bitsTwoComplement(bits);
-			System.out.println("wholeChips :  " + wholeChips );
-
-			data = new int[2]; // fracChips [0..1023] (U2)
-			for (int i = 0; i < 2; i++) {
-				data[i] = in.read();
-			}
-			bits = new boolean[8 * 2];  
-			indice = 0;
-			for (int j = 1; j >= 0; j--) {
-				temp1 = Bits.intToBits(data[j], 8);
-				for (int i = 0; i < 8; i++) {
-					bits[indice] = temp1[i];
-					indice++;
-				}
-			}
-			int fracChips = (int)Bits.bitsTwoComplement(bits);
-			System.out.println("fracChips :  " + fracChips );
-
-			data = new int[4]; // codePhase [ms] (U4)
-			for (int i = 0; i < 4; i++) {
-				data[i] = in.read();
-			}
-			bits = new boolean[4 * 8]; 
-			indice = 0;
-			for (int j = 3; j >= 0 ; j--) {
-				temp1 = Bits.intToBits(data[j], 8);
-				for (int i = 0; i < 8; i++) {
-					bits[indice] = temp1[i];
-					indice++;
-				}
-			}
-			float codePhase = UnsignedOperation.toInt(Bits.tobytes(bits));
-			codePhase *= Math.pow(2,-21);
-			System.out.println("codePhase:  " + codePhase );
-		
-			bits = new boolean[8]; // intCodePhase [ms] (U1)
-			indice = 0;
-			temp1 = Bits.intToBits(in.read(), 8);
-			for (int i = 0; i < 8; i++) {
-				bits[indice] = temp1[i];
-				indice++;
-			}		
-			int intCodePhase = (int)Bits.bitsToUInt(bits);
-			System.out.println("intCodePhase :  " + intCodePhase );
-
-			bits = new boolean[8]; // pseuRangeRMSErr [0..63] (U1)
-			indice = 0;
-			temp1 = Bits.intToBits(in.read(), 8);
-			for (int i = 0; i < 8; i++) {
-				bits[indice] = temp1[i];
-				indice++;
-			}		
-			int pseuRangeRMSErr = (int)Bits.bitsToUInt(bits);
-			System.out.println("pseuRangeRMSErr :  " + pseuRangeRMSErr );
-
-			for (int i = 0; i < 2; i++) { //reserved5
-				in.read();
-			}
-
+			if( o == null )
+				o = new Observations(new Time(0, gpsTow),0);
 			ObservationSet os = new ObservationSet();
 
-			double pseudoRange = (intCodePhase + codePhase)/ 1000.0 * Constants.SPEED_OF_LIGHT;
+			double pseudoRange = 0;//(intCodePhase + codePhase)/ 1000.0 * Constants.SPEED_OF_LIGHT;
 					
 //			System.out.print("SV" + k +"\tPhase: " + carrierPhase + "  ");
 			double carrierPhase = 0;
@@ -422,6 +263,7 @@ public class DecodeTRKMEAS {
 			anomalousValues = false;
 			
 		}
+		
 		// / Checksum
 		CH_A = CH_A & 0xFF;
 		CH_B = CH_B & 0xFF;
@@ -434,7 +276,7 @@ public class DecodeTRKMEAS {
 
 //		if(CH_A != c1 || CH_B!=c2)
 //			throw new UBXException("Wrong message checksum");
-		if (o.getNumSat() == 0) {
+		if (o != null && o.getNumSat() == 0) {
 			o = null;
 		}
 		

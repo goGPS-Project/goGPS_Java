@@ -289,4 +289,8 @@ public class Observations implements Streamable {
 	public int getIssueOfData() {
 		return this.issueOfData;
 	}
+	
+	public void sortBySatID() {
+			obsSet.sort( (o1,o2)-> o1.getSatID() - o2.getSatID());
+	}
 }

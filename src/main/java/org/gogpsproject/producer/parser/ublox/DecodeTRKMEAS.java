@@ -333,6 +333,7 @@ public class DecodeTRKMEAS {
 			o2.setGps(i, os);
 		}
 		
+		o2.sortBySatID();
 		return o2;
 	}
 

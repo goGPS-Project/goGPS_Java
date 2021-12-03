@@ -180,7 +180,7 @@ public class DecodeTRKMEAS {
 
 /*24*/double ts = I8(in);
       // transmission time
-			ts = ts * Math.pow(2, 32)/1000;
+			ts = ts / Math.pow(2, 32)/1000;
 			System.out.println("ts:  " + ts );
 			
 			// for now store ts as pseudorange

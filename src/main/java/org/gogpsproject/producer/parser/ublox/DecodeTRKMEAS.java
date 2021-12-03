@@ -73,7 +73,6 @@ public class DecodeTRKMEAS {
 
 		// parse little Endian data
 		int[] length = new int[2];
-		int[] data;
 
 		length[1] = in.read();
 		length[0] = in.read();
@@ -100,10 +99,6 @@ public class DecodeTRKMEAS {
 
 		System.out.println("TRK-MEAS message Length : " + len);
 
-		int indice;
-		boolean[] bits;
-		boolean temp1[];
-	
 /*0*/in.skip(2); //  *p=raw->buff+6
 
 /*2*/int numSV = U2(in); // nch=U1(p+2);
@@ -183,17 +178,15 @@ public class DecodeTRKMEAS {
       // transmission time
 			ts = ts / Math.pow(2, 32)/1000;
 			System.out.println("ts:  " + ts );
-			
+
+			if( gnssId==3 ) // SYS_CMP
+				ts += 14.0;             /* bdt  -> gpst */
+			else if ( gnssId == 6 ) // SYS_GLO 
+				ts -= 10800.0 + time.getGpsWeekSec(); /* glot -> gpst */			
+	
 			// for now store ts as pseudorange
 			double pseudoRange = ts;
 			
-//			if( gnssId==3 ) // SYS_CMP
-//				ts += 14.0;             /* bdt  -> gpst */
-//      else if ( gnssId == 6 ) // SYS_GLO 
-//      	ts -= 10800.0 + utc_gpst; /* glot -> gpst */			
-			
-//	    if (maxts<0.0) 
-//	    	in.skip(. .);
 
 			if( gnssId==0 ) { // SYS_GPS
 				if( ts>maxts ) {
@@ -306,20 +299,23 @@ public class DecodeTRKMEAS {
 		System.out.println("tr " + tr );
 		
 //		/* adjust week handover */
-//		t = time2gpst( raw->time, week );
-//		if (t<tr-302400.0) 
-//			week--;
-//		else if (t>tr+302400.0) 
-//			week++;
-//		
-//		time = gpst2time( week, tr );
-//		utc_gpst = timediff(gpst2utc(time), time);
+//		time2gpst( raw->time, week );
+		int week = time.getGpsWeek();
+		int t = time.getGpsWeekSec();
 		
-		long week = 0, gpsTow = 0;
+		if (t<tr-302400.0) 
+			week--;
+		else if (t>tr+302400.0) 
+			week++;
+		
+		Time time2 = new Time( week, tr );
+		long gpsTow = time2.getGpsWeekSec(); 
+		//utc_gpst = timediff(gpst2utc(time), time);
+		
 		System.out.println("gpsTow:  " + gpsTow );
 		
 		// compute all PRs
-		Observations o2 = new Observations( new Time(week, gpsTow ),0);
+		Observations o2 = new Observations( time2,0);
 		for( int i=0; i<o.getNumSat(); i++ ) {
 			ObservationSet os = o.getSatByIdx(i);
 			

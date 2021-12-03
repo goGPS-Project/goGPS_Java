@@ -178,11 +178,11 @@ public class UBXReader implements StreamEventProducer {
 				}
 				else if (uclass == 0x03) { // TRK
 					uid = in.read(); // ID
-					if (uid == 0x10) { // MEAS
+					if (uid == 0x10 && this.pos != null) { // MEAS
 						// RMX-MEASX
 						DecodeTRKMEAS decodegnss = new DecodeTRKMEAS(in, multiConstellation);
 						parsed = true;
-			
+
 						Observations o = decodegnss.decode(null, this.pos.getRefTime());
 						if (o!=null && this.debugModeEnabled) {
 							System.out.println("Decoded observations");

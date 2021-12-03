@@ -96,7 +96,9 @@ public class DecodeNAVSOL {
     
     int gpsFix = in.read();
     int flags  = in.read();
-    		
+    
+    in.skip(40);
+    
     if(( flags & 0x0C) == 0x0C ) {
         Time t = new Time( week, itow*1E-3 + ftow*1E-9 );
     		System.out.println(t);

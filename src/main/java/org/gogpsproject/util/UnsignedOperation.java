@@ -20,6 +20,9 @@
 
 package org.gogpsproject.util;
 
+import java.io.IOException;
+import java.io.InputStream;
+
 public class UnsignedOperation {
 	public static final int SIZEOF_LONG = Long.SIZE / Byte.SIZE;
 	public static final int SIZEOF_INT = Integer.SIZE / Byte.SIZE;
@@ -107,15 +110,15 @@ public class UnsignedOperation {
 		return Float.intBitsToFloat(toInt(bytes, offset, SIZEOF_INT));
 	}
 
-	public static short toShort(byte[] bytes) {
+	public static int toShort(byte[] bytes) {
 		return toShort(bytes, 0, SIZEOF_SHORT);
 	}
 
-	public static short toShort(byte[] bytes, int offset, final int length) {
+	public static int toShort(byte[] bytes, int offset, final int length) {
 		if (length != SIZEOF_SHORT || offset + length > bytes.length) {
 			throw explainWrongLengthOrOffset(bytes, offset, length, SIZEOF_SHORT);
 		}
-		short n = 0;
+		int n = 0;
 		for (int i = offset; i < (offset + length); i++) {
 			n <<= 8;
 			n ^= bytes[i] & 0xFF;
@@ -197,4 +200,20 @@ public class UnsignedOperation {
 		return b;
 	}
 
+	public static int U2( InputStream in ) throws IOException {
+		int[] data = new int[2]; // gpsTOWacc (U2)
+		for (int i = 0; i < 2; i++) {
+			data[i] = in.read();
+		}
+		boolean[] bits = new boolean[2 * 8];  
+		int indice = 0;
+		for (int j = 1; j >= 0; j--) {
+			boolean[] temp1 = Bits.intToBits(data[j], 8);
+			for (int i = 0; i < 8; i++) {
+				bits[indice] = temp1[i];
+				indice++;
+			}
+		}
+		return UnsignedOperation.toShort(Bits.tobytes(bits));
+	}
 }

@@ -218,20 +218,33 @@ public class UnsignedOperation {
 		return UnsignedOperation.toShort(Bits.tobytes(bits));
 	}
 
+	public static int U1(byte b) {
+		return b & 0xFF;
+	}
+	
 	/** Read Little Endian Short*/
 	public static int U2( InputStream in ) throws IOException {
 		return in.read() | (in.read()<<8); 
 	}
 
 	/** Read Little Endian I4*/
-	public static long I4( InputStream in ) throws IOException {
-		return in.read() | (in.read()<< 8) | (in.read()<<16) | (in.read()<<24);
+	public static int I4( InputStream in ) throws IOException {
+		byte b[] = new byte[4];
+		in.read(b, 0, 4);
+		
+		int i = U1(b[0]) | U1(b[1])<< 8 | U1(b[2])<<16 | U1(b[3])<<24;
+		return i;
 	}
 	
 	/** Read Little Endian I8*/
 	public static long I8( InputStream in ) throws IOException {
-		return in.read() | (in.read()<< 8) | (in.read()<<16) | (in.read()<<24) |
-    (in.read()<<32) | (in.read()<<40) | (in.read()<<48) | (in.read()<<56); 
+		byte b[] = new byte[8];
+		in.read(b, 0, 8);
+		
+		long l = U1(b[0]) | U1(b[1])<< 8 | U1(b[2])<<16 | U1(b[3])<<24 |
+     U1(b[4])<<32 | U1(b[5])<<40 | U1(b[6])<<48 | U1(b[7])<<56; 
+		
+		return l;
 	}
 	
 }

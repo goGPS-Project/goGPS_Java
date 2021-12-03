@@ -65,6 +65,11 @@ public class DecodeTRKMEAS {
 	 * @throws UBXException
 	 */
 	public Observations decode(OutputStream logos) throws IOException, UBXException {
+		double maxts = 0;		
+		boolean anomalousValues = false;
+		int gpsCounter = 0;
+    Observations o = new Observations(new Time(0, 0),0);
+
 		// parse little Endian data
 		int[] length = new int[2];
 		int[] data;
@@ -116,10 +121,7 @@ public class DecodeTRKMEAS {
 				System.out.println();
 		}
 		System.out.println();
-		
-		boolean anomalousValues = false;
-		int gpsCounter = 0;
-		Observations o = null;
+
 		for (int k = 0; k < numSV; k++) { // p=raw->buff+110
 
 /*0*/	int chNum = in.read(); 
@@ -141,17 +143,18 @@ public class DecodeTRKMEAS {
 			System.out.println("svId:  " + svId );
 			in.read();
 			
-/*7*/	int fcn = in.read();
+/*7*/	int fcn = in.read()-7;
       // GLO frequency channel number+7
 			System.out.println("fcn:  " + fcn );
 			
-/*8*/	int status = in.read();
+/*8*/	int statusval = in.read();
 			// tracking/lock status (bit3: half-cycle)
-			System.out.print("status:  " + Integer.toHexString(status) + " " + Integer.toBinaryString(status) );
-			if( (status & 0b01000000) == 0 )
-				System.out.println(" FULL");
-			else
+			System.out.print("status:  " + Integer.toHexString(statusval) + " " + Integer.toBinaryString(statusval) );
+			boolean statusFlag = ((statusval & 0b01000000) != 0);
+			if( statusFlag )
 				System.out.println(" HALF");
+			else
+				System.out.println(" FULL");
 				
 			in.skip(7);
 
@@ -175,26 +178,41 @@ public class DecodeTRKMEAS {
 			System.out.println("cNo:  " + cNo );
 			in.skip(2);
 
-/*24*/double gpsTow = I8(in);
-			gpsTow *= Math.pow(2, -32);
-			System.out.println("gpsTow:  " + gpsTow );
+/*24*/double ts = I8(in);
+      // transmission time
+			ts = ts * Math.pow(2, 32)/1000;
+			System.out.println("ts:  " + ts );
+			
+			// for now store ts as pseudorange
+			double pseudoRange = ts;
+			
+//			if( gnssId==3 ) // SYS_CMP
+//				ts += 14.0;             /* bdt  -> gpst */
+//      else if ( gnssId == 6 ) // SYS_GLO 
+//      	ts -= 10800.0 + utc_gpst; /* glot -> gpst */			
+			
+//	    if (maxts<0.0) 
+//	    	in.skip(. .);
 
+			if( gnssId==0 ) { // SYS_GPS
+				if( ts>maxts ) {
+					maxts = ts;
+			}
+			
 /*32*/double adr = I8(in);
 		  // accumulated Doppler range
-			adr *= Math.pow(2, -32);
+			adr *= Math.pow(2, 32);
+			adr += statusFlag? 0.5: 0;
 			System.out.println("adr:  " + adr );
 
 /*40*/float dopplerHz = I4(in);
-			dopplerHz *= 10*Math.pow(2, -32);
+//			dopplerHz *= 10*Math.pow(2, 10);
+			dopplerHz /= Math.pow(2, 8);
 			System.out.println("dopplerHz:  " + dopplerHz );
 
 /*48*/in.skip(12);
 
-			if( o == null )
-				o = new Observations(new Time(0, gpsTow),0);
 			ObservationSet os = new ObservationSet();
-
-			double pseudoRange = 0;//(intCodePhase + codePhase)/ 1000.0 * Constants.SPEED_OF_LIGHT;
 					
 //			System.out.print("SV" + k +"\tPhase: " + carrierPhase + "  ");
 			double carrierPhase = 0;
@@ -265,8 +283,8 @@ public class DecodeTRKMEAS {
 			}
 			anomalousValues = false;
 			
-		}
-		
+		 }
+	  }
 		// / Checksum
 		CH_A = CH_A & 0xFF;
 		CH_B = CH_B & 0xFF;
@@ -277,13 +295,49 @@ public class DecodeTRKMEAS {
 		int c2 = in.read();
 		if(logos!=null) logos.write(c2);
 
-//		if(CH_A != c1 || CH_B!=c2)
-//			throw new UBXException("Wrong message checksum");
+//	if(CH_A != c1 || CH_B!=c2)
+//	throw new UBXException("Wrong message checksum");
+
 		if (o != null && o.getNumSat() == 0) {
-			o = null;
+			return null;
 		}
 		
-		return o;
+		/* time-tag = max(transmission time + 0.08) rounded by 100 ms */
+		double tr = Math.round((maxts+0.08)/0.1)*0.1;
+		System.out.println("tr " + tr );
+		
+//		/* adjust week handover */
+//		t = time2gpst( raw->time, week );
+//		if (t<tr-302400.0) 
+//			week--;
+//		else if (t>tr+302400.0) 
+//			week++;
+//		
+//		time = gpst2time( week, tr );
+//		utc_gpst = timediff(gpst2utc(time), time);
+		
+		long week = 0, gpsTow = 0;
+		System.out.println("gpsTow:  " + gpsTow );
+		
+		// compute all PRs
+		Observations o2 = new Observations( new Time(week, gpsTow ),0);
+		for( int i=0; i<o.getNumSat(); i++ ) {
+			ObservationSet os = o.getSatByIdx(i);
+			
+			double ts = os.getPseudorange(0);
+			
+			/* signal travel time */
+      double tau = tr - ts;
+      if( tau<-302400.0 ) 
+      	tau += 604800.0;
+      else if( tau>302400.0 ) 
+      	tau-=604800.0;				
+	
+			os.setCodeC(ObservationSet.L1, tau * Constants.SPEED_OF_LIGHT );
+			o2.setGps(i, os);
+		}
+		
+		return o2;
 	}
 
 	private long getGMTTS(long tow, long week) {

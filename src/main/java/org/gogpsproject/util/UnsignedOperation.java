@@ -222,4 +222,16 @@ public class UnsignedOperation {
 	public static int U2( InputStream in ) throws IOException {
 		return in.read() | (in.read()<<8); 
 	}
+
+	/** Read Little Endian I4*/
+	public static long I4( InputStream in ) throws IOException {
+		return in.read() | (in.read()<< 8) | (in.read()<<16) | (in.read()<<24);
+	}
+	
+	/** Read Little Endian I8*/
+	public static long I8( InputStream in ) throws IOException {
+		return in.read() | (in.read()<< 8) | (in.read()<<16) | (in.read()<<24) |
+    (in.read()<<32) | (in.read()<<40) | (in.read()<<48) | (in.read()<<56); 
+	}
+	
 }

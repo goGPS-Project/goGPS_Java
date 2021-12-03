@@ -101,8 +101,9 @@ public class DecodeTRKMEAS {
 
 /*0*/in.skip(2); //  *p=raw->buff+6
 
-/*2*/int numSV = U2(in); // nch=U1(p+2);
+/*2*/int numSV = in.read(); // nch=U1(p+2);
 		System.out.println("numSV :  " + numSV );
+		in.read();
 		
 		if( len< 112 + numSV*56 - 8) {
 			throw new UBXException("Length error TRK-MEAS message");

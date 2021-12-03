@@ -227,12 +227,22 @@ public class UnsignedOperation {
 	}
 	
 	/** Read Little Endian Short*/
+	public static int I2( InputStream in ) throws IOException {
+		return in.read() | (in.read()<<8); 
+	}
 	public static int U2( InputStream in ) throws IOException {
 		return in.read() | (in.read()<<8); 
 	}
 
 	/** Read Little Endian I4*/
 	public static int I4( InputStream in ) throws IOException {
+		byte b[] = new byte[4];
+		in.read(b, 0, 4);
+		
+		int i = UBI(b[0]) | UBI(b[1])<< 8 | UBI(b[2])<<16 | UBI(b[3])<<24;
+		return i;
+	}
+	public static int U4( InputStream in ) throws IOException {
 		byte b[] = new byte[4];
 		in.read(b, 0, 4);
 		

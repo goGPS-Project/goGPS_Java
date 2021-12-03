@@ -34,7 +34,7 @@ import org.gogpsproject.producer.ObservationSet;
 import org.gogpsproject.producer.Observations;
 import org.gogpsproject.util.Bits;
 import org.gogpsproject.util.UnsignedOperation;
-import static org.gogpsproject.util.UnsignedOperation.U2;
+import static org.gogpsproject.util.UnsignedOperation.*;
 
 public class DecodeTRKMEAS {
 	private InputStream in;
@@ -100,7 +100,7 @@ public class DecodeTRKMEAS {
 	
 /*0*/in.skip(2); //  *p=raw->buff+6
 
-/*2*/int numSV = in.read() | (in.read()<<8); // nch=U1(p+2);
+/*2*/int numSV = U2(in); // nch=U1(p+2);
 		System.out.println("numSV :  " + numSV );
 		
 		if( len< 112 + numSV*56 - 8) {
@@ -175,27 +175,20 @@ public class DecodeTRKMEAS {
 			System.out.println("cNo:  " + cNo );
 			in.skip(2);
 
-			if( true ) {
-				in.skip(32);
-				continue;
-			}
-			
-/*24*/double gpsTow = in.read() | (in.read()<< 8) | (in.read()<<16) | (in.read()<<24) |
-					      (in.read()<<32) | (in.read()<<40) | (in.read()<<48) | (in.read()<<56);
-			
+/*24*/double gpsTow = I8(in);
 			gpsTow *= Math.pow(2, -32);
 			System.out.println("gpsTow:  " + gpsTow );
 
-/*32*/double adr = in.read() | (in.read()<< 8) | (in.read()<<16) | (in.read()<<24) |
-		         (in.read()<<32) | (in.read()<<40) | (in.read()<<48) | (in.read()<<56);
+/*32*/double adr = I8(in);
+		  // accumulated Doppler range
 			adr *= Math.pow(2, -32);
 			System.out.println("adr:  " + adr );
-			
-/*40*/float dopplerHz = in.read() | (in.read()<< 8) | (in.read()<<16) | (in.read()<<24);
+
+/*40*/float dopplerHz = I4(in);
 			dopplerHz *= 10*Math.pow(2, -32);
 			System.out.println("dopplerHz:  " + dopplerHz );
-	
-/*48*/in.skip(8);
+
+/*48*/in.skip(12);
 
 			if( o == null )
 				o = new Observations(new Time(0, gpsTow),0);

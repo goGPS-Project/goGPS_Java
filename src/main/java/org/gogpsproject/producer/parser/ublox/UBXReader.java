@@ -120,6 +120,11 @@ public class UBXReader implements StreamEventProducer {
 					parsed = true;
 		
 					Observations o = decodegnss.decode(null);
+
+					// ignore for now
+					if( true )
+						return null;
+
 					if (o!=null && this.debugModeEnabled) {
 						System.out.println("Decoded observations");
 					}
@@ -129,9 +134,7 @@ public class UBXReader implements StreamEventProducer {
 							sel.addObservations(oc);
 						}
 					}
-//					return o;
-					// ignore for now
-					return null;
+					return o;
 			 }
 				
 			}

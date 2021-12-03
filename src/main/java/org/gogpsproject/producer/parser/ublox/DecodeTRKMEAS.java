@@ -123,7 +123,7 @@ public class DecodeTRKMEAS {
 		for (int k = 0; k < numSV; k++) { // p=raw->buff+110
 
 /*0*/	int chNum = in.read(); 
-			System.out.println("chNum:  " + chNum );
+			System.out.println("\nchNum:  " + chNum );
 			
 /*1*/	int mesQI = in.read();  
 			System.out.println("mesQI:  " + mesQI );
@@ -139,25 +139,35 @@ public class DecodeTRKMEAS {
 			
 /*5*/	int svId = in.read();
 			System.out.println("svId:  " + svId );
-
+			in.read();
+			
 /*7*/	int fcn = in.read();
+      // GLO frequency channel number+7
 			System.out.println("fcn:  " + fcn );
 			
 /*8*/	int status = in.read();
-			System.out.println("status:  " + status );
+			// tracking/lock status (bit3: half-cycle)
+			System.out.print("status:  " + Integer.toHexString(status) + " " + Integer.toBinaryString(status) );
+			if( (status & 0b01000000) == 0 )
+				System.out.println(" FULL");
+			else
+				System.out.println(" HALF");
+				
 			in.skip(7);
 
 /*16*/int lock1 = in.read();
+      // code lock count
 			System.out.println("lock1:  " + lock1 );
 
 /*17*/int lock2 = in.read();
+      // carrier lock count
 			System.out.println("lock2:  " + lock2 );
 			in.skip(2);
 
 /*20*/float cNo = U2(in);
 			if( cNo <=0 ) {
 				System.out.println("Invalid" );
-				in.skip(35);
+				in.skip(34);
 				continue;
 			}
 				
@@ -166,7 +176,7 @@ public class DecodeTRKMEAS {
 			in.skip(2);
 
 			if( true ) {
-				in.skip(33);
+				in.skip(32);
 				continue;
 			}
 			

@@ -201,9 +201,10 @@ public class DecodeTRKMEAS {
 			
 /*32*/double adr = I8(in);
 		  // accumulated Doppler range
-			adr *= Math.pow(2, 32);
+			adr /= Math.pow(2, 32);
 			adr += statusFlag? 0.5: 0;
 			System.out.println("adr:  " + adr );
+		  double carrierPhase = -adr;
 
 /*40*/float dopplerHz = I4(in);
 //			dopplerHz *= 10*Math.pow(2, 10);
@@ -214,9 +215,6 @@ public class DecodeTRKMEAS {
 
 			ObservationSet os = new ObservationSet();
 					
-//			System.out.print("SV" + k +"\tPhase: " + carrierPhase + "  ");
-			double carrierPhase = 0;
-			
 			if (gnssId == 0 && gpsEnable == true && !anomalousValues){ 
 				/* GPS */
 				os.setSatType('G');

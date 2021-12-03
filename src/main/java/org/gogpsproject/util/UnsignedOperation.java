@@ -218,7 +218,11 @@ public class UnsignedOperation {
 		return UnsignedOperation.toShort(Bits.tobytes(bits));
 	}
 
-	public static int U1(byte b) {
+	public static int UBI(byte b) {
+		return b & 0xFF;
+	}
+
+	public static long UBL(byte b) {
 		return b & 0xFF;
 	}
 	
@@ -232,7 +236,7 @@ public class UnsignedOperation {
 		byte b[] = new byte[4];
 		in.read(b, 0, 4);
 		
-		int i = U1(b[0]) | U1(b[1])<< 8 | U1(b[2])<<16 | U1(b[3])<<24;
+		int i = UBI(b[0]) | UBI(b[1])<< 8 | UBI(b[2])<<16 | UBI(b[3])<<24;
 		return i;
 	}
 	
@@ -241,8 +245,8 @@ public class UnsignedOperation {
 		byte b[] = new byte[8];
 		in.read(b, 0, 8);
 		
-		long l = U1(b[0]) | U1(b[1])<< 8 | U1(b[2])<<16 | U1(b[3])<<24 |
-     U1(b[4])<<32 | U1(b[5])<<40 | U1(b[6])<<48 | U1(b[7])<<56; 
+		long l = UBL(b[0]) | UBL(b[1])<< 8 | UBL(b[2])<<16 | UBL(b[3])<<24 |
+         UBL(b[4])<<32 | UBL(b[5])<<40 | UBL(b[6])<<48 | UBL(b[7])<<56; 
 		
 		return l;
 	}

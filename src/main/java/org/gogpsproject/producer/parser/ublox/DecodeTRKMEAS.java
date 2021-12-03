@@ -60,11 +60,12 @@ public class DecodeTRKMEAS {
 	 * static int decode_trkmeas(raw_t *raw)
 	 * 
 	 * @param logos
+	 * @param time 
 	 * @return
 	 * @throws IOException
 	 * @throws UBXException
 	 */
-	public Observations decode(OutputStream logos) throws IOException, UBXException {
+	public Observations decode(OutputStream logos, Time time) throws IOException, UBXException {
 		double maxts = 0;		
 		boolean anomalousValues = false;
 		int gpsCounter = 0;

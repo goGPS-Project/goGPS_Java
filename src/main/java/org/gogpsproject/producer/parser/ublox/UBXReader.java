@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.util.Vector;
 
 import org.gogpsproject.ephemeris.EphGps;
+import org.gogpsproject.positioning.ReceiverPosition;
 import org.gogpsproject.producer.Observations;
 import org.gogpsproject.producer.StreamEventListener;
 import org.gogpsproject.producer.StreamEventProducer;
@@ -38,6 +39,8 @@ import org.gogpsproject.producer.parser.IonoGps;
  */
 public class UBXReader implements StreamEventProducer {
 	private InputStream in;
+	ReceiverPosition pos;
+	
 	private Vector<StreamEventListener> streamEventListeners = new Vector<StreamEventListener>();
 	private Boolean debugModeEnabled = false;
 	//	private StreamEventListener streamEventListener;
@@ -126,7 +129,9 @@ public class UBXReader implements StreamEventProducer {
 							sel.addObservations(oc);
 						}
 					}
-					return o;
+//					return o;
+					// ignore for now
+					return null;
 			 }
 				
 			}
@@ -178,7 +183,7 @@ public class UBXReader implements StreamEventProducer {
 						DecodeTRKMEAS decodegnss = new DecodeTRKMEAS(in, multiConstellation);
 						parsed = true;
 			
-						Observations o = decodegnss.decode(null);
+						Observations o = decodegnss.decode(null, this.pos.getRefTime());
 						if (o!=null && this.debugModeEnabled) {
 							System.out.println("Decoded observations");
 						}
@@ -189,6 +194,16 @@ public class UBXReader implements StreamEventProducer {
 							}
 						}
 						return o;
+					}
+				}
+				else if (uclass == 0x01) { // NAV
+					uid = in.read(); // ID
+
+					if (uid == 0x6) { // SOL
+						DecodeNAVSOL decodegnss = new DecodeNAVSOL(in, multiConstellation);
+						this.pos = decodegnss.decode(null);
+						parsed = true;
+						return null;
 					}
 				}
 				else {

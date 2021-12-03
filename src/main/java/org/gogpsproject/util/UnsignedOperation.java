@@ -200,7 +200,8 @@ public class UnsignedOperation {
 		return b;
 	}
 
-	public static int U2( InputStream in ) throws IOException {
+	/** Redundant */
+	public static int U2_( InputStream in ) throws IOException {
 		int[] data = new int[2]; // gpsTOWacc (U2)
 		for (int i = 0; i < 2; i++) {
 			data[i] = in.read();
@@ -215,5 +216,10 @@ public class UnsignedOperation {
 			}
 		}
 		return UnsignedOperation.toShort(Bits.tobytes(bits));
+	}
+
+	/** Read Little Endian Short*/
+	public static int U2( InputStream in ) throws IOException {
+		return in.read() | (in.read()<<8); 
 	}
 }

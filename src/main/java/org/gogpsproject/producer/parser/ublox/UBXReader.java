@@ -19,9 +19,11 @@
  */
 package org.gogpsproject.producer.parser.ublox;
 
-import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Vector;
 
 import org.gogpsproject.ephemeris.EphGps;
@@ -30,6 +32,7 @@ import org.gogpsproject.producer.Observations;
 import org.gogpsproject.producer.StreamEventListener;
 import org.gogpsproject.producer.StreamEventProducer;
 import org.gogpsproject.producer.parser.IonoGps;
+
 /**
  * <p>
  * Read and parse UBX messages
@@ -38,7 +41,7 @@ import org.gogpsproject.producer.parser.IonoGps;
  * @author Lorenzo Patocchi cryms.com, Eugenio Realini
  */
 public class UBXReader implements StreamEventProducer {
-	private InputStream in;
+	private InputStream in0, in;
 	ReceiverPosition pos;
 	
 	private Vector<StreamEventListener> streamEventListeners = new Vector<StreamEventListener>();
@@ -52,25 +55,76 @@ public class UBXReader implements StreamEventProducer {
   boolean bdsEnable = false;  // enable BeiDou data reading
 
   private Boolean[] multiConstellation = {gpsEnable, qzsEnable, gloEnable, galEnable, bdsEnable};
+	public final int uBloxPrefix1 = 0xB5;
+	public final int uBloxPrefix2 = 0x62;
+	private int CK_A;
+	private int CK_B;
+	byte[] bytes;
 	
 	public UBXReader(InputStream is){
 		this(is,null);
 	}
 	public UBXReader(InputStream is, StreamEventListener eventListener){
-		this.in = is;
+		this.in0 = is;
 		addStreamEventListener(eventListener);
 	}
 	
 	public UBXReader(InputStream is, Boolean[] multiConstellation, StreamEventListener eventListener){
-		this.in = is;
+		this.in0 = is;
 		this.multiConstellation = multiConstellation;
 		addStreamEventListener(eventListener);
 	}
 
+	private void computeCheckSum(List<Integer> msg) {
+		CK_A = 0;
+		CK_B = 0;
+		for (int i = 2; i < msg.size(); i++) {
+			CK_A = CK_A + msg.get(i);
+			CK_B = CK_B + CK_A;
+
+		}
+		CK_A = CK_A & 0xFF;
+		CK_B = CK_B & 0xFF;
+	}
+
+	void validateCheckSum() throws UBXException, IOException {
+		List<Integer> msg = new ArrayList<>();
+		msg.add(new Integer(uBloxPrefix1));
+		msg.add(in0.read()); //uBloxPrefix2
+		msg.add(in0.read()); //Class
+		msg.add(in0.read()); //Uid
+		// read non parsed message length
+		int[] length = new int[2];
+		length[1] = in0.read();
+		length[0] = in0.read();
+		
+		int len = length[0]<<8 | length[1];
+		if( len<7 || len>10000) // no idea what the maximum length should be
+			throw new UBXException("Wrong length");
+			
+		msg.add(length[1]);
+		msg.add(length[0]);
+		for(int i=0;i<len;i++)
+			msg.add(in0.read()); 
+		
+		computeCheckSum(msg);
+		
+		int c1 = in0.read();
+		int c2 = in0.read();
+		if(CK_A != c1 || CK_B!=c2) {
+			throw new UBXException("Wrong message checksum");
+		}
+		bytes = new byte[len-1];
+		for( int i=1; i<len;i++ ) {
+			bytes[i-1] = (byte)(int)msg.get(i);
+		}
+		in = new ByteArrayInputStream(bytes);
+	}
+	
 	public Object readMessage() throws IOException, UBXException{
 
-	//	int data = in.read();
-	//	if(data == 0xB5){
+		validateCheckSum();
+		
 		int usynch2 = in.read();
 		if(usynch2 == 0x62){ //Preamble
 

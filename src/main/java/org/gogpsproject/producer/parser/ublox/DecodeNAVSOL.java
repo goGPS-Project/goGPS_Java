@@ -88,7 +88,7 @@ public class DecodeNAVSOL {
 			throw new UBXException("Zero-length NAV-SOL message");
 		}
 
-		System.out.println("NAV-SOL message Length : " + len);
+//		System.out.println("NAV-SOL message Length : " + len);
 
     int itow = U4(in); 
     int ftow = I4(in);
@@ -101,7 +101,7 @@ public class DecodeNAVSOL {
     
     if(( flags & 0x0C) == 0x0C ) {
         Time t = new Time( week, itow*1E-3 + ftow*1E-9 );
-    		System.out.println(t);
+//    		System.out.println(t);
 
         RoverPosition p = new RoverPosition();
         p.setRefTime(t);

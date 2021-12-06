@@ -77,14 +77,6 @@ public class DecodeTRKMEAS {
 		length[1] = in.read();
 		length[0] = in.read();
 
-		int CH_A = 0;
-		int CH_B = 0;
-		CH_A += 0x02;CH_B += CH_A;
-
-		CH_A += 0x10;CH_B += CH_A;
-		CH_A += length[1];CH_B += CH_A;
-		CH_A += length[0];CH_B += CH_A;
-
 		int len = length[0]*256+length[1];
 		
 		boolean gpsEnable = multiConstellation[0];
@@ -109,15 +101,7 @@ public class DecodeTRKMEAS {
 			throw new UBXException("Length error TRK-MEAS message");
     }
 
-/*4*/for (int i = 0; i < 5; i++) { // reserved
-			System.out.print(  Integer.toHexString(in.read()) + " " );
-		}
-		for (int i = 5; i < 100; i++) { // reserved
-			System.out.print(  Integer.toHexString(in.read()) + " " );
-			if( (i + 5)  %16 == 0 )
-				System.out.println();
-		}
-		System.out.println();
+/*4*/in.skip(100);
 
 		for (int k = 0; k < numSV; k++) { // p=raw->buff+110
 
@@ -125,48 +109,48 @@ public class DecodeTRKMEAS {
 			System.out.println("\nchNum:  " + chNum );
 			
 /*1*/	int mesQI = in.read();  
-			System.out.println("mesQI:  " + mesQI );
+//			System.out.println("mesQI:  " + mesQI );
 			if( mesQI<4 || mesQI >7) {
-				System.out.println("Invalid");
+//				System.out.println("Invalid");
 				in.skip(53);
 				continue;
 			}
 			in.skip(2);
 
 /*4*/	int gnssId = in.read();
-			System.out.println("gnssId:  " + gnssId );
+//			System.out.println("gnssId:  " + gnssId );
 			
 /*5*/	int svId = in.read();
-			System.out.println("svId:  " + svId );
+//			System.out.println("svId:  " + svId );
 			in.read();
 			
 /*7*/	int fcn = in.read()-7;
       // GLO frequency channel number+7
-			System.out.println("fcn:  " + fcn );
+//			System.out.println("fcn:  " + fcn );
 			
 /*8*/	int statusval = in.read();
 			// tracking/lock status (bit3: half-cycle)
-			System.out.print("status:  " + Integer.toHexString(statusval) + " " + Integer.toBinaryString(statusval) );
+//			System.out.print("status:  " + Integer.toHexString(statusval) + " " + Integer.toBinaryString(statusval) );
 			boolean statusFlag = ((statusval & 0b01000000) != 0);
-			if( statusFlag )
-				System.out.println(" HALF");
-			else
-				System.out.println(" FULL");
+//			if( statusFlag )
+//				System.out.println(" HALF");
+//			else
+//				System.out.println(" FULL");
 				
 			in.skip(7);
 
 /*16*/int lock1 = in.read();
       // code lock count
-			System.out.println("lock1:  " + lock1 );
+//			System.out.println("lock1:  " + lock1 );
 
 /*17*/int lock2 = in.read();
       // carrier lock count
-			System.out.println("lock2:  " + lock2 );
+//			System.out.println("lock2:  " + lock2 );
 			in.skip(2);
 
 /*20*/float cNo = U2(in);
-			if( cNo <=0 ) {
-				System.out.println("Invalid" );
+			if( cNo==0 ) {
+//				System.out.println("Invalid" );
 				in.skip(34);
 				continue;
 			}
@@ -175,36 +159,39 @@ public class DecodeTRKMEAS {
 			System.out.println("cNo:  " + cNo );
 			in.skip(2);
 
-/*24*/double ts = I8(in);
+/*24*/long tsl = I8(in);
       // transmission time
-			ts = ts / Math.pow(2, 32)/1000;
-			System.out.println("ts:  " + ts );
+			double ts = tsl / 1000.0d / Math.pow(2, 32);
+//			System.out.println("ts:  " + ts );
 
-			if( gnssId==3 ) // SYS_CMP
-				ts += 14.0;             /* bdt  -> gpst */
-			else if ( gnssId == 6 ) // SYS_GLO 
-				ts -= 10800.0 + time.getGpsWeekSec(); /* glot -> gpst */			
+//			if( gnssId==3 ) // SYS_CMP
+//				ts += 14.0;             /* bdt  -> gpst */
+//			else if ( gnssId == 6 ) // SYS_GLO 
+//				ts -= 10800.0 + time.getGpsWeekSec(); /* glot -> gpst */			
 	
 			// for now store ts as pseudorange
 			double pseudoRange = ts;
 			
-
-			if( gnssId==0 ) { // SYS_GPS
-				if( ts>maxts ) {
-					maxts = ts;
+			if( ts<=0 || ts>600000 ) {
+//				System.out.println("Invalid");
+				in.skip(24);
+				continue;
+			}
+			else if( gnssId==0 && ts>maxts ) { // SYS_GPS
+				maxts = ts;
 			}
 			
 /*32*/double adr = I8(in);
 		  // accumulated Doppler range
 			adr /= Math.pow(2, 32);
 			adr += statusFlag? 0.5: 0;
-			System.out.println("adr:  " + adr );
+//			System.out.println("adr:  " + adr );
 		  double carrierPhase = -adr;
 
 /*40*/float dopplerHz = I4(in);
 //			dopplerHz *= 10*Math.pow(2, 10);
 			dopplerHz /= Math.pow(2, 8);
-			System.out.println("dopplerHz:  " + dopplerHz );
+//			System.out.println("dopplerHz:  " + dopplerHz );
 
 /*48*/in.skip(12);
 
@@ -277,27 +264,17 @@ public class DecodeTRKMEAS {
 			anomalousValues = false;
 			
 		 }
-	  }
-		// / Checksum
-		CH_A = CH_A & 0xFF;
-		CH_B = CH_B & 0xFF;
 
 		int c1 = in.read();
-		if(logos!=null) logos.write(c1);
-
 		int c2 = in.read();
-		if(logos!=null) logos.write(c2);
-
-//	if(CH_A != c1 || CH_B!=c2)
-//	throw new UBXException("Wrong message checksum");
-
+		
 		if (o != null && o.getNumSat() == 0) {
 			return null;
 		}
 		
 		/* time-tag = max(transmission time + 0.08) rounded by 100 ms */
 		double tr = Math.round((maxts+0.08)/0.1)*0.1;
-		System.out.println("tr " + tr );
+//		System.out.println("tr " + tr );
 		
 //		/* adjust week handover */
 //		time2gpst( raw->time, week );
@@ -313,7 +290,7 @@ public class DecodeTRKMEAS {
 		long gpsTow = time2.getGpsWeekSec(); 
 		//utc_gpst = timediff(gpst2utc(time), time);
 		
-		System.out.println("gpsTow:  " + gpsTow );
+//		System.out.println("gpsTow:  " + gpsTow );
 		
 		// compute all PRs
 		Observations o2 = new Observations( time2,0);
@@ -332,7 +309,7 @@ public class DecodeTRKMEAS {
 			os.setCodeC(ObservationSet.L1, tau * Constants.SPEED_OF_LIGHT );
 			o2.setGps(i, os);
 		}
-		
+	
 		o2.sortBySatID();
 		return o2;
 	}

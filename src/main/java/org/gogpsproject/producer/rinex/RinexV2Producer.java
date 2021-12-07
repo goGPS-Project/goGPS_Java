@@ -139,7 +139,7 @@ public class RinexV2Producer implements StreamEventListener {
 			int DOY = epoch.getDayOfYear();
 			int hour = epoch.getGpsHourInDay();
 			if (DOY >= this.minDOY) {
-				if (this.standardFilename && (this.outFilename == null || this.DOYold != DOY || (this.enableHourlyRinex && this.hourOld != hour))) {
+				if (this.standardFilename && (this.outFilename == null || this.DOYold < DOY || (this.enableHourlyRinex && this.hourOld != hour))) {
 					streamClosed();
 
 					if (this.enableZip && this.outFilename != null) {

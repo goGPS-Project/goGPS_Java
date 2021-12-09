@@ -20,11 +20,6 @@
  */
 package org.gogpsproject.positioning;
 
-import static org.gogpsproject.util.UnsignedOperation.I1;
-import static org.gogpsproject.util.UnsignedOperation.I2;
-import static org.gogpsproject.util.UnsignedOperation.I4;
-import static org.gogpsproject.util.UnsignedOperation.U1;
-
 /**
  * @author ZiglioUK
  */
@@ -55,7 +50,7 @@ public class SVInfo extends SatellitePosition{
 	
 	int cno;
 	
-	/* pseudorange residual in degrees*/
+	/* pseudorange residual in cm*/
 	int prRes;
 	
 	public SVInfo( long unixTime, int satID, char satType, double az, double el, int cno, int prRes, int flags, int quality ) {

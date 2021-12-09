@@ -28,7 +28,9 @@ import java.util.Vector;
 
 import org.gogpsproject.ephemeris.EphGps;
 import org.gogpsproject.positioning.ReceiverPosition;
+import org.gogpsproject.positioning.SVInfo;
 import org.gogpsproject.producer.Observations;
+import org.gogpsproject.producer.SVInfoListener;
 import org.gogpsproject.producer.StreamEventListener;
 import org.gogpsproject.producer.StreamEventProducer;
 import org.gogpsproject.producer.parser.IonoGps;
@@ -41,7 +43,7 @@ import org.gogpsproject.producer.parser.IonoGps;
  * @author Lorenzo Patocchi cryms.com, Eugenio Realini
  */
 public class UBXReader implements StreamEventProducer {
-	private InputStream in0, in;
+	InputStream in0, in;
 	ReceiverPosition pos;
 	
 	private Vector<StreamEventListener> streamEventListeners = new Vector<StreamEventListener>();
@@ -262,6 +264,20 @@ public class UBXReader implements StreamEventProducer {
 						parsed = true;
 						return null;
 					}
+					else if( uid == 0x30 && this.pos != null) {// SVINFO
+						DecodeNAVSVINFO decodegnss = new DecodeNAVSVINFO(in, multiConstellation);
+						List<SVInfo> spl = decodegnss.decode(null, this.pos.getRefTime());
+						parsed = true;
+						
+						if(streamEventListeners!=null && spl!=null){
+							for(StreamEventListener sel:streamEventListeners){
+								if( sel instanceof SVInfoListener)
+									((SVInfoListener)sel).addSVInfo(spl);
+							}
+						}
+						return null;
+					}
+//					else if( uid == 0x7) {} // UBX-NAV-PVT
 				}
 				else {
 					uid = in.read(); // ID

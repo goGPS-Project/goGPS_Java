@@ -171,26 +171,25 @@ public class UBXReader implements StreamEventProducer {
 					return o;
 				}
 				else if(uid == 0x14){ //MEASX
-					// RMX-MEASX
-					DecodeRXMMEASX decodegnss = new DecodeRXMMEASX(in, multiConstellation);
-					parsed = true;
-		
-					Observations o = decodegnss.decode(null);
-
 					// ignore for now
-					if( true )
-						return null;
-
-					if (o!=null && this.debugModeEnabled) {
-						System.out.println("Decoded observations");
-					}
-					if(streamEventListeners!=null && o!=null){
-						for(StreamEventListener sel:streamEventListeners){
-							Observations oc = (Observations)o.clone();
-							sel.addObservations(oc);
+					if( false ) {
+						// RMX-MEASX
+						DecodeRXMMEASX decodegnss = new DecodeRXMMEASX(in, multiConstellation);
+						parsed = true;
+			
+						Observations o = decodegnss.decode(null);
+	
+						if (o!=null && this.debugModeEnabled) {
+							System.out.println("Decoded observations");
 						}
+						if(streamEventListeners!=null && o!=null){
+							for(StreamEventListener sel:streamEventListeners){
+								Observations oc = (Observations)o.clone();
+								sel.addObservations(oc);
+							}
+						}
+						return o;
 					}
-					return o;
 			 }
 				
 			}

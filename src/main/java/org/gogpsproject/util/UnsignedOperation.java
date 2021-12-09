@@ -218,11 +218,19 @@ public class UnsignedOperation {
 		return UnsignedOperation.toShort(Bits.tobytes(bits));
 	}
 
-	public static int UBI(byte b) {
+	public static int U1(byte b) {
 		return b & 0xFF;
 	}
 
-	public static long UBL(byte b) {
+	public static int U1( InputStream in ) throws IOException {
+		return in.read() & 0xFF; 
+	}
+
+	public static int I1( InputStream in ) throws IOException {
+		return in.read(); 
+	}
+	
+	public static long U1L(byte b) {
 		return b & 0xFF;
 	}
 	
@@ -230,6 +238,7 @@ public class UnsignedOperation {
 	public static int I2( InputStream in ) throws IOException {
 		return in.read() | (in.read()<<8); 
 	}
+	
 	public static int U2( InputStream in ) throws IOException {
 		return in.read() | (in.read()<<8); 
 	}
@@ -239,14 +248,15 @@ public class UnsignedOperation {
 		byte b[] = new byte[4];
 		in.read(b, 0, 4);
 		
-		int i = UBI(b[0]) | UBI(b[1])<< 8 | UBI(b[2])<<16 | UBI(b[3])<<24;
+		int i = U1(b[0]) | U1(b[1])<< 8 | U1(b[2])<<16 | U1(b[3])<<24;
 		return i;
 	}
+	
 	public static int U4( InputStream in ) throws IOException {
 		byte b[] = new byte[4];
 		in.read(b, 0, 4);
 		
-		int i = UBI(b[0]) | UBI(b[1])<< 8 | UBI(b[2])<<16 | UBI(b[3])<<24;
+		int i = U1(b[0]) | U1(b[1])<< 8 | U1(b[2])<<16 | U1(b[3])<<24;
 		return i;
 	}
 	
@@ -254,9 +264,13 @@ public class UnsignedOperation {
 	public static long I8( InputStream in ) throws IOException {
 		byte b[] = new byte[8];
 		in.read(b, 0, 8);
+//		String bs = new String(b);
 		
-		long l = UBL(b[0]) | UBL(b[1])<< 8 | UBL(b[2])<<16 | UBL(b[3])<<24 |
-         UBL(b[4])<<32 | UBL(b[5])<<40 | UBL(b[6])<<48 | UBL(b[7])<<56; 
+		long l = U1L(b[0]) | U1L(b[1])<< 8 | U1L(b[2])<<16 | U1L(b[3])<<24 |
+         U1L(b[4])<<32 | U1L(b[5])<<40 | U1L(b[6])<<48 | U1L(b[7])<<56; 
+		
+		if( l<0 )
+			System.out.println(l);
 		
 		return l;
 	}

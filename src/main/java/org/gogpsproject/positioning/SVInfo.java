@@ -25,7 +25,9 @@ package org.gogpsproject.positioning;
  */
 public class SVInfo extends SatellitePosition{
 
-	TopocentricCoordinates topocentric;
+//	public TopocentricCoordinates topocentric;
+	public double az;
+	public double el;
 	
 	/*
 	 * svUsed
@@ -55,6 +57,9 @@ public class SVInfo extends SatellitePosition{
 	
 	public SVInfo( long unixTime, int satID, char satType, double az, double el, int cno, int prRes, int flags, int quality ) {
 		super( unixTime, satID, satType, 0, 0, 0);
-		topocentric = new TopocentricCoordinates(az, el);
+//		topocentric = new TopocentricCoordinates(az, el);
+		this.az = az;
+		this.el = el;
 	}
 }
+

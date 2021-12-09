@@ -65,7 +65,7 @@ s  *
 		if (len == 0) {
 			throw new UBXException("Zero-length NAV-SVINFO message");
 		}
-		System.out.println("NAV-SVINFO message Length : " + len);
+		System.out.println("\nNAV-SVINFO message Length : " + len);
 
 		int week = time.getGpsWeek();  
 /*0*/int itow  = U4(in);
@@ -78,20 +78,25 @@ s  *
     }
 
 /*5*/int globalFlags = U1(in);
-/*6*/in.skip(1);
+/*6*/in.skip(2);
     
 		List<SVInfo> sl = new ArrayList<>();
 		for (int k = 0; k < numCh; k++) { // p=raw->buff+110
-/*8*/	int chn = in.read(); 
-			System.out.println("\nchn:  " + chn );
-
-			if( chn != k ) {
-				// Some problem with parsing has occurred
+/*8*/	int chn = U1(in); 
+			if( chn == 255 ) {
 				in.skip(11);
 				continue;
 			}
+				
+			System.out.println("\nchn:  " + chn );
+
+//			if( chn != k ) {
+//				// Some problem with parsing has occurred
+//				in.skip(11);
+//				continue;
+//			}
 			
-			int svid = in.read();
+/*9*/	int svid = U1(in);
 			System.out.println("svid:  " + svid );
 			
 			/*
@@ -104,7 +109,7 @@ s  *
 			 * orbitAop
 			 * smoothed
 			 */
-			int flags = U1(in);
+/*10*/	int flags = U1(in);
 
 			/*
 			 * 0: no signal
@@ -113,26 +118,27 @@ s  *
 			 * 4. code locked and time synchronised
 			 * 5, 6, 7: code and carrier locked and time synchronised
 			 */
-			int quality = U1(in);
+/*11*/	int quality = U1(in) &0b111;
+				System.out.println("Q:  " + quality );
 			
-			int cno = U1(in);
-			System.out.println("cNo:  " + cno );
+/*12*/	int cno = U1(in);
+				System.out.println("cNo:  " + cno );
 			
 			/* elev in integer degrees */
-			int elev = I1(in);
-			System.out.println("elev:  " + elev );
+/*13*/	int elev = I1(in);
+				System.out.println("elev:  " + elev );
 			
-			/* azimuth in integer degrees */
-			int azim = I2(in);
-			System.out.println("azim:  " + azim );
+				/* azimuth in integer degrees */
+/*14*/	int azim = I2(in);
+				System.out.println("azim:  " + azim );
 
-			/* pseudorange residual in degrees*/
-			int prRes = I4(in);
-			System.out.println("prRes:  " + prRes );
+				/* pseudorange residual in cm*/
+/*16*/	int prRes = I4(in);
+				System.out.println("prRes:  " + prRes );
 			
 //      char satType = obs.getGnssType(i);			
-			SVInfo sp = new SVInfo(time.getMsec(), svid, 'G', azim, elev, cno, prRes, flags, quality);
-			sl.add(sp);
+				SVInfo sp = new SVInfo(time.getMsec(), svid, 'G', azim, elev, cno, prRes, flags, quality);
+				sl.add(sp);
 		}
 		return sl; 
 	}

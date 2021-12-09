@@ -65,14 +65,14 @@ s  *
 		if (len == 0) {
 			throw new UBXException("Zero-length NAV-SVINFO message");
 		}
-		System.out.println("\nNAV-SVINFO message Length : " + len);
+//		System.out.println("\nNAV-SVINFO message Length : " + len);
 
 		int week = time.getGpsWeek();  
 /*0*/int itow  = U4(in);
 		time = new Time( week, itow/1000 );
 
 /*4*/int numCh = U1(in);
-		System.out.println("numCh: " + numCh);
+//		System.out.println("numCh: " + numCh);
 		if( len< 8 + numCh*12 ) {
 			throw new UBXException("Length error NAV-SVINFO message");
     }
@@ -88,7 +88,7 @@ s  *
 				continue;
 			}
 				
-			System.out.println("\nchn:  " + chn );
+//			System.out.println("\nchn:  " + chn );
 
 //			if( chn != k ) {
 //				// Some problem with parsing has occurred
@@ -97,7 +97,7 @@ s  *
 //			}
 			
 /*9*/	int svid = U1(in);
-			System.out.println("svid:  " + svid );
+//			System.out.println("svid:  " + svid );
 			
 			/*
 			 * svUsed
@@ -119,22 +119,22 @@ s  *
 			 * 5, 6, 7: code and carrier locked and time synchronised
 			 */
 /*11*/	int quality = U1(in) &0b111;
-				System.out.println("Q:  " + quality );
+//				System.out.println("Q:  " + quality );
 			
 /*12*/	int cno = U1(in);
-				System.out.println("cNo:  " + cno );
+//				System.out.println("cNo:  " + cno );
 			
 			/* elev in integer degrees */
 /*13*/	int elev = I1(in);
-				System.out.println("elev:  " + elev );
+//				System.out.println("elev:  " + elev );
 			
 				/* azimuth in integer degrees */
 /*14*/	int azim = I2(in);
-				System.out.println("azim:  " + azim );
+//				System.out.println("azim:  " + azim );
 
 				/* pseudorange residual in cm*/
 /*16*/	int prRes = I4(in);
-				System.out.println("prRes:  " + prRes );
+//				System.out.println("prRes:  " + prRes );
 			
 //      char satType = obs.getGnssType(i);			
 				SVInfo sp = new SVInfo(time.getMsec(), svid, 'G', azim, elev, cno, prRes, flags, quality);

@@ -269,9 +269,6 @@ public class UnsignedOperation {
 		long l = U1L(b[0]) | U1L(b[1])<< 8 | U1L(b[2])<<16 | U1L(b[3])<<24 |
          U1L(b[4])<<32 | U1L(b[5])<<40 | U1L(b[6])<<48 | U1L(b[7])<<56; 
 		
-		if( l<0 )
-			System.out.println(l);
-		
 		return l;
 	}
 	

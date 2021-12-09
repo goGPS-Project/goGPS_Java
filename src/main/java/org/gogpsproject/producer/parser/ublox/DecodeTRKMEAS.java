@@ -85,12 +85,12 @@ public class DecodeTRKMEAS {
 		boolean galEnable = multiConstellation[3];
 		boolean bdsEnable = multiConstellation[4];
 		
-		System.out.println("TRK-MEAS message Length : " + len);
+//		System.out.println("TRK-MEAS message Length : " + len);
 
 /*0*/in.skip(2); //  *p=raw->buff+6
 
 /*2*/int numSV = in.read(); // nch=U1(p+2);
-		System.out.println("numSV :  " + numSV );
+//		System.out.println("numSV :  " + numSV );
 		in.read();
 		
 		if( len< 112 + numSV*56 - 8) {
@@ -102,7 +102,7 @@ public class DecodeTRKMEAS {
 		for (int k = 0; k < numSV; k++) { // p=raw->buff+110
 
 /*0*/	int chNum = in.read(); 
-			System.out.println("\nchNum:  " + chNum );
+//			System.out.println("\nchNum:  " + chNum );
 			
 			if( chNum != k ) {
 				// Some problem with parsing has occurred
@@ -152,7 +152,7 @@ public class DecodeTRKMEAS {
 
 /*20*/float cNo = U2(in);
 			cNo /= Math.pow(2, 8);
-			System.out.println("cNo:  " + cNo );
+//			System.out.println("cNo:  " + cNo );
 			if( cNo==0 || cNo > 50 ) {
 //			System.out.println("Invalid" );
 				in.skip(34);

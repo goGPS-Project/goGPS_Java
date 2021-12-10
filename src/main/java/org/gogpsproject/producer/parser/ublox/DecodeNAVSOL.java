@@ -73,15 +73,6 @@ public class DecodeNAVSOL {
 
 		length[1] = in.read();
 		length[0] = in.read();
-
-		int CH_A = 0;
-		int CH_B = 0;
-		CH_A += 0x02;CH_B += CH_A;
-
-		CH_A += 0x10;CH_B += CH_A;
-		CH_A += length[1];CH_B += CH_A;
-		CH_A += length[0];CH_B += CH_A;
-
 		int len = length[0]*256+length[1];
 		
 		if (len == 0) {
@@ -108,18 +99,11 @@ public class DecodeNAVSOL {
         return p;
     }
 		
-		// / Checksum
-		CH_A = CH_A & 0xFF;
-		CH_B = CH_B & 0xFF;
-
 		int c1 = in.read();
 		if(logos!=null) logos.write(c1);
 
 		int c2 = in.read();
 		if(logos!=null) logos.write(c2);
-
-//	if(CH_A != c1 || CH_B!=c2)
-//	throw new UBXException("Wrong message checksum");
 
 		return null; 
 	}

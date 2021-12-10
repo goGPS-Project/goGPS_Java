@@ -172,26 +172,24 @@ public class UBXReader implements StreamEventProducer {
 				}
 				else if(uid == 0x14){ //MEASX
 					// ignore for now
-					if( false ) {
-						// RMX-MEASX
-						DecodeRXMMEASX decodegnss = new DecodeRXMMEASX(in, multiConstellation);
-						parsed = true;
-			
-						Observations o = decodegnss.decode(null);
-	
-						if (o!=null && this.debugModeEnabled) {
-							System.out.println("Decoded observations");
-						}
-						if(streamEventListeners!=null && o!=null){
-							for(StreamEventListener sel:streamEventListeners){
-								Observations oc = (Observations)o.clone();
-								sel.addObservations(oc);
-							}
-						}
-						return o;
-					}
+//					// RMX-MEASX
+//					DecodeRXMMEASX decodegnss = new DecodeRXMMEASX(in, multiConstellation);
+//					parsed = true;
+//		
+//					Observations o = decodegnss.decode(null);
+//
+//					if (o!=null && this.debugModeEnabled) {
+//						System.out.println("Decoded observations");
+//					}
+//					if(streamEventListeners!=null && o!=null){
+//						for(StreamEventListener sel:streamEventListeners){
+//							Observations oc = (Observations)o.clone();
+//							sel.addObservations(oc);
+//						}
+//					}
+//					return o;
+//				}
 			 }
-				
 			}
 			else if (uclass == 0x0B) { // AID
 					uid = in.read(); // ID
@@ -237,7 +235,6 @@ public class UBXReader implements StreamEventProducer {
 				else if (uclass == 0x03) { // TRK
 					uid = in.read(); // ID
 					if (uid == 0x10 && this.pos != null) { // MEAS
-						// RMX-MEASX
 						DecodeTRKMEAS decodegnss = new DecodeTRKMEAS(in, multiConstellation);
 						parsed = true;
 
@@ -263,19 +260,19 @@ public class UBXReader implements StreamEventProducer {
 						parsed = true;
 						return null;
 					}
-					else if( uid == 0x30 && this.pos != null) {// SVINFO
-						DecodeNAVSVINFO decodegnss = new DecodeNAVSVINFO(in, multiConstellation);
-						List<SVInfo> spl = decodegnss.decode(null, this.pos.getRefTime());
-						parsed = true;
-						
-						if(streamEventListeners!=null && spl!=null){
-							for(StreamEventListener sel:streamEventListeners){
-								if( sel instanceof SVInfoListener)
-									((SVInfoListener)sel).addSVInfo(spl);
-							}
-						}
-						return null;
-					}
+//					else if( uid == 0x30 && this.pos != null) {// SVINFO
+//						DecodeNAVSVINFO decodegnss = new DecodeNAVSVINFO(in, multiConstellation);
+//						List<SVInfo> spl = decodegnss.decode(null, this.pos.getRefTime());
+//						parsed = true;
+//						
+//						if(streamEventListeners!=null && spl!=null){
+//							for(StreamEventListener sel:streamEventListeners){
+//								if( sel instanceof SVInfoListener)
+//									((SVInfoListener)sel).addSVInfo(spl);
+//							}
+//						}
+//						return null;
+//					}
 //					else if( uid == 0x7) {} // UBX-NAV-PVT
 				}
 				else {

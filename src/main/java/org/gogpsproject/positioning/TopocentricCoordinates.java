@@ -30,12 +30,8 @@ import org.ejml.simple.SimpleMatrix;
  */
 public class TopocentricCoordinates {
 
-	SimpleMatrix topocentric = new SimpleMatrix(3, 1); /* Azimuth (az), elevation (el), distance (d) */
+	private SimpleMatrix topocentric = new SimpleMatrix(3, 1); /* Azimuth (az), elevation (el), distance (d) */
 
-	public TopocentricCoordinates( double az, double el ) {
-		
-	}
-	
 	/**
 	 * @param origin
 	 */

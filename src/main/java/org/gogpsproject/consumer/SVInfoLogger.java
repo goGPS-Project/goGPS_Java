@@ -110,7 +110,7 @@ public class SVInfoLogger implements SVInfoListener {
 			String csvl = convertToCSV(line);
 			pw.println(csvl);
 		}
-		System.out.println( o.getRefTime().getGpsWeekSec());
+		System.out.println( o.getRefTime().getGpsWeekSec() + " " + o.getNumSat());
 //	pw.flush();
 	}
 	

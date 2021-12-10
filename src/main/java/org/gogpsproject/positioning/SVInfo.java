@@ -58,8 +58,19 @@ public class SVInfo extends SatellitePosition{
 	public SVInfo( long unixTime, int satID, char satType, double az, double el, int cno, int prRes, int flags, int quality ) {
 		super( unixTime, satID, satType, 0, 0, 0);
 //		topocentric = new TopocentricCoordinates(az, el);
+    Time newTime = new Time( unixTime);
+    setRefTime( newTime );
+		
 		this.az = az;
 		this.el = el;
+		this.cno = cno;
+		this.prRes = prRes;
+		this.flags = flags;
+		this.quality = quality;
+	}
+
+	public boolean isValid() {
+		return quality>=4;
 	}
 }
 

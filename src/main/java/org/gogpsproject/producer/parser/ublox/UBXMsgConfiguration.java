@@ -28,7 +28,7 @@ import org.gogpsproject.util.UnsignedOperation;
 public class UBXMsgConfiguration {
 
 	public final int uBloxPrefix1 = 0xB5;
-	public final  int uBloxPrefix2 = 0x62;
+	public final int uBloxPrefix2 = 0x62;
 	private int classid;
 	private int msgval;
 	private UBXMessageType msgid;

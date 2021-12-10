@@ -65,7 +65,7 @@ import txw2.output.IndentingXMLStreamWriter;
  * Produces KML file
  * </p>
  *
- * @author Emanuele Ziglioli - Sirtrack Ltd.
+ * @author Emanuele Ziglioli 
  */
 
 public class JakKmlProducer implements PositionConsumer {

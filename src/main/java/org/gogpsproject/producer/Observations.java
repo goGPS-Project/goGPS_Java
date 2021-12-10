@@ -51,7 +51,7 @@ public class Observations implements Streamable {
 
 	private ArrayList<ObservationSet> obsSet; /* sets of observations */
 	private int issueOfData = -1;
-    public long index;
+  public long index;
 
 	/**
 	 * The Rinex filename

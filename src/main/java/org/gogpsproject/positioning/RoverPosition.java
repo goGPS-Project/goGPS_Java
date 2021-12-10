@@ -28,7 +28,7 @@ import org.gogpsproject.producer.Observations;
  * Receiver position class
  * </p>
  *
- * @author Eugenio Realini, Cryms.com, Daisuke Yoshida, Emanuele Ziglioli (Sirtrack Ltd)
+ * @author Eugenio Realini, Cryms.com, Daisuke Yoshida, Emanuele Ziglioli 
  */
 public class RoverPosition extends ReceiverPosition {
 

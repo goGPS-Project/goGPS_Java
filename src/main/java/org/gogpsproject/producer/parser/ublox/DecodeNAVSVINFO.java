@@ -82,7 +82,7 @@ s  *
     
 		List<SVInfo> sl = new ArrayList<>();
 		for (int k = 0; k < numCh; k++) { // p=raw->buff+110
-/*8*/	int chn = U1(in); 
+/*0*/	int chn = U1(in); 
 			if( chn == 255 ) {
 				in.skip(11);
 				continue;
@@ -96,7 +96,7 @@ s  *
 //				continue;
 //			}
 			
-/*9*/	int svid = U1(in);
+/*1*/	int svid = U1(in);
 //			System.out.println("svid:  " + svid );
 			
 			/*
@@ -109,7 +109,7 @@ s  *
 			 * orbitAop
 			 * smoothed
 			 */
-/*10*/	int flags = U1(in);
+/*2*/	int flags = U1(in);
 
 			/*
 			 * 0: no signal
@@ -118,22 +118,26 @@ s  *
 			 * 4. code locked and time synchronised
 			 * 5, 6, 7: code and carrier locked and time synchronised
 			 */
-/*11*/	int quality = U1(in) &0b111;
+/*3*/	int quality = U1(in) &0b111;
 //				System.out.println("Q:  " + quality );
 			
-/*12*/	int cno = U1(in);
+/*4*/	int cno = U1(in);
 //				System.out.println("cNo:  " + cno );
 			
 			/* elev in integer degrees */
-/*13*/	int elev = I1(in);
+/*5*/	int elev = I1(in);
 //				System.out.println("elev:  " + elev );
-			
+			  if( elev<0 || elev>90 ) {
+			  	in.skip(6);
+			  	continue;
+			  }
+			  	
 				/* azimuth in integer degrees */
-/*14*/	int azim = I2(in);
+/*6*/	int azim = I2(in);
 //				System.out.println("azim:  " + azim );
 
 				/* pseudorange residual in cm*/
-/*16*/	int prRes = I4(in);
+/*8*/	int prRes = I4(in);
 //				System.out.println("prRes:  " + prRes );
 			
 //      char satType = obs.getGnssType(i);			

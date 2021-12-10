@@ -19,6 +19,8 @@
  */
 package org.gogpsproject.producer;
 
+import java.util.List;
+
 import org.gogpsproject.positioning.SVInfo;
 
 /**
@@ -26,5 +28,5 @@ import org.gogpsproject.positioning.SVInfo;
  *
  */
 public interface SVInfoListener extends StreamEventListener {
-	public void addSVInfo(SVInfo sv);
+	public void addSVInfo(List<SVInfo> spl);
 }

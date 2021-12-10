@@ -73,10 +73,8 @@ public class DecodeTRKMEAS {
 
 		// parse little Endian data
 		int[] length = new int[2];
-
 		length[1] = in.read();
 		length[0] = in.read();
-
 		int len = length[0]*256+length[1];
 		
 		boolean gpsEnable = multiConstellation[0];
@@ -89,42 +87,43 @@ public class DecodeTRKMEAS {
 
 /*0*/in.skip(2); //  *p=raw->buff+6
 
-/*2*/int numSV = in.read(); // nch=U1(p+2);
+/*2*/int numSV = in.read(); // nch=U1(p+2); //buff+8
 //		System.out.println("numSV :  " + numSV );
-		in.read();
+		in.read(); //buff+9
 		
 		if( len< 112 + numSV*56 - 8) {
 			throw new UBXException("Length error TRK-MEAS message");
     }
 
-/*4*/in.skip(100);
+/*4*/in.skip(100); //buff+10
 
 		for (int k = 0; k < numSV; k++) { // p=raw->buff+110
 
 /*0*/	int chNum = in.read(); 
 //			System.out.println("\nchNum:  " + chNum );
 			
-			if( chNum != k ) {
-				// Some problem with parsing has occurred
-				in.skip(54);
-				continue;
-			}
+//			if( chNum != k ) {
+//				// Some problem with parsing has occurred
+//				in.skip(55);
+//				continue;
+//			}
 			
 /*1*/	int mesQI = in.read();  
 //			System.out.println("mesQI:  " + mesQI );
 			if( mesQI<4 || mesQI >7) {
 //				System.out.println("Invalid");
-				in.skip(53);
+				in.skip(54);
 				continue;
 			}
-			in.skip(2);
-
+			
+/*2*/	in.skip(2);
+			
 /*4*/	int gnssId = in.read();
 //			System.out.println("gnssId:  " + gnssId );
 			
 /*5*/	int svId = in.read();
 //			System.out.println("svId:  " + svId );
-			in.read();
+/*6*/ in.read();
 			
 /*7*/	int fcn = in.read()-7;
       // GLO frequency channel number+7
@@ -139,7 +138,7 @@ public class DecodeTRKMEAS {
 //			else
 //				System.out.println(" FULL");
 				
-			in.skip(7);
+/*9*/	in.skip(7);
 
 /*16*/int lock1 = in.read();
       // code lock count
@@ -148,18 +147,18 @@ public class DecodeTRKMEAS {
 /*17*/int lock2 = in.read();
       // carrier lock count
 //			System.out.println("lock2:  " + lock2 );
-			in.skip(2);
+/*18*/in.skip(2);
 
 /*20*/float cNo = U2(in);
 			cNo /= Math.pow(2, 8);
 //			System.out.println("cNo:  " + cNo );
-			if( cNo==0 || cNo > 50 ) {
+			if( cNo==0 || cNo > 64 ) {
 //			System.out.println("Invalid" );
 				in.skip(34);
 				continue;
 		}
 				
-			in.skip(2);
+/*22*/in.skip(2);
 
 /*24*/long tsl = I8(in);
       // transmission time
@@ -198,6 +197,7 @@ public class DecodeTRKMEAS {
 /*48*/in.skip(12);
 
 			ObservationSet os = new ObservationSet();
+//			os.setLossLockInd(0, statusFlag?1:0);
 					
 			if (gnssId == 0 && gpsEnable == true && !anomalousValues){ 
 				/* GPS */

@@ -69,7 +69,7 @@ public class DecodeTRKMEAS {
 		double maxts = 0;		
 		boolean anomalousValues = false;
 		int gpsCounter = 0;
-    Observations o = new Observations(new Time(0, 0),0);
+    Observations o = new Observations(time,0);
 
 		// parse little Endian data
 		int[] length = new int[2];

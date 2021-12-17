@@ -26,16 +26,15 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.ParseException;
+import java.util.Vector;
 
-import org.gogpsproject.ephemeris.EphGps;
 import org.gogpsproject.positioning.Coordinates;
 import org.gogpsproject.positioning.Time;
-import org.gogpsproject.producer.NavigationProducer;
 import org.gogpsproject.producer.ObservationSet;
 import org.gogpsproject.producer.Observations;
 import org.gogpsproject.producer.ObservationsProducer;
-import org.gogpsproject.producer.StreamResource;
-
+import org.gogpsproject.producer.StreamEventListener;
+import org.gogpsproject.producer.StreamEventProducer;
 import java.math.BigDecimal;
 
 /**
@@ -45,7 +44,7 @@ import java.math.BigDecimal;
  *
  * @author Eugenio Realini, Cryms.com
  */
-public class RinexObservationParser implements ObservationsProducer{
+public class RinexObservationParser implements ObservationsProducer, StreamEventProducer{
 
 	private File fileObs;
 	private FileInputStream streamObs;
@@ -76,11 +75,13 @@ public class RinexObservationParser implements ObservationsProducer{
 	
 	boolean gpsEnable = true;  // enable GPS data reading
 	boolean qzsEnable = true;  // enable QZSS data reading
-    boolean gloEnable = true;  // enable GLONASS data reading	
-    boolean galEnable = true;  // enable Galileo data reading	
-    boolean bdsEnable = true;  // enable BeiDou data reading	
+  boolean gloEnable = true;  // enable GLONASS data reading	
+  boolean galEnable = true;  // enable Galileo data reading	
+  boolean bdsEnable = true;  // enable BeiDou data reading	
 
 	Boolean[] multiConstellation = {gpsEnable, qzsEnable, gloEnable, galEnable, bdsEnable};
+
+	private Vector<StreamEventListener> streamEventListeners = new Vector<StreamEventListener>();
 
 //	String line;
 	
@@ -248,12 +249,8 @@ public class RinexObservationParser implements ObservationsProducer{
 							return ver;
 						}							
 				break;
-						
-				
 				} // End of switch
-				
 			} // End of while 
-
 			
 			// Display an error if END OF HEADER was not reached
 			System.err.println("END OF HEADER was not found in file "
@@ -270,311 +267,322 @@ public class RinexObservationParser implements ObservationsProducer{
 		
 	}
 
+	/* In case of RINEX ver. 2.11 */
+	Observations getNextObservationsV2() throws ParseException, IOException {
+
+		if(!hasMoreObservations()) return null;
+		String line = buffStreamObs.readLine();
+		int len = line.length();
+
+		// Parse date and time
+		String dateStr = "20" + line.substring(1, 22);
+
+		// Parse event flag
+		String eFlag = line.substring(28, 30).trim();
+		int eventFlag = Integer.parseInt(eFlag);
+
+		// Parse available satellites string
+		String satAvail = line.substring(30, len);
+
+		// Parse number of available satellites
+		String numOfSat = satAvail.substring(0, 2).trim();
+		nSat = Integer.parseInt(numOfSat);
+
+		// Arrays to store satellite order
+		satOrder = new int[nSat];
+		sysOrder = new char[nSat];
+
+		nGps = 0;
+		nGlo = 0;
+		nSbs = 0;
+
+		// If number of satellites <= 12, read only one line...
+		// first line
+		int nSatCount = nSat;
+		{
+			// Parse satellite IDs
+			int j = 2;
+                final int num = nSatCount<12? nSatCount : 12;
+			for (int i = 0; i < num; i++) {
+
+				String satType = satAvail.substring(j, j + 1);
+				String satID = satAvail.substring(j + 1, j + 3);
+				if (satType.equals("G") || satType.equals(" ")) {
+					sysOrder[i] = 'G';
+                        satOrder[i] = Integer.parseInt(satID.trim());
+					nGps++;
+				} else if (satType.equals("R")) {
+					sysOrder[i] = 'R';
+					satOrder[i] = Integer.parseInt(satID.trim());
+					nGlo++;
+				} else if (satType.equals("S")) {
+					sysOrder[i] = 'S';
+					satOrder[i] = Integer.parseInt(satID.trim());
+					nSbs++;
+				}
+				j = j + 3;
+				nSatCount--;
+			}
+		} 
+		// ... read two or more lines
+		while( nSatCount>0 ) { 
+
+			// Get second line
+			satAvail = buffStreamObs.readLine().trim();
+
+			// Parse satellite IDs
+                final int num = nSatCount<12? nSatCount : 12;
+			int k = 0;
+			for (int i = 0; i < num; i++) {
+			    String satType = satAvail.substring(k, k + 1);
+				String satID = satAvail.substring(k + 1, k + 3);
+				if (satType.equals("G") || satType.equals(" ")) {
+					sysOrder[i + 12] = 'G';
+					satOrder[i + 12] = Integer.parseInt(satID.trim());
+					nGps++;
+				} else if (satType.equals("R")) {
+					sysOrder[i + 12] = 'R';
+					satOrder[i + 12] = Integer.parseInt(satID.trim());
+					nGlo++;
+				} else if (satType.equals("S")) {
+					sysOrder[i + 12] = 'S';
+					satOrder[i + 12] = Integer.parseInt(satID.trim());
+					nSbs++;
+				}
+				k = k + 3;
+				nSatCount--;
+			}
+		}
+
+		obs = new Observations(new Time(dateStr), eventFlag);
+
+		// Convert date string to standard UNIX time in milliseconds
+		//long time = Time.dateStringToTime(dateStr);
+
+		// Store time
+		//obs.refTime = new Time(dateStr);
+		//obs.refTime.msec = time;
+
+		// Store event flag
+		//obs.eventFlag = eventFlag;
+
+		parseDataObsV2();
+
+		obs.cleanObservations();
+
+		return obs;
+	}
+	
+	/* In case of RINEX ver. 2.12 */
+	Observations getNextObservationsV2_12() throws IOException, ParseException {
+
+		if(!hasMoreObservations()) return null;
+		String line = buffStreamObs.readLine();
+		int len = line.length();
+
+		// Parse date and time
+		String dateStr = "20" + line.substring(1, 22);
+		
+		// Parse event flag
+		String eFlag = line.substring(28, 30).trim();
+		int eventFlag = Integer.parseInt(eFlag);
+
+		// Parse available satellites string
+		String satAvail = line.substring(30, len);
+
+		// Parse number of available satellites
+		String numOfSat = satAvail.substring(0, 2).trim();
+		nSat = Integer.parseInt(numOfSat);
+
+		// Arrays to store satellite order
+		satOrder = new int[nSat];
+		sysOrder = new char[nSat];
+
+		nGps = 0;
+		nGlo = 0;
+		nSbs = 0;
+		nQzs = 0;
+
+		// If number of satellites <= 12, read only one line...
+		if (nSat <= 12) {
+
+			// Parse satellite IDs
+			int j = 2;
+			for (int i = 0; i < nSat; i++) {
+
+				String satType = satAvail.substring(j, j + 1);
+				String satID = satAvail.substring(j + 1, j + 3);
+				if (satType.equals("G") || satType.equals(" ")) {
+					sysOrder[i] = 'G';
+					satOrder[i] = Integer.parseInt(satID.trim());
+					nGps++;
+				} else if (satType.equals("R")) {
+					sysOrder[i] = 'R';
+					satOrder[i] = Integer.parseInt(satID.trim());
+					nGlo++;
+				} else if (satType.equals("S")) {
+					sysOrder[i] = 'S';
+					satOrder[i] = Integer.parseInt(satID.trim());
+					nSbs++;
+				} else if (satType.equals("J")) {
+					sysOrder[i] = 'J';
+					satOrder[i] = Integer.parseInt(satID.trim());
+					nQzs++;
+				}
+				
+				j = j + 3;
+			}
+		} else { // ... otherwise, read two lines
+
+			// Parse satellite IDs
+			int j = 2;
+			for (int i = 0; i < 12; i++) {
+
+				String satType = satAvail.substring(j, j + 1);
+				String satID = satAvail.substring(j + 1, j + 3);
+				if (satType.equals("G") || satType.equals(" ")) {
+					sysOrder[i] = 'G';
+					satOrder[i] = Integer.parseInt(satID.trim());
+					nGps++;
+				} else if (satType.equals("R")) {
+					sysOrder[i] = 'R';
+					satOrder[i] = Integer.parseInt(satID.trim());
+					nGlo++;
+				} else if (satType.equals("S")) {
+					sysOrder[i] = 'S';
+					satOrder[i] = Integer.parseInt(satID.trim());
+					nSbs++;
+				} else if (satType.equals("J")) {
+					sysOrder[i] = 'J';
+					satOrder[i] = Integer.parseInt(satID.trim());
+					nQzs++;
+				}
+				j = j + 3;
+			}
+			// Get second line
+			satAvail = buffStreamObs.readLine().trim();
+
+			// Number of remaining satellites
+			int num = nSat - 12;
+
+			// Parse satellite IDs
+			int k = 0;
+			for (int i = 0; i < num; i++) {
+
+				String satType = satAvail.substring(k, k + 1);
+				String satID = satAvail.substring(k + 1, k + 3);
+				if (satType.equals("G") || satType.equals(" ")) {
+					sysOrder[i + 12] = 'G';
+					satOrder[i + 12] = Integer.parseInt(satID.trim());
+					nGps++;
+				} else if (satType.equals("R")) {
+					sysOrder[i + 12] = 'R';
+					satOrder[i + 12] = Integer.parseInt(satID.trim());
+					nGlo++;
+				} else if (satType.equals("S")) {
+					sysOrder[i + 12] = 'S';
+					satOrder[i + 12] = Integer.parseInt(satID.trim());
+					nSbs++;
+				} else if (satType.equals("J")) {
+					sysOrder[i + 12] = 'J';
+					satOrder[i + 12] = Integer.parseInt(satID.trim());
+					nQzs++;
+				}
+				k = k + 3;
+			}
+		}
+
+		obs = new Observations(new Time(dateStr), eventFlag);
+
+		// Convert date string to standard UNIX time in milliseconds
+		//long time = Time.dateStringToTime(dateStr);
+
+		// Store time
+		//obs.refTime = new Time(dateStr);
+		//obs.refTime.msec = time;
+
+		// Store event flag
+		//obs.eventFlag = eventFlag;
+
+		parseDataObsV2();
+
+		obs.cleanObservations();
+
+		return obs;
+	}		
+
+	
+	/* In case of RINEX ver. 3 */
+	public Observations getNextObservationsV3() throws IOException, ParseException {
+		if(!hasMoreObservations()) return null;
+		String line = buffStreamObs.readLine();
+		
+		// Parse date and time
+		String dateStr = line.substring(2, 25);
+		
+		// Parse event flag
+		String eFlag = line.substring(30, 32).trim();
+		
+		int eventFlag = Integer.parseInt(eFlag);
+		
+		// Parse available satellites string
+		String satAvail = line.substring(33, 35).trim();
+		
+		// Parse number of available satellites
+		//String numOfSat = satAvail.substring(0, 2).trim();
+		nSat = Integer.parseInt(satAvail);
+		
+		// Arrays to store satellite order
+		//satOrder = new int[nSat];
+		//sysOrder = new char[nSat];
+		
+		nGps = 0;
+		nGlo = 0;
+		nSbs = 0;
+		nQzs = 0;
+		
+		obs = new Observations(new Time(dateStr), eventFlag);
+		
+		// Convert date string to standard UNIX time in milliseconds
+		//long time = Time.dateStringToTime(dateStr);
+		
+		// Store time
+		//obs.refTime = new Time(dateStr);
+		//obs.refTime.msec = time;
+		
+		// Store event flag
+		//obs.eventFlag = eventFlag;
+		
+		parseDataObsV3();
+		
+		obs.cleanObservations();
+		
+		return obs;
+	}
+	
 	/**
 	 * Parse one observation epoch single/double line
 	 */
 	public Observations getNextObservations() {
-
-		
-		
 		try {
 			
-			/* In case of RINEX ver. 2.11 */
+			Observations o;
 			if (ver == 2){ 	
-
-					if(!hasMoreObservations()) return null;
-					String line = buffStreamObs.readLine();
-					int len = line.length();
-		
-					// Parse date and time
-					String dateStr = "20" + line.substring(1, 22);
-		
-					// Parse event flag
-					String eFlag = line.substring(28, 30).trim();
-					int eventFlag = Integer.parseInt(eFlag);
-		
-					// Parse available satellites string
-					String satAvail = line.substring(30, len);
-		
-					// Parse number of available satellites
-					String numOfSat = satAvail.substring(0, 2).trim();
-					nSat = Integer.parseInt(numOfSat);
-		
-					// Arrays to store satellite order
-					satOrder = new int[nSat];
-					sysOrder = new char[nSat];
-		
-					nGps = 0;
-					nGlo = 0;
-					nSbs = 0;
-		
-					// If number of satellites <= 12, read only one line...
-					// first line
-					int nSatCount = nSat;
-					{
-						// Parse satellite IDs
-						int j = 2;
-	                    final int num = nSatCount<12? nSatCount : 12;
-						for (int i = 0; i < num; i++) {
-		
-							String satType = satAvail.substring(j, j + 1);
-							String satID = satAvail.substring(j + 1, j + 3);
-							if (satType.equals("G") || satType.equals(" ")) {
-								sysOrder[i] = 'G';
-	                            satOrder[i] = Integer.parseInt(satID.trim());
-								nGps++;
-							} else if (satType.equals("R")) {
-								sysOrder[i] = 'R';
-								satOrder[i] = Integer.parseInt(satID.trim());
-								nGlo++;
-							} else if (satType.equals("S")) {
-								sysOrder[i] = 'S';
-								satOrder[i] = Integer.parseInt(satID.trim());
-								nSbs++;
-							}
-							j = j + 3;
-							nSatCount--;
-						}
-					} 
-					// ... read two or more lines
-					while( nSatCount>0 ) { 
-		
-						// Get second line
-						satAvail = buffStreamObs.readLine().trim();
-		
-						// Parse satellite IDs
-	                    final int num = nSatCount<12? nSatCount : 12;
-						int k = 0;
-						for (int i = 0; i < num; i++) {
-						    String satType = satAvail.substring(k, k + 1);
-							String satID = satAvail.substring(k + 1, k + 3);
-							if (satType.equals("G") || satType.equals(" ")) {
-								sysOrder[i + 12] = 'G';
-								satOrder[i + 12] = Integer.parseInt(satID.trim());
-								nGps++;
-							} else if (satType.equals("R")) {
-								sysOrder[i + 12] = 'R';
-								satOrder[i + 12] = Integer.parseInt(satID.trim());
-								nGlo++;
-							} else if (satType.equals("S")) {
-								sysOrder[i + 12] = 'S';
-								satOrder[i + 12] = Integer.parseInt(satID.trim());
-								nSbs++;
-							}
-							k = k + 3;
-							nSatCount--;
-						}
-					}
-		
-					obs = new Observations(new Time(dateStr), eventFlag);
-		
-					// Convert date string to standard UNIX time in milliseconds
-					//long time = Time.dateStringToTime(dateStr);
-		
-					// Store time
-					//obs.refTime = new Time(dateStr);
-					//obs.refTime.msec = time;
-		
-					// Store event flag
-					//obs.eventFlag = eventFlag;
-		
-					parseDataObsV2();
-		
-					obs.cleanObservations();
-		
-					return obs;
-					
-			
-			 /* In case of RINEX ver. 2.12 */
+				o = getNextObservationsV2();
 			}else if (ver == 212){ 	
-
-				if(!hasMoreObservations()) return null;
-				String line = buffStreamObs.readLine();
-				int len = line.length();
-	
-				// Parse date and time
-				String dateStr = "20" + line.substring(1, 22);
-				
-				// Parse event flag
-				String eFlag = line.substring(28, 30).trim();
-				int eventFlag = Integer.parseInt(eFlag);
-	
-				// Parse available satellites string
-				String satAvail = line.substring(30, len);
-	
-				// Parse number of available satellites
-				String numOfSat = satAvail.substring(0, 2).trim();
-				nSat = Integer.parseInt(numOfSat);
-	
-				// Arrays to store satellite order
-				satOrder = new int[nSat];
-				sysOrder = new char[nSat];
-	
-				nGps = 0;
-				nGlo = 0;
-				nSbs = 0;
-				nQzs = 0;
-	
-				// If number of satellites <= 12, read only one line...
-				if (nSat <= 12) {
-	
-					// Parse satellite IDs
-					int j = 2;
-					for (int i = 0; i < nSat; i++) {
-	
-						String satType = satAvail.substring(j, j + 1);
-						String satID = satAvail.substring(j + 1, j + 3);
-						if (satType.equals("G") || satType.equals(" ")) {
-							sysOrder[i] = 'G';
-							satOrder[i] = Integer.parseInt(satID.trim());
-							nGps++;
-						} else if (satType.equals("R")) {
-							sysOrder[i] = 'R';
-							satOrder[i] = Integer.parseInt(satID.trim());
-							nGlo++;
-						} else if (satType.equals("S")) {
-							sysOrder[i] = 'S';
-							satOrder[i] = Integer.parseInt(satID.trim());
-							nSbs++;
-						} else if (satType.equals("J")) {
-							sysOrder[i] = 'J';
-							satOrder[i] = Integer.parseInt(satID.trim());
-							nQzs++;
-						}
-						
-						j = j + 3;
-					}
-				} else { // ... otherwise, read two lines
-	
-					// Parse satellite IDs
-					int j = 2;
-					for (int i = 0; i < 12; i++) {
-	
-						String satType = satAvail.substring(j, j + 1);
-						String satID = satAvail.substring(j + 1, j + 3);
-						if (satType.equals("G") || satType.equals(" ")) {
-							sysOrder[i] = 'G';
-							satOrder[i] = Integer.parseInt(satID.trim());
-							nGps++;
-						} else if (satType.equals("R")) {
-							sysOrder[i] = 'R';
-							satOrder[i] = Integer.parseInt(satID.trim());
-							nGlo++;
-						} else if (satType.equals("S")) {
-							sysOrder[i] = 'S';
-							satOrder[i] = Integer.parseInt(satID.trim());
-							nSbs++;
-						} else if (satType.equals("J")) {
-							sysOrder[i] = 'J';
-							satOrder[i] = Integer.parseInt(satID.trim());
-							nQzs++;
-						}
-						j = j + 3;
-					}
-					// Get second line
-					satAvail = buffStreamObs.readLine().trim();
-	
-					// Number of remaining satellites
-					int num = nSat - 12;
-	
-					// Parse satellite IDs
-					int k = 0;
-					for (int i = 0; i < num; i++) {
-	
-						String satType = satAvail.substring(k, k + 1);
-						String satID = satAvail.substring(k + 1, k + 3);
-						if (satType.equals("G") || satType.equals(" ")) {
-							sysOrder[i + 12] = 'G';
-							satOrder[i + 12] = Integer.parseInt(satID.trim());
-							nGps++;
-						} else if (satType.equals("R")) {
-							sysOrder[i + 12] = 'R';
-							satOrder[i + 12] = Integer.parseInt(satID.trim());
-							nGlo++;
-						} else if (satType.equals("S")) {
-							sysOrder[i + 12] = 'S';
-							satOrder[i + 12] = Integer.parseInt(satID.trim());
-							nSbs++;
-						} else if (satType.equals("J")) {
-							sysOrder[i + 12] = 'J';
-							satOrder[i + 12] = Integer.parseInt(satID.trim());
-							nQzs++;
-						}
-						k = k + 3;
-					}
-				}
-	
-				obs = new Observations(new Time(dateStr), eventFlag);
-	
-				// Convert date string to standard UNIX time in milliseconds
-				//long time = Time.dateStringToTime(dateStr);
-	
-				// Store time
-				//obs.refTime = new Time(dateStr);
-				//obs.refTime.msec = time;
-	
-				// Store event flag
-				//obs.eventFlag = eventFlag;
-	
-				parseDataObsV2();
-	
-				obs.cleanObservations();
-	
-				return obs;
-					
+				o = getNextObservationsV2_12();
+			}
 			/* In case of RINEX ver. 3 */
-			} else {
-								
-				if(!hasMoreObservations()) return null;
-				String line = buffStreamObs.readLine();
-	
-				// Parse date and time
-				String dateStr = line.substring(2, 25);
-
-				// Parse event flag
-				String eFlag = line.substring(30, 32).trim();
-				
-				int eventFlag = Integer.parseInt(eFlag);
-	
-				// Parse available satellites string
-				String satAvail = line.substring(33, 35).trim();
-	
-				// Parse number of available satellites
-//				String numOfSat = satAvail.substring(0, 2).trim();
-				nSat = Integer.parseInt(satAvail);
-	
-				// Arrays to store satellite order
-//				satOrder = new int[nSat];
-//				sysOrder = new char[nSat];
-	
-				nGps = 0;
-				nGlo = 0;
-				nSbs = 0;
-				nQzs = 0;
-				
-				obs = new Observations(new Time(dateStr), eventFlag);
-	
-				// Convert date string to standard UNIX time in milliseconds
-				//long time = Time.dateStringToTime(dateStr);
-	
-				// Store time
-				//obs.refTime = new Time(dateStr);
-				//obs.refTime.msec = time;
-	
-				// Store event flag
-				//obs.eventFlag = eventFlag;
-	
-				parseDataObsV3();
-	
-				obs.cleanObservations();
-	
-				return obs;
-					
-						
+			else {
+				o = getNextObservationsV3();
 			} // End of if 
-					
-			
-					
+
+			if(streamEventListeners!=null && o!=null){
+				for(StreamEventListener sel:streamEventListeners){
+					Observations oc = (Observations)o.clone();
+					sel.addObservations(oc);
+				}
+			}
 		} catch (ParseException e) {
 			// Skip over unexpected observation lines
 			e.printStackTrace();
@@ -1604,4 +1612,33 @@ public class RinexObservationParser implements ObservationsProducer{
 
 	}
 
+	/* (non-Javadoc)
+	 * @see org.gogpsproject.StreamEventProducer#addStreamEventListener(org.gogpsproject.StreamEventListener)
+	 */
+	@Override
+	public void addStreamEventListener(StreamEventListener streamEventListener) {
+		if(streamEventListener==null) return;
+		if(!streamEventListeners.contains(streamEventListener))
+			this.streamEventListeners.add(streamEventListener);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.gogpsproject.StreamEventProducer#getStreamEventListeners()
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public Vector<StreamEventListener> getStreamEventListeners() {
+		return (Vector<StreamEventListener>) streamEventListeners.clone();
+	}
+
+	/* (non-Javadoc)
+	 * @see org.gogpsproject.StreamEventProducer#removeStreamEventListener(org.gogpsproject.StreamEventListener)
+	 */
+	@Override
+	public void removeStreamEventListener(
+			StreamEventListener streamEventListener) {
+		if(streamEventListener==null) return;
+		if(streamEventListeners.contains(streamEventListener))
+			this.streamEventListeners.remove(streamEventListener);
+	}
 }

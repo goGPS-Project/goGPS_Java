@@ -173,7 +173,7 @@ public class LS_SA_code extends Core {
             if(debug) System.out.println("Total number of satellites: "+obsR.getNumSat());
 
             // Compute approximate positioning by iterative least-squares
-            if (!rover.isValidXYZ()) {
+            if (! (rover.isValidXYZ() && rover.isValidClockError())) {
             	
             	 double el = -100;
             	 if( roverIn.getDefinedPosition() != null && roverIn.getDefinedPosition().isValidXYZ()) {
@@ -195,7 +195,7 @@ public class LS_SA_code extends Core {
             // If an approximate position was computed
               if(debug) System.out.println("Valid approximate position? "+rover.isValidXYZ()+ " " + rover.toString());
             }
-            if (rover.isValidXYZ()) {
+            if (rover.isValidXYZ() && rover.isValidClockError()) {
               // Select available satellites
               sats.selectStandalone( obsR );
               
@@ -210,8 +210,8 @@ public class LS_SA_code extends Core {
               }
             }
 
-            if(debug)System.out.println("Valid LS position? "+rover.isValidXYZ()+ " " + rover.toString() );
-            if (rover.isValidXYZ()) {
+            if(debug)System.out.println("Valid LS position? "+ (rover.isValidXYZ() && rover.isValidClockError() )+ " " + rover.toString() );
+            if (rover.isValidXYZ() && rover.isValidClockError()) {
               if(!validPosition){
                 goGPS.notifyPositionConsumerEvent(PositionConsumer.EVENT_START_OF_TRACK);
                 validPosition = true;

@@ -108,6 +108,10 @@ public class RoverPosition extends ReceiverPosition {
 		this.clockError = clockError;
 	}
 
+	public boolean isValidClockError() {
+		return Math.abs(clockErrorRate) < 1E-3;
+	}
+	
   public double getClockErrorRate() {
     return clockErrorRate;
   }

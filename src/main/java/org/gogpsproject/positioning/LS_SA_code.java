@@ -219,6 +219,8 @@ public class LS_SA_code extends Core {
                   coord.obs = obsR;
                   coord.sampleTime = obsR.getRefTime();
                   coord.status = rover.status;
+                  coord.clockError = rover.clockError;
+                  coord.clockErrorRate = rover.clockErrorRate;
                   goGPS.notifyPositionConsumerAddCoordinate(coord);
                 }
                 if(debug)System.out.println("PDOP: "+rover.getpDop());

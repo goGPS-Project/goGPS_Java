@@ -1,29 +1,33 @@
 package org.gogpsproject.consumer;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
-import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.gogpsproject.ephemeris.EphGps;
 import org.gogpsproject.positioning.Coordinates;
+import org.gogpsproject.positioning.RoverPosition;
 import org.gogpsproject.positioning.SVInfo;
 import org.gogpsproject.positioning.SatellitePosition;
 import org.gogpsproject.positioning.TopocentricCoordinates;
 import org.gogpsproject.producer.ObservationSet;
 import org.gogpsproject.producer.Observations;
-import org.gogpsproject.producer.SVInfoListener;
+import org.gogpsproject.producer.StreamEventListener;
 import org.gogpsproject.producer.parser.IonoGps;
 import org.gogpsproject.producer.parser.rinex.RinexNavigationParser;
 
-public class SVInfoLogger implements SVInfoListener {
+public class SVInfoLogger implements StreamEventListener, PositionConsumer {
 	HashMap<Integer,SVInfo> satpos = new HashMap<>();
 	PrintWriter pw;
 	RinexNavigationParser nav;
 	private Coordinates rover;
+
+	/** standard subms clock error in s*/
+  double clockError = 0;
+  
+	double clockErrorRate = 0; 
 	
 	public SVInfoLogger( String filename, RinexNavigationParser nav ) throws Exception {
     File csvOutputFile = new File(filename);
@@ -38,38 +42,6 @@ public class SVInfoLogger implements SVInfoListener {
       .collect(Collectors.joining(","));
 	}
 	
-//	@Override
-//	public void addObservations(Observations o) {
-//		for( int i=0; i<o.getNumSat(); i++ ) {
-//			ObservationSet os = o.getSatByIdx(i);
-//
-//			SVInfo sv = satpos.get(os.getSatID());
-//			if( sv == null || !sv.isValid())
-//				continue;
-//			
-//			int diff = o.getRefTime().getGpsWeekSec() - sv.getRefTime().getGpsWeekSec();
-//			
-//			if( diff>2)
-//				continue;
-//			
-//			String[] line = new String[] {
-//					Integer.toString( o.getRefTime().getGpsWeekSec()),
-//					Integer.toString( os.getSatID()),
-//					Integer.toString((int)sv.az), //* 255.0f / 360.0f,
-//					Integer.toString((int)sv.el),
-//					Double.toString( os.getCodeC(0)),
-//					Double.toString( os.getDoppler(0)),
-//					Double.toString( os.getPhaserange(0)),
-//					Double.toString( os.getSignalStrength(0))
-//			};
-//			
-//			String csvl = convertToCSV(line);
-//			pw.println(csvl);
-//		}
-//		System.out.println( o.getRefTime().getGpsWeekSec());
-////	pw.flush();
-//	}
-
 	@Override
 	public void addObservations(Observations o) {
 		long unixTime = o.getRefTime().getMsec();
@@ -104,7 +76,9 @@ public class SVInfoLogger implements SVInfoListener {
 					Double.toString( os.getCodeC(0)),
 					Double.toString( os.getDoppler(0)),
 					Double.toString( os.getPhaserange(0)),
-					Double.toString( os.getSignalStrength(0))
+					Double.toString( os.getSignalStrength(0)),
+					Double.toString( clockError ),
+					Double.toString( clockErrorRate )
 			};
 			
 			String csvl = convertToCSV(line);
@@ -112,13 +86,6 @@ public class SVInfoLogger implements SVInfoListener {
 		}
 		System.out.println( o.getRefTime().getGpsWeekSec() + " " + o.getNumSat());
 //	pw.flush();
-	}
-	
-	@Override
-	public void addSVInfo(List<SVInfo> spl) {
-		spl.forEach( sp -> {
-			satpos.put(sp.getSatID(), sp);
-		});
 	}
 	
 	@Override
@@ -152,6 +119,18 @@ public class SVInfoLogger implements SVInfoListener {
 
 	@Override
 	public void pointToNextObservations() {
+	}
+
+	@Override
+	public void addCoordinate(RoverPosition coord) {
+		this.clockError = coord.getClockError();
+		this.clockErrorRate = coord.getClockErrorRate();
+	}
+
+	@Override
+	public void event(int event) {
+		// TODO Auto-generated method stub
+		
 	}
 
 

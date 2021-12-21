@@ -564,9 +564,9 @@ public class RinexObservationParser implements ObservationsProducer, StreamEvent
 	 * Parse one observation epoch single/double line
 	 */
 	public Observations getNextObservations() {
+		Observations o = null;
 		try {
 			
-			Observations o;
 			if (ver == 2){ 	
 				o = getNextObservationsV2();
 			}else if (ver == 212){ 	
@@ -592,7 +592,7 @@ public class RinexObservationParser implements ObservationsProducer, StreamEvent
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		return null;
+		return o;
 	}
 
 	/**
@@ -1588,6 +1588,10 @@ public class RinexObservationParser implements ObservationsProducer, StreamEvent
 		return approxPos;
 	}
 
+	public void setDefinedPosition(Coordinates pos) {
+		pos.cloneInto(approxPos);
+	}
+	
 	/**
 	 * @return the obs
 	 */
@@ -1641,4 +1645,5 @@ public class RinexObservationParser implements ObservationsProducer, StreamEvent
 		if(streamEventListeners.contains(streamEventListener))
 			this.streamEventListeners.remove(streamEventListener);
 	}
+
 }

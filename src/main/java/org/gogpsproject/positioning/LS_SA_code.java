@@ -175,12 +175,17 @@ public class LS_SA_code extends Core {
             // Compute approximate positioning by iterative least-squares
             if (!rover.isValidXYZ()) {
             	
-            	 if( roverIn.getDefinedPosition() != null )
-           	   roverIn.getDefinedPosition().cloneInto(rover);
+            	 double el = -100;
+            	 if( roverIn.getDefinedPosition() != null && roverIn.getDefinedPosition().isValidXYZ()) {
+            		 roverIn.getDefinedPosition().cloneInto(rover);
+            		 el = 0;
+            	 }
+            	 
+            	 rover.setClockError(0);
 
               for (int iter = 0; iter < 3; iter++) {
                 // Select all satellites
-                sats.selectStandalone( obsR, -100);
+                sats.selectStandalone( obsR, el);
                 
                 if (sats.getAvailNumber() >= 4) {
                   sa.codeStandalone( obsR, false, true);
@@ -199,9 +204,10 @@ public class LS_SA_code extends Core {
                 // Compute code stand-alone positioning (epoch-by-epoch solution)
                 sa.codeStandalone( obsR, false, false);
               }
-              else
+              else {
                 // Discard approximate positioning
                 rover.setXYZ(0, 0, 0);
+              }
             }
 
             if(debug)System.out.println("Valid LS position? "+rover.isValidXYZ()+ " " + rover.toString() );

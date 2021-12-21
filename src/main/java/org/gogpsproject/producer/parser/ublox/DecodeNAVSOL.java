@@ -108,24 +108,4 @@ public class DecodeNAVSOL {
 		return null; 
 	}
 
-	private long getGMTTS(long tow, long week) {
-		Calendar c = Calendar.getInstance();
-		c.setTimeZone(TimeZone.getTimeZone("GMT Time"));
-		c.set(Calendar.YEAR, 1980);
-		c.set(Calendar.MONTH, Calendar.JANUARY);
-		c.set(Calendar.DAY_OF_MONTH, 6);
-		c.set(Calendar.HOUR_OF_DAY, 0);
-		c.set(Calendar.MINUTE, 0);
-		c.set(Calendar.SECOND, 0);
-		c.set(Calendar.MILLISECOND, 0);
-
-//		c.add(Calendar.DATE, week*7);
-//		c.add(Calendar.MILLISECOND, tow/1000*1000);
-
-		//SimpleDateFormat sdf = new SimpleDateFormat("yyyy MM dd HH mm ss.SSS");
-		//System.out.println(sdf.format(c.getTime()));
-		//ubx.log( (c.getTime().getTime())+" "+c.getTime()+" "+week+" "+tow+"\n\r");
-
-		return c.getTimeInMillis() + week*7*24*3600*1000 + tow ;
-	}
 }

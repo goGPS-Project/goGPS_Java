@@ -65,6 +65,8 @@ public class UBXFileReader extends EphemerisSystem implements ObservationsProduc
   boolean bdsEnable = true;  // enable BeiDou data reading
 	
 	Boolean[] multiConstellation = {gpsEnable, qzsEnable, gloEnable, galEnable, bdsEnable};
+
+	Coordinates definedPosition = Coordinates.globalXYZInstance(0.0, 0.0, 0.0);
 	
 	public UBXFileReader(File file) {
 		this.file = file;
@@ -80,9 +82,11 @@ public class UBXFileReader extends EphemerisSystem implements ObservationsProduc
 	 */
 	@Override
 	public Coordinates getDefinedPosition() {
-		Coordinates coord = Coordinates.globalXYZInstance(0.0, 0.0, 0.0); //new Coordinates(new SimpleMatrix(3, 1));
-		coord.setXYZ(0.0, 0.0, 0.0 );
-		return coord;
+		return definedPosition;
+	}
+
+	public void setDefinedPosition( Coordinates definedPosition ) {
+		definedPosition.cloneInto( this.definedPosition );
 	}
 
 	/* (non-Javadoc)

@@ -49,6 +49,9 @@ public class SVInfoLogger implements StreamEventListener, PositionConsumer {
 		for( int i=0; i<o.getNumSat(); i++ ) {
 			ObservationSet os = o.getSatByIdx(i);
 
+			if( !os.inUse() )
+				continue;
+			
 			int    satID = os.getSatID();
 			char satType = os.getSatType();
 			
@@ -79,6 +82,7 @@ public class SVInfoLogger implements StreamEventListener, PositionConsumer {
 					Double.toString( os.getSignalStrength(0)),
 					Double.toString( clockError ),
 					Double.toString( clockErrorRate )
+//					os.inUse()?"Y":"N"
 			};
 			
 			String csvl = convertToCSV(line);
@@ -132,6 +136,4 @@ public class SVInfoLogger implements StreamEventListener, PositionConsumer {
 		// TODO Auto-generated method stub
 		
 	}
-
-
 }

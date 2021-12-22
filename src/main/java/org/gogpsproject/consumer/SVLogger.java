@@ -18,7 +18,8 @@ import org.gogpsproject.producer.StreamEventListener;
 import org.gogpsproject.producer.parser.IonoGps;
 import org.gogpsproject.producer.parser.rinex.RinexNavigationParser;
 
-public class SVInfoLogger implements StreamEventListener, PositionConsumer {
+/** Log satellite observables + azimuth/elevation to csv  */
+public class SVLogger implements StreamEventListener, PositionConsumer {
 	HashMap<Integer,SVInfo> satpos = new HashMap<>();
 	PrintWriter pw;
 	RinexNavigationParser nav;
@@ -29,7 +30,7 @@ public class SVInfoLogger implements StreamEventListener, PositionConsumer {
   
 	double clockErrorRate = 0; 
 	
-	public SVInfoLogger( String filename, RinexNavigationParser nav ) throws Exception {
+	public SVLogger( String filename, RinexNavigationParser nav ) throws Exception {
     File csvOutputFile = new File(filename);
     pw = new PrintWriter(csvOutputFile);
     this.nav = nav;

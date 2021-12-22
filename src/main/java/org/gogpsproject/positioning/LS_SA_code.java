@@ -7,6 +7,7 @@ import org.gogpsproject.consumer.PositionConsumer;
 import org.gogpsproject.positioning.RoverPosition.DopType;
 import org.gogpsproject.producer.Observations;
 import org.gogpsproject.producer.ObservationsProducer;
+import org.gogpsproject.producer.StreamEventListener;
 
 public class LS_SA_code extends Core {
 
@@ -118,6 +119,16 @@ public class LS_SA_code extends Core {
     if(estimateOnlyClock)
       return;
 
+    // check residuals 
+    // Probably not needed if the elevation mask is set reasonably
+//    SimpleMatrix resid = y0.minus(b);
+//    resid = resid.plus(-rover.clockError * Constants.SPEED_OF_LIGHT);
+//    double resMax = resid.elementMaxAbs();
+//    if( resMax>1000 ) {
+//    	rover.setXYZ(0, 0, 0);
+//    	return;
+//    }
+    
     // Receiver position
     rover.setPlusXYZ(x.extractMatrix(0, 3, 0, 1));
 
@@ -178,7 +189,7 @@ public class LS_SA_code extends Core {
             	 double el = -100;
             	 if( roverIn.getDefinedPosition() != null && roverIn.getDefinedPosition().isValidXYZ()) {
             		 roverIn.getDefinedPosition().cloneInto(rover);
-            		 el = 0;
+            		 el = 5;
             	 }
             	 
             	 rover.setClockError(0);
@@ -195,6 +206,7 @@ public class LS_SA_code extends Core {
             // If an approximate position was computed
               if(debug) System.out.println("Valid approximate position? "+rover.isValidXYZ()+ " " + rover.toString());
             }
+            
             if (rover.isValidXYZ() && rover.isValidClockError()) {
               // Select available satellites
               sats.selectStandalone( obsR );
@@ -228,6 +240,12 @@ public class LS_SA_code extends Core {
                   coord.clockError = rover.clockError;
                   coord.clockErrorRate = rover.clockErrorRate;
                   goGPS.notifyPositionConsumerAddCoordinate(coord);
+
+    							for(StreamEventListener sel:goGPS.getStreamEventListeners()){
+    								Observations oc = (Observations)obsR.clone();
+    								sel.addObservations(oc);
+    							}
+                  
                 }
                 if(debug)System.out.println("PDOP: "+rover.getpDop());
                 if(debug)System.out.println("------------------------------------------------------------");

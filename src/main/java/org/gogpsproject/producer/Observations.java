@@ -249,6 +249,7 @@ public class Observations implements Streamable {
 				+" Ss:"+fd(os.getSignalStrength(0))
 				+" LL:"+fd(os.getLossLockInd(0))
 				+" LL2:"+fd(os.getLossLockInd(1))
+				+" inUse:" + (os.inUse()? "Y":"N")
 				+lineBreak;
 		}
 		return out;

@@ -309,6 +309,7 @@ public class ObservationSet implements Streamable {
 			dos.writeFloat(signalStrength[L2]); size+=4;
 			dos.writeFloat(doppler[L2]); size+=4;
 		}
+		dos.writeBoolean(inUse);
 		return size;
 	}
 
@@ -346,6 +347,7 @@ public class ObservationSet implements Streamable {
 				signalStrength[L2] = dai.readFloat();
 				doppler[L2] = dai.readFloat();
 			}
+			inUse = dai.readBoolean();
 		}else{
 			throw new IOException("Unknown format version:"+v);
 		}

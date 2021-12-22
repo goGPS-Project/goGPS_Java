@@ -272,6 +272,7 @@ public class Satellites {
 
     	  	if( pos[i].equals( SatellitePosition.UnhealthySat )) {
     	        pos[i] = null;
+              roverObs.getSatByIdx(i).setInUse(false);
     	        continue;
     	  	}
     	  	
@@ -298,7 +299,8 @@ public class Satellites {
           avail.put(id, pos[i]);
           typeAvail.add(satType);
           gnssAvail.add(String.valueOf(satType) + String.valueOf(id));
-
+          roverObs.getSatByIdx(i).setInUse(true);
+          
           // Check if also phase is available
           if (!Double.isNaN(roverObs.getSatByIDType(id, satType).getPhaseCycles(goGPS.getFreq()))) {
             availPhase.add(id);
@@ -308,6 +310,7 @@ public class Satellites {
           }
         }else{
           if(goGPS.isDebug()) System.out.println("Not useful sat "+roverObs.getSatID(i)+" for too low elevation "+rover.topo[i].getElevation()+" < "+cutoff);
+          roverObs.getSatByIdx(i).setInUse(false);
         }
       }
     }

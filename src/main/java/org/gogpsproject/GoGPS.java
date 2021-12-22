@@ -31,7 +31,7 @@ import org.gogpsproject.producer.*;
  *
  * @author Eugenio Realini, Cryms.com
  */
-public class GoGPS implements Runnable{
+public class GoGPS implements Runnable, StreamEventProducer{
 
   // Frequency selector
   /** The Constant FREQ_L1. */
@@ -107,11 +107,11 @@ public class GoGPS implements Runnable{
 
   public static enum RunMode {
     CODE_STANDALONE,
-	CODE_DOUBLE_DIFF,
-	KALMAN_FILTER_CODE_PHASE_STANDALONE,
-	KALMAN_FILTER_CODE_PHASE_DOUBLE_DIFF,
-	CODE_STANDALONE_SNAPSHOT,
-	CODE_STANDALONE_COARSETIME
+		CODE_DOUBLE_DIFF,
+		KALMAN_FILTER_CODE_PHASE_STANDALONE,
+		KALMAN_FILTER_CODE_PHASE_DOUBLE_DIFF,
+		CODE_STANDALONE_SNAPSHOT,
+		CODE_STANDALONE_COARSETIME
   }
 
   private RunMode runMode;
@@ -171,6 +171,8 @@ public class GoGPS implements Runnable{
   private double phaseResidThreshold = 0.05;
 
   private boolean searchForOutliers = false;
+ 
+	private Vector<StreamEventListener> streamEventListeners = new Vector<StreamEventListener>();
   
   /**
    * Instantiates a new GoGPS.
@@ -696,5 +698,35 @@ public class GoGPS implements Runnable{
     
     return this;
   }
+
+	/* (non-Javadoc)
+	 * @see org.gogpsproject.StreamEventProducer#addStreamEventListener(org.gogpsproject.StreamEventListener)
+	 */
+	@Override
+	public void addStreamEventListener(StreamEventListener streamEventListener) {
+		if(streamEventListener==null) return;
+		if(!streamEventListeners.contains(streamEventListener))
+			this.streamEventListeners.add(streamEventListener);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.gogpsproject.StreamEventProducer#getStreamEventListeners()
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public Vector<StreamEventListener> getStreamEventListeners() {
+		return (Vector<StreamEventListener>) streamEventListeners.clone();
+	}
+
+	/* (non-Javadoc)
+	 * @see org.gogpsproject.StreamEventProducer#removeStreamEventListener(org.gogpsproject.StreamEventListener)
+	 */
+	@Override
+	public void removeStreamEventListener(
+			StreamEventListener streamEventListener) {
+		if(streamEventListener==null) return;
+		if(streamEventListeners.contains(streamEventListener))
+			this.streamEventListeners.remove(streamEventListener);
+	}
 
 }

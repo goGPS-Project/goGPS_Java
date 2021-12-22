@@ -56,8 +56,6 @@ public class UBXFileReader extends EphemerisSystem implements ObservationsProduc
 	// TODO support past times, now keep only last broadcast data
 	private HashMap<Integer,EphGps> ephs = new HashMap<Integer,EphGps>();
 	
-	private Vector<StreamEventListener> streamEventListeners = new Vector<StreamEventListener>();
-
 	boolean gpsEnable = true;  // enable GPS data reading
 	boolean qzsEnable = true;  // enable QZSS data reading
   boolean gloEnable = true;  // enable GLONASS data reading	
@@ -199,11 +197,7 @@ public class UBXFileReader extends EphemerisSystem implements ObservationsProduc
 	 */
 	@Override
 	public void addStreamEventListener(StreamEventListener streamEventListener) {
-		if(streamEventListener==null) return;
-		if(!streamEventListeners.contains(streamEventListener))
-			this.streamEventListeners.add(streamEventListener);
-		if(this.reader!=null)
-			this.reader.addStreamEventListener(streamEventListener);
+		reader.addStreamEventListener(streamEventListener);
 	}
 
 	/* (non-Javadoc)
@@ -212,18 +206,14 @@ public class UBXFileReader extends EphemerisSystem implements ObservationsProduc
 	@SuppressWarnings("unchecked")
 	@Override
 	public Vector<StreamEventListener> getStreamEventListeners() {
-		return (Vector<StreamEventListener>) streamEventListeners.clone();
+		return reader.getStreamEventListeners();
 	}
 
 	/* (non-Javadoc)
 	 * @see org.gogpsproject.StreamEventProducer#removeStreamEventListener(org.gogpsproject.StreamEventListener)
 	 */
 	@Override
-	public void removeStreamEventListener(
-			StreamEventListener streamEventListener) {
-		if(streamEventListener==null) return;
-		if(streamEventListeners.contains(streamEventListener))
-			this.streamEventListeners.remove(streamEventListener);
-		this.reader.removeStreamEventListener(streamEventListener);
+	public void removeStreamEventListener(StreamEventListener streamEventListener) {
+		reader.removeStreamEventListener(streamEventListener);
 	}
 }

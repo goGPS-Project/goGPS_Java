@@ -28,9 +28,7 @@ import java.util.Vector;
 
 import org.gogpsproject.ephemeris.EphGps;
 import org.gogpsproject.positioning.ReceiverPosition;
-import org.gogpsproject.positioning.SVInfo;
 import org.gogpsproject.producer.Observations;
-import org.gogpsproject.producer.SVInfoListener;
 import org.gogpsproject.producer.StreamEventListener;
 import org.gogpsproject.producer.StreamEventProducer;
 import org.gogpsproject.producer.parser.IonoGps;

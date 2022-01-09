@@ -19,7 +19,7 @@ import org.gogpsproject.producer.parser.IonoGps;
 import org.gogpsproject.producer.parser.rinex.RinexNavigationParser;
 
 /** Log satellite observables + azimuth/elevation to csv  */
-public class SVLogger implements StreamEventListener, PositionConsumer {
+public class SVLogger /*extends EphemerisSystem*/ implements StreamEventListener, PositionConsumer {
 	HashMap<Integer,SVInfo> satpos = new HashMap<>();
 	PrintWriter pw;
 	RinexNavigationParser nav;
@@ -60,8 +60,8 @@ public class SVLogger implements StreamEventListener, PositionConsumer {
 			if( eph == null ) // || !eph.getSvHealth() )
 				continue;
 			
-      SatellitePosition satpos = nav.getGpsSatPosition( o, satID, satType, 0);
-			
+      SatellitePosition satpos = nav.getGpsSatPosition( o, satID, satType, clockError);
+		
       if(satpos==null || satpos.equals( SatellitePosition.UnhealthySat )) {
         continue;
 	  	}
@@ -75,14 +75,14 @@ public class SVLogger implements StreamEventListener, PositionConsumer {
 			String[] line = new String[] {
 					Integer.toString( o.getRefTime().getGpsWeekSec()),
 					Integer.toString( os.getSatID()),
-					Integer.toString((int)topo.getAzimuth()), //* 255.0f / 360.0f,
-					Integer.toString((int)topo.getElevation()),
-					Double.toString( os.getCodeC(0)),
-					Double.toString( os.getDoppler(0)),
-					Double.toString( os.getPhaserange(0)),
-					Double.toString( os.getSignalStrength(0)),
-					Double.toString( clockError ),
-					Double.toString( clockErrorRate )
+					String.format("%3.2f", topo.getAzimuth()), //* 255.0f / 360.0f,
+					String.format("%3.2f", topo.getElevation()),
+					String.format("%10.3f", os.getCodeC(0)),
+          String.format("%10.3f", os.getDoppler(0)),
+          String.format("%10.3f", os.getPhaserange(0)),
+          String.format("%3.1f", os.getSignalStrength(0)),
+          String.format("%10.9f", clockError ),
+          String.format("%10.9f", clockErrorRate )
 //					os.inUse()?"Y":"N"
 			};
 			

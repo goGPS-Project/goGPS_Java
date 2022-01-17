@@ -23,6 +23,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.CookieHandler;
+import java.net.CookieManager;
+import java.net.CookiePolicy;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Base64;
@@ -33,6 +36,8 @@ import java.util.Hashtable;
 import java.util.SimpleTimeZone;
 import java.util.TimeZone;
 import java.util.zip.GZIPInputStream;
+
+import javax.net.ssl.HttpsURLConnection;
 
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
@@ -61,7 +66,7 @@ public class RinexNavigation implements NavigationProducer {
 	public final static String GARNER_NAVIGATION_ZIM2 = "ftp://garner.ucsd.edu/pub/nav/${yyyy}/${ddd}/zim2${ddd}0.${yy}n.Z";
 	public final static String IGN_NAVIGATION_HOURLY_ZIM2 = "ftp://igs.ensg.ign.fr/pub/igs/data/hourly/${yyyy}/${ddd}/zim2${ddd}${h}.${yy}n.Z";
 	public final static String NASA_NAVIGATION_DAILY = "ftp://cddis.gsfc.nasa.gov/pub/gps/data/daily/${yyyy}/${ddd}/${yy}n/brdc${ddd}0.${yy}n.Z";
-	public final static String NASA_NAVIGATION_DAILY_HTTP = "https://cddis.nasa.gov/archive/gnss/data/daily/${yyyy}/${ddd}/${yy}n/brdc${ddd}0.${yy}n.Z";
+	public final static String NASA_NAVIGATION_DAILY_HTTP = "https://cddis.nasa.gov/archive/gnss/data/daily/${yyyy}/${ddd}/${yy}n/brdc${ddd}0.${yy}n.gz";
 	public final static String NASA_NAVIGATION_HOURLY = "ftp://cddis.gsfc.nasa.gov/pub/gps/data/hourly/${yyyy}/${ddd}/hour${ddd}0.${yy}n.Z";
   public final static String GARNER_NAVIGATION_AUTO_HTTP = "http://garner.ucsd.edu/pub/rinex/${yyyy}/${ddd}/auto${ddd}0.${yy}n.Z"; // ex http://garner.ucsd.edu/pub/rinex/2016/034/auto0340.16n.Z
 
@@ -72,48 +77,51 @@ public class RinexNavigation implements NavigationProducer {
 	public String RNP_CACHE = "./rnp-cache";
 
 	private boolean waitForData = true;
+	
+	private String username = null;
+	private String password = null;
 	/**
 	 * @param args
 	 */
-	public static void main(String[] args) {
-
-		TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
-
-		Calendar c = Calendar.getInstance();
-		c.set(Calendar.YEAR, 2011);
-		c.set(Calendar.MONTH, 0);
-		c.set(Calendar.DAY_OF_MONTH, 9);
-		c.set(Calendar.HOUR_OF_DAY, 1);
-		c.set(Calendar.MINUTE, 0);
-		c.set(Calendar.SECOND, 0);
-		c.set(Calendar.MILLISECOND, 0);
-		c.setTimeZone(new SimpleTimeZone(0,""));
-
-		Time t = new Time(c.getTimeInMillis());
-
-		System.out.println("ts: "+t.getMsec()+" "+(new Date(t.getMsec())));
-		System.out.println("week: "+t.getGpsWeek());
-		System.out.println("week sec: "+t.getGpsWeekSec());
-		System.out.println("week day: "+t.getGpsWeekDay());
-		System.out.println("week hour in day: "+t.getGpsHourInDay());
-
-
-		System.out.println("ts2: "+(new Time(t.getGpsWeek(),t.getGpsWeekSec())).getMsec());
-
-		RinexNavigation rn = new RinexNavigation(IGN_NAVIGATION_HOURLY_ZIM2);
-		rn.init();
-//		SatellitePosition sp = rn.getGpsSatPosition(c.getTimeInMillis(), 2, 0, 0);
-		Observations obs = new Observations(new Time(c.getTimeInMillis()),0);
-		SatellitePosition sp = rn.getGpsSatPosition(obs, 2, 'G', 0);
-
-		if(sp!=null){
-			System.out.println("found "+(new Date(sp.getUtcTime()))+" "+(sp.isPredicted()?" predicted":""));
-		}else{
-			System.out.println("Epoch not found "+(new Date(c.getTimeInMillis())));
-		}
-
-
-	}
+//	public static void main(String[] args) {
+//
+//		TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+//
+//		Calendar c = Calendar.getInstance();
+//		c.set(Calendar.YEAR, 2011);
+//		c.set(Calendar.MONTH, 0);
+//		c.set(Calendar.DAY_OF_MONTH, 9);
+//		c.set(Calendar.HOUR_OF_DAY, 1);
+//		c.set(Calendar.MINUTE, 0);
+//		c.set(Calendar.SECOND, 0);
+//		c.set(Calendar.MILLISECOND, 0);
+//		c.setTimeZone(new SimpleTimeZone(0,""));
+//
+//		Time t = new Time(c.getTimeInMillis());
+//
+//		System.out.println("ts: "+t.getMsec()+" "+(new Date(t.getMsec())));
+//		System.out.println("week: "+t.getGpsWeek());
+//		System.out.println("week sec: "+t.getGpsWeekSec());
+//		System.out.println("week day: "+t.getGpsWeekDay());
+//		System.out.println("week hour in day: "+t.getGpsHourInDay());
+//
+//
+//		System.out.println("ts2: "+(new Time(t.getGpsWeek(),t.getGpsWeekSec())).getMsec());
+//
+//		RinexNavigation rn = new RinexNavigation(IGN_NAVIGATION_HOURLY_ZIM2);
+//		rn.init();
+////		SatellitePosition sp = rn.getGpsSatPosition(c.getTimeInMillis(), 2, 0, 0);
+//		Observations obs = new Observations(new Time(c.getTimeInMillis()),0);
+//		SatellitePosition sp = rn.getGpsSatPosition(obs, 2, 'G', 0);
+//
+//		if(sp!=null){
+//			System.out.println("found "+(new Date(sp.getUtcTime()))+" "+(sp.isPredicted()?" predicted":""));
+//		}else{
+//			System.out.println("Epoch not found "+(new Date(c.getTimeInMillis())));
+//		}
+//
+//
+//	}
 
 	/** Template string where to retrieve files on the net */
 	private String urltemplate;
@@ -176,6 +184,14 @@ public class RinexNavigation implements NavigationProducer {
        pool.put(url, rnp);
    }
    
+  public void setUsername( String username ) {
+  	this.username = username;
+  }
+  
+  public void setPassword( String password ) {
+  	this.password = password;
+  }
+  
 	protected RinexNavigationParser getRNPByTimestamp(long unixTime) {
 
 		RinexNavigationParser rnp = null;
@@ -192,7 +208,7 @@ public class RinexNavigation implements NavigationProducer {
         if(pool.containsKey(url)){
           rnp = pool.get(url);
         }else{
-          if(url.toLowerCase().startsWith("http"))
+        	if(url.toLowerCase().startsWith("http"))
             rnp = getFromHTTP(url);
           else if(url.toLowerCase().startsWith("ftp"))
             rnp = getFromFTP(url);
@@ -314,7 +330,6 @@ public class RinexNavigation implements NavigationProducer {
   private RinexNavigationParser getFromHTTP(String tUrl) throws IOException{
     RinexNavigationParser rnp = null;
 
-    String origurl = tUrl;
     if(negativeChache.containsKey(tUrl)){
       if(System.currentTimeMillis()-negativeChache.get(tUrl).getTime() < 60*60*1000){
         throw new FileNotFoundException("cached answer");
@@ -333,43 +348,63 @@ public class RinexNavigation implements NavigationProducer {
       rnp.init();
     }
     else {
-      System.out.println(tUrl+" from the net.");
-      
-      System.out.println("URL: "+tUrl);
+    	System.out.println(tUrl+" from the net.");
       tUrl = tUrl.substring("http://".length());
       String remoteFile = tUrl.substring(tUrl.indexOf('/'));
       remoteFile = remoteFile.substring(remoteFile.lastIndexOf('/')+1);
+      
+    	InputStream is = null;
+    	if( urltemplate.equals(RinexNavigation.NASA_NAVIGATION_DAILY_HTTP)) {
+    		if( username==null || password== null ) {
+    			throw new IOException("Username and password needed");
+    		}
+    	
+				try {
+		      String resource = "https:/" + tUrl;
+					is = getCDDISResource(resource, username, password);
+					
+				} catch (Exception e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+					throw new IOException(e1);
+				}
+    	}
+			else
+    	{
+	      URL url = new URL("http://" + tUrl);
+	      HttpURLConnection con = (HttpURLConnection) url.openConnection();
+	      con.setRequestMethod("GET");
+	
+	//      con.setRequestProperty("Authorization", "Basic "+ new String(Base64.encode(new String("anonymous:info@eriadne.org"))));
+	      con.setRequestProperty("Authorization", "Basic "+ new String(Base64.getEncoder().encode((new String("anonymous:info@eriadne.org").getBytes()))));
+	
+	      int reply = con.getResponseCode();
+	
+	      if (reply>200) {
+	        if( reply == 404 )
+	          System.err.println("404 Not Found");
+	        else
+	          System.err.println("HTTP server refused connection.");
+	//        System.out.print(new String(res.getContent()));
+	
+	        return null;
+	      }
 
-      URL url = new URL("http://" + tUrl);
-      HttpURLConnection con = (HttpURLConnection) url.openConnection();
-      con.setRequestMethod("GET");
-//      con.setRequestProperty("Authorization", "Basic "+ new String(Base64.encode(new String("anonymous:info@eriadne.org"))));
-      con.setRequestProperty("Authorization", "Basic "+ new String(Base64.getEncoder().encode((new String("anonymous:info@eriadne.org").getBytes()))));
-
-      int reply = con.getResponseCode();
-
-      if (reply>200) {
-        if( reply == 404 )
-          System.err.println("404 Not Found");
-        else
-          System.err.println("HTTP server refused connection.");
-//        System.out.print(new String(res.getContent()));
-
-        return null;
-      }
-
-      try{
+	      is  = con.getInputStream();
+    	}
+    	
+    	try {
+    		
         if(remoteFile.endsWith(".Z")){
-          try{
-//            InputStream is = new ByteArrayInputStream(res.getContent());
-            InputStream is  = con.getInputStream();
             InputStream uis = new UncompressInputStream(is);
             rnp = new RinexNavigationParser(uis,rnf);
             rnp.init();
             uis.close();
-          }
-          catch( IOException e ){
-            InputStream is  = con.getInputStream();
+        }
+        else if( remoteFile.endsWith(".gz") ) {
+//          	FileInputStream fin = new FileInputStream("archive.tar.Z");
+//          	BufferedInputStream in = new BufferedInputStream(fin);
+//          	FileOutputStream out = new FileOutputStream("archive.tar");
             InputStream uis = new GZIPInputStream(is);
             rnp = new RinexNavigationParser(uis,rnf);
             rnp.init();
@@ -377,9 +412,7 @@ public class RinexNavigation implements NavigationProducer {
   //        BufferedReader buffered = new BufferedReader(decoder);
             uis.close();
           }
-        }
         else {
-          InputStream is  = con.getInputStream();
           rnp = new RinexNavigationParser(is,rnf);
           rnp.init();
           is.close();
@@ -387,13 +420,78 @@ public class RinexNavigation implements NavigationProducer {
       }
       catch(IOException e ){
         e.printStackTrace();
-        // TODO delete file, maybe it's corrupt
+        // delete file, maybe it's corrupt
+        rnf.delete();
       }
     }
     return rnp;
   }
   
-	
+  /* 
+   * Return an input stream for a designated resource on a URS-authenticated remote server.
+   * See https://cddis.nasa.gov/Data_and_Derived_Products/CDDIS_Archive_Access.html
+   */
+  public InputStream getCDDISResource ( String resource, String username, String password) throws Exception {
+  	
+  	/* Set up a cookie handle, required */
+  	CookieHandler.setDefault(new CookieManager(null, CookiePolicy.ACCEPT_ALL));
+  	
+  	/* Set location for Earthdata Login */
+  	final String URS = "https://urs.earthdata.nasa.gov";
+  	
+	  int redirects = 0;
+	  /* Place an upper limit on the number of redirects we will follow */
+	  while( redirects < 10 ) {
+		  ++redirects;
+		
+		  /* Configure a connection to the resource server and submit the request for our resource. */
+		  URL url = new URL(resource);
+		  
+		  HttpsURLConnection connection = null;
+		  if (url.getProtocol().equalsIgnoreCase("https")) {
+		  	connection = (HttpsURLConnection) url.openConnection();
+		  }
+		  /* Handle any redirect that goes to http - set it back to an https request */
+		  else {
+		  	connection = (HttpsURLConnection)new URL("https", url.getAuthority(), url.getFile()).openConnection();
+		  }
+
+			connection.setRequestMethod("GET");
+		  connection.setInstanceFollowRedirects(false);
+		  connection.setUseCaches(false);
+		  connection.setDoInput(true);
+		
+		  /* If this is the URS server, add in the authentication header. */
+		  if( resource.startsWith(URS) ) {
+			  connection.setDoOutput(true);
+			  connection.setRequestProperty (
+			  "Authorization",
+			  "Basic " + Base64.getEncoder().encodeToString (
+			  		(username + ":" + password).getBytes()));
+		  }
+		
+		  /*Execute the request and get the response status code. A return status code of 200 is good - it means that we have our resource. We can return the input stream so it can be read (may also want to return additional header information such as the mime type or size). */
+		  int status = connection.getResponseCode();
+		  if( status == 200 ) {
+		  	return connection.getInputStream();
+		  }
+		
+		  /* Any returned status code other than 302 (a redirect) will need custom handling. A 401 code means that the credentials aren't valid. A 403 code means that the user hasn't authorized the application. */
+		  if( status != 302 ) {
+			  throw new Exception(
+			  "Invalid response from server - status " + status);
+		  }
+		
+		  /* Get the redirection location and continue. This should really have a null check, just in case. */
+		  resource = connection.getHeaderField("Location");
+		  
+//		  System.out.println("Status: " + status + " Redirect to: " + connection.getHeaderField("Location") );
+		  }
+		
+		/* If we get to this point, we have exceeded our redirect limit. This is most likely a configuration problem somewhere on the remote server. */
+		throw new Exception("Redirection limit exceeded");
+	}
+
 	/* (non-Javadoc)
 	 * @see org.gogpsproject.NavigationProducer#getIono(int)
 	 */

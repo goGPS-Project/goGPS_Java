@@ -33,8 +33,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Hashtable;
-import java.util.SimpleTimeZone;
-import java.util.TimeZone;
+import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -45,12 +44,10 @@ import org.apache.commons.net.ftp.FTPReply;
 import org.gogpsproject.ephemeris.EphGps;
 import org.gogpsproject.producer.parser.IonoGps;
 import org.gogpsproject.producer.parser.rinex.RinexNavigation;
-import org.gogpsproject.producer.parser.rinex.RinexNavigationParser;
 import org.gogpsproject.positioning.SatellitePosition;
 import org.gogpsproject.positioning.Time;
-import org.gogpsproject.producer.NavigationProducer;
 import org.gogpsproject.producer.Observations;
-import org.gogpsproject.producer.StreamResource;
+import org.gogpsproject.producer.RinexNavigationProducer;
 import org.gogpsproject.util.UncompressInputStream;
 
 /**
@@ -59,14 +56,15 @@ import org.gogpsproject.util.UncompressInputStream;
  * This class retrieve RINEX file on-demand from known server structures
  *
  */
-public class RinexNavigation implements NavigationProducer {
+public class RinexNavigation implements RinexNavigationProducer {
 
 	public final static String GARNER_NAVIGATION_AUTO = "ftp://garner.ucsd.edu/pub/nav/${yyyy}/${ddd}/auto${ddd}0.${yy}n.Z";
 	public final static String IGN_MULTI_NAVIGATION_DAILY = "ftp://igs.ign.fr/pub/igs/data/campaign/mgex/daily/rinex3/${yyyy}/${ddd}/brdm${ddd}0.${yy}p.Z";
 	public final static String GARNER_NAVIGATION_ZIM2 = "ftp://garner.ucsd.edu/pub/nav/${yyyy}/${ddd}/zim2${ddd}0.${yy}n.Z";
 	public final static String IGN_NAVIGATION_HOURLY_ZIM2 = "ftp://igs.ensg.ign.fr/pub/igs/data/hourly/${yyyy}/${ddd}/zim2${ddd}${h}.${yy}n.Z";
 	public final static String NASA_NAVIGATION_DAILY = "ftp://cddis.gsfc.nasa.gov/pub/gps/data/daily/${yyyy}/${ddd}/${yy}n/brdc${ddd}0.${yy}n.Z";
-	public final static String NASA_NAVIGATION_DAILY_HTTP = "https://cddis.nasa.gov/archive/gnss/data/daily/${yyyy}/${ddd}/${yy}n/brdc${ddd}0.${yy}n.gz";
+	public final static String NASA_NAVIGATION_DAILY_HTTP_GPS = "https://cddis.nasa.gov/archive/gnss/data/daily/${yyyy}/${ddd}/${yy}n/brdc${ddd}0.${yy}n.gz";
+	public final static String NASA_NAVIGATION_DAILY_HTTP_GLONASS = "https://cddis.nasa.gov/archive/gnss/data/daily/${yyyy}/${ddd}/${yy}g/brdc${ddd}0.${yy}g.gz";
 	public final static String NASA_NAVIGATION_HOURLY = "ftp://cddis.gsfc.nasa.gov/pub/gps/data/hourly/${yyyy}/${ddd}/hour${ddd}0.${yy}n.Z";
   public final static String GARNER_NAVIGATION_AUTO_HTTP = "http://garner.ucsd.edu/pub/rinex/${yyyy}/${ddd}/auto${ddd}0.${yy}n.Z"; // ex http://garner.ucsd.edu/pub/rinex/2016/034/auto0340.16n.Z
 
@@ -80,6 +78,7 @@ public class RinexNavigation implements NavigationProducer {
 	
 	private String username = null;
 	private String password = null;
+	
 	/**
 	 * @param args
 	 */
@@ -123,19 +122,34 @@ public class RinexNavigation implements NavigationProducer {
 //
 //	}
 
-	/** Template string where to retrieve files on the net */
-	private String urltemplate;
+	/** Sotore in a map template strings of where to retrieve files on the net 
+	 * the key is satellite type */
+	private Map<Character,String> urltemplates = new HashMap<>();
 	private HashMap<String,RinexNavigationParser> pool = new HashMap<String,RinexNavigationParser>();
 
+	static {
+  	/* Set up a cookie handle, required */
+  	CookieHandler.setDefault(new CookieManager(null, CookiePolicy.ACCEPT_ALL));
+	}
+	
 	/**
 	 * Instantiates a new RINEX navigation retriever and parser.
 	 *
-	 * @param urltemplate the template URL where to get the files on the net.
+	 * @param urltemplates the template URL where to get the files on the net.
 	 */
-	public RinexNavigation(String urltemplate){
-		this.urltemplate = urltemplate;
-
+	public RinexNavigation( String gpsUrltemplate ){
+			urltemplates.put('G', gpsUrltemplate );
 	}
+
+	/**
+	 * Pass a map of some sort, maybe using Java 9?
+	 * @param gpsUrltemplate
+	 * @param glonassUrltemplate
+	 */
+	public RinexNavigation( String gpsUrltemplate, String glonassUrltemplate ){
+		urltemplates.put('G', gpsUrltemplate );
+		urltemplates.put('R', glonassUrltemplate );
+  }
 
 	/* (non-Javadoc)
 	 * @see org.gogpsproject.NavigationProducer#getGpsSatPosition(long, int, double)
@@ -145,7 +159,7 @@ public class RinexNavigation implements NavigationProducer {
 		long unixTime = obs.getRefTime().getMsec();
 		double range = obs.getSatByIDType(satID, satType).getPseudorange(0);
 		
-		RinexNavigationParser rnp = getRNPByTimestamp(unixTime);
+		RinexNavigationParser rnp = getRNPByTimestamp(unixTime, satType);
 		if(rnp!=null){
 			if(rnp.isTimestampInEpocsRange(unixTime)){
 				return rnp.getGpsSatPosition(obs, satID, satType, receiverClockError);
@@ -153,16 +167,16 @@ public class RinexNavigation implements NavigationProducer {
 				return null;
 			}
 		}
-
 		return null;
 	}
+	
 	public EphGps findEph(long unixTime, int satID, char satType) {
 		long requestedTime = unixTime;
 		EphGps eph = null;
 		int maxBack = 12;
 		while(eph==null && (maxBack--)>0){
 
-			RinexNavigationParser rnp = getRNPByTimestamp(requestedTime);
+			RinexNavigationParser rnp = getRNPByTimestamp(requestedTime, satType);
 
 			if(rnp!=null){
 				if(rnp.isTimestampInEpocsRange(unixTime)){
@@ -177,12 +191,13 @@ public class RinexNavigation implements NavigationProducer {
 	}
 	
 	/* Convenience method for adding an rnp to memory cache*/
-  public void put(long reqTime, RinexNavigationParser rnp) {
+  public void put(long reqTime, RinexNavigationParser rnp, char satType) {
     Time t = new Time(reqTime);
-     String url = t.formatTemplate(urltemplate);
-     if(!pool.containsKey(url))
-       pool.put(url, rnp);
-   }
+    String urltemplate = urltemplates.get(satType);
+    String url = t.formatTemplate(urltemplate);
+    if(!pool.containsKey(url))
+      pool.put(url, rnp);
+  }
    
   public void setUsername( String username ) {
   	this.username = username;
@@ -192,24 +207,32 @@ public class RinexNavigation implements NavigationProducer {
   	this.password = password;
   }
   
-	protected RinexNavigationParser getRNPByTimestamp(long unixTime) {
+	protected RinexNavigationParser getRNPByTimestamp(long unixTime, char satType) {
 
+		String urltemplate = urltemplates.get(satType);
+		
+		if( urltemplate == null )
+			throw new RuntimeException( "no urlTemplate for satType " + satType );
+		
 		RinexNavigationParser rnp = null;
 		long reqTime = unixTime;
 
 		do{
-			// found none, retrieve from urltemplate
+			// found none, retrieve from urltemplates
 			Time t = new Time(reqTime);
 			//System.out.println("request: "+unixTime+" "+(new Date(t.getMsec()))+" week:"+t.getGpsWeek()+" "+t.getGpsWeekDay());
 
 			String url = t.formatTemplate(urltemplate);
-
-      try {
+      
+			try {
         if(pool.containsKey(url)){
           rnp = pool.get(url);
         }else{
-        	if(url.toLowerCase().startsWith("http"))
-            rnp = getFromHTTP(url);
+        	if(url.toLowerCase().startsWith("http")) {
+            boolean CDDIS = urltemplate.equals(RinexNavigation.NASA_NAVIGATION_DAILY_HTTP_GPS) ||
+            	              urltemplate.equals(RinexNavigation.NASA_NAVIGATION_DAILY_HTTP_GLONASS);
+        		rnp = getFromHTTP(url, CDDIS, satType );
+        	}
           else if(url.toLowerCase().startsWith("ftp"))
             rnp = getFromFTP(url);
           else 
@@ -327,7 +350,7 @@ public class RinexNavigation implements NavigationProducer {
 		return rnp;
 	}
 
-  private RinexNavigationParser getFromHTTP(String tUrl) throws IOException{
+  private RinexNavigationParser getFromHTTP(String tUrl, boolean CDDIS, char satType ) throws IOException{
     RinexNavigationParser rnp = null;
 
     if(negativeChache.containsKey(tUrl)){
@@ -354,7 +377,7 @@ public class RinexNavigation implements NavigationProducer {
       remoteFile = remoteFile.substring(remoteFile.lastIndexOf('/')+1);
       
     	InputStream is = null;
-    	if( urltemplate.equals(RinexNavigation.NASA_NAVIGATION_DAILY_HTTP)) {
+    	if( CDDIS ) {
     		if( username==null || password== null ) {
     			throw new IOException("Username and password needed");
     		}
@@ -406,7 +429,13 @@ public class RinexNavigation implements NavigationProducer {
 //          	BufferedInputStream in = new BufferedInputStream(fin);
 //          	FileOutputStream out = new FileOutputStream("archive.tar");
             InputStream uis = new GZIPInputStream(is);
-            rnp = new RinexNavigationParser(uis,rnf);
+            if( satType == 'G' )
+            	rnp = new RinexNavigationParser(uis,rnf);
+            else if( satType == 'R')
+            	rnp = new RinexNavigationParserGlonass(uis,rnf);
+            else
+            	throw new RuntimeException("satType unsupported " + satType);
+            	
             rnp.init();
   //        Reader decoder = new InputStreamReader(gzipStream, encoding);
   //        BufferedReader buffered = new BufferedReader(decoder);
@@ -432,9 +461,6 @@ public class RinexNavigation implements NavigationProducer {
    * See https://cddis.nasa.gov/Data_and_Derived_Products/CDDIS_Archive_Access.html
    */
   public InputStream getCDDISResource ( String resource, String username, String password) throws Exception {
-  	
-  	/* Set up a cookie handle, required */
-  	CookieHandler.setDefault(new CookieManager(null, CookiePolicy.ACCEPT_ALL));
   	
   	/* Set location for Earthdata Login */
   	final String URS = "https://urs.earthdata.nasa.gov";
@@ -496,9 +522,10 @@ public class RinexNavigation implements NavigationProducer {
 	 * @see org.gogpsproject.NavigationProducer#getIono(int)
 	 */
 	@Override
-	public IonoGps getIono(long unixTime) {
-		RinexNavigationParser rnp = getRNPByTimestamp(unixTime);
-		if(rnp!=null) return rnp.getIono(unixTime);
+	public IonoGps getIono(long unixTime, char satType) {
+		RinexNavigationParser rnp = getRNPByTimestamp(unixTime, satType);
+		if(rnp!=null) 
+			return rnp.getIono(unixTime, satType);
 		return null;
 	}
 

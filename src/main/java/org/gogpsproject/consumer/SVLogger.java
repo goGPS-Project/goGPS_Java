@@ -14,15 +14,15 @@ import org.gogpsproject.positioning.SatellitePosition;
 import org.gogpsproject.positioning.TopocentricCoordinates;
 import org.gogpsproject.producer.ObservationSet;
 import org.gogpsproject.producer.Observations;
+import org.gogpsproject.producer.RinexNavigationProducer;
 import org.gogpsproject.producer.StreamEventListener;
 import org.gogpsproject.producer.parser.IonoGps;
-import org.gogpsproject.producer.parser.rinex.RinexNavigationParser;
 
 /** Log satellite observables + azimuth/elevation to csv  */
 public class SVLogger /*extends EphemerisSystem*/ implements StreamEventListener, PositionConsumer {
 	HashMap<Integer,SVInfo> satpos = new HashMap<>();
 	PrintWriter pw;
-	RinexNavigationParser nav;
+	RinexNavigationProducer nav;
 	private Coordinates rover;
 
 	/** standard subms clock error in s*/
@@ -30,7 +30,7 @@ public class SVLogger /*extends EphemerisSystem*/ implements StreamEventListener
   
 	double clockErrorRate = 0; 
 	
-	public SVLogger( String filename, RinexNavigationParser nav ) throws Exception {
+	public SVLogger( String filename, RinexNavigationProducer nav ) throws Exception {
     File csvOutputFile = new File(filename);
     pw = new PrintWriter(csvOutputFile);
     this.nav = nav;
@@ -79,7 +79,7 @@ public class SVLogger /*extends EphemerisSystem*/ implements StreamEventListener
 					String.format("%3.2f", topo.getElevation()),
 					String.format("%10.3f", os.getCodeC(0)),
           String.format("%10.3f", os.getDoppler(0)),
-          String.format("%10.3f", os.getPhaserange(0)),
+          String.format("%10.3f", os.getPhaseCycles(0)),
           String.format("%3.1f", os.getSignalStrength(0)),
           String.format("%10.9f", clockError ),
           String.format("%10.9f", clockErrorRate )

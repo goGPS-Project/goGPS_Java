@@ -522,10 +522,10 @@ public class RinexNavigation implements RinexNavigationProducer {
 	 * @see org.gogpsproject.NavigationProducer#getIono(int)
 	 */
 	@Override
-	public IonoGps getIono(long unixTime, char satType) {
-		RinexNavigationParser rnp = getRNPByTimestamp(unixTime, satType);
+	public IonoGps getIono(long unixTime) {
+		RinexNavigationParser rnp = getRNPByTimestamp(unixTime,'G');
 		if(rnp!=null) 
-			return rnp.getIono(unixTime, satType);
+			return rnp.getIono(unixTime);
 		return null;
 	}
 

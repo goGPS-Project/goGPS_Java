@@ -195,7 +195,7 @@ public class NVSFileReader extends EphemerisSystem implements ObservationsProduc
 	 * @see org.gogpsproject.NavigationProducer#getIono(long)
 	 */
 	@Override
-	public IonoGps getIono(long unixTime) {
+	public IonoGps getIono(long unixTime, char satType) {
 		return iono;
 	}
 	

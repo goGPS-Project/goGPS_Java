@@ -91,6 +91,7 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 	//private int obsCursor = 0;
 
 	private String streamFileLogger = null;
+	private File f = null;
 
 	private String NtripGGA = null;
 	private long lastNtripGGAsent = 0;
@@ -536,7 +537,8 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 			try {
 				if (streamFileLogger != null) {
 					lastStreamLoggerCreated = System.currentTimeMillis();
-					fos = new FileOutputStream(streamFileLogger);
+					f = new File(streamFileLogger);
+					fos = new FileOutputStream(f);
 				}
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
@@ -726,6 +728,9 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 				//if(debug) System.out.println("Header : " + c);
 				if (!noRtcm && c == 211) { // header
 					readMessage(in);
+					if (f != null){
+						touch(f);
+					}
 				}
 //			}
 			
@@ -794,7 +799,8 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 				
 				lastStreamLoggerCreated = System.currentTimeMillis();
 				((InputStreamCounter) in).closeOutput();
-				fos = new FileOutputStream(streamFileLogger);
+				f = new File(streamFileLogger);
+				fos = new FileOutputStream(f);
 				((InputStreamCounter) in).setOutputStream(fos);
 				//in = new InputStreamCounter(in, fos);
 			}
@@ -1142,5 +1148,18 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 	public RTCM3Client setNoRTCM(Boolean noRtcm) {
 		this.noRtcm = noRtcm;
 		return this;
+	}
+	
+	public static void touch(File file) throws IOException{
+	    long timestamp = System.currentTimeMillis();
+	    touch(file, timestamp);
+	}
+
+	public static void touch(File file, long timestamp) throws IOException{
+	    if (!file.exists()) {
+	       new FileOutputStream(file).close();
+	    }
+
+	    file.setLastModified(timestamp);
 	}
 }

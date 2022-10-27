@@ -203,6 +203,15 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 		decodeMap.put(new Integer(1007), new Decode1007Msg(this));
 		decodeMap.put(new Integer(1008), new Decode1008Msg(this));
 		decodeMap.put(new Integer(1012), new Decode1012Msg());
+		decodeMap.put(new Integer(1019), new Decode1019Msg());
+		decodeMap.put(new Integer(1042), new Decode1042Msg());
+		decodeMap.put(new Integer(1045), new Decode1045Msg());
+		decodeMap.put(new Integer(1059), new Decode1059Msg());
+		decodeMap.put(new Integer(1060), new Decode1060Msg());
+		decodeMap.put(new Integer(1242), new Decode1242Msg());
+		decodeMap.put(new Integer(1243), new Decode1243Msg());
+		decodeMap.put(new Integer(1260), new Decode1260Msg());
+		decodeMap.put(new Integer(1261), new Decode1261Msg());
 	}
 	
 	public RTCM3Client(int startWeek) {
@@ -217,6 +226,15 @@ public class RTCM3Client implements Runnable, StreamResource, StreamEventProduce
 		decodeMap.put(new Integer(1007), new Decode1007Msg(this));
 		decodeMap.put(new Integer(1008), new Decode1008Msg(this));
 		decodeMap.put(new Integer(1012), new Decode1012Msg());
+		decodeMap.put(new Integer(1019), new Decode1019Msg());
+		decodeMap.put(new Integer(1042), new Decode1042Msg());
+		decodeMap.put(new Integer(1045), new Decode1045Msg());
+		decodeMap.put(new Integer(1059), new Decode1059Msg());
+		decodeMap.put(new Integer(1060), new Decode1060Msg());
+		decodeMap.put(new Integer(1242), new Decode1242Msg());
+		decodeMap.put(new Integer(1243), new Decode1243Msg());
+		decodeMap.put(new Integer(1260), new Decode1260Msg());
+		decodeMap.put(new Integer(1261), new Decode1261Msg());
 	}
 
 	public ArrayList<String> getSources() throws IOException {

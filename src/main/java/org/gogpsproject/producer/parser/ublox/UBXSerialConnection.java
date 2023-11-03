@@ -20,6 +20,7 @@
 
 package org.gogpsproject.producer.parser.ublox;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.gogpsproject.producer.parser.AbstractSerialConnection;
@@ -28,17 +29,19 @@ public class UBXSerialConnection extends AbstractSerialConnection<UBXSerialReade
 
 	protected int setEphemerisRate = 10;
 	protected int setIonosphereRate = 60;
-  protected Boolean enableDebug = false;
-  protected Boolean enableTimetag = false;
-  protected String outputDir = "./out";
-	protected List<String> enableNmeaList;
+	protected Boolean enableDebug = false;
+	protected Boolean enableTimetag = false;
+	protected String outputDir = "./out";
+	protected List<String> enableNmeaList = new ArrayList<String>();
 
 	public UBXSerialConnection(String portName, int speed) {
 		this.portName = portName;
 		this.speed = speed;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.gogpsproject.StreamResource#init()
 	 */
 	@Override
@@ -46,19 +49,19 @@ public class UBXSerialConnection extends AbstractSerialConnection<UBXSerialReade
 
 //		boolean conn = false;
 //		try {
-	      super.init();
-				prod = new UBXSerialReader(inputStream,outputStream,portName,outputDir);
-				prod.setRate(this.setMeasurementRate);
-				prod.enableAidEphMsg(this.setEphemerisRate);
-				prod.enableAidHuiMsg(this.setIonosphereRate);
-				prod.enableSysTimeLog(this.enableTimetag);
-				prod.enableDebugMode(this.enableDebug);
-				prod.enableNmeaMsg(this.enableNmeaList);
-				prod.start();
+		super.init();
+		prod = new UBXSerialReader(inputStream, outputStream, portName, outputDir);
+		prod.setRate(this.setMeasurementRate);
+		prod.enableAidEphMsg(this.setEphemerisRate);
+		prod.enableAidHuiMsg(this.setIonosphereRate);
+		prod.enableSysTimeLog(this.enableTimetag);
+		prod.enableDebugMode(this.enableDebug);
+		prod.enableNmeaMsg(this.enableNmeaList);
+		prod.start();
 
-				connected = true;
-				System.out.println("Connection on " + portName + " established");
-				//conn = true;
+		connected = true;
+		System.out.println("Connection on " + portName + " established");
+		// conn = true;
 
 //		} catch (NoSuchPortException e) {
 //			System.out.println("The connection could not be made");
@@ -76,22 +79,22 @@ public class UBXSerialConnection extends AbstractSerialConnection<UBXSerialReade
 //		return conn;
 	}
 
-
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.gogpsproject.StreamResource#release(boolean, long)
 	 */
 	@Override
-	public void release(boolean waitForThread, long timeoutMs)
-			throws InterruptedException {
+	public void release(boolean waitForThread, long timeoutMs) throws InterruptedException {
 
-		if(prod!=null){
+		if (prod != null) {
 			prod.stop(waitForThread, timeoutMs);
 		}
 		super.release();
 	}
 
 	public void setMeasurementRate(int measRate) {
-		if(prod!=null){
+		if (prod != null) {
 			prod.setRate(measRate);
 		} else {
 			this.setMeasurementRate = measRate;
@@ -99,7 +102,7 @@ public class UBXSerialConnection extends AbstractSerialConnection<UBXSerialReade
 	}
 
 	public void enableEphemeris(Integer ephRate) {
-		if(prod!=null){
+		if (prod != null) {
 			prod.enableAidEphMsg(ephRate);
 		} else {
 			this.setEphemerisRate = ephRate;
@@ -107,31 +110,31 @@ public class UBXSerialConnection extends AbstractSerialConnection<UBXSerialReade
 	}
 
 	public void enableIonoParam(Integer ionRate) {
-		if(prod!=null){
+		if (prod != null) {
 			prod.enableAidHuiMsg(ionRate);
 		} else {
 			this.setIonosphereRate = ionRate;
 		}
 	}
-	
+
 	public void enableNmeaSentences(List<String> nmeaList) {
-			if(prod!=null){
-				prod.enableNmeaMsg(nmeaList);
-			} else {
-				this.enableNmeaList = nmeaList;
-			}
+		if (prod != null) {
+			prod.enableNmeaMsg(nmeaList);
+		} else {
+			this.enableNmeaList = nmeaList;
+		}
 	}
 
 	public void enableTimetag(Boolean enableTim) {
-		if(prod!=null){
+		if (prod != null) {
 			prod.enableSysTimeLog(enableTim);
 		} else {
 			this.enableTimetag = enableTim;
 		}
 	}
-	
+
 	public void enableDebug(Boolean enableDebug) {
-		if(prod!=null){
+		if (prod != null) {
 			prod.enableDebugMode(enableDebug);
 		} else {
 			this.enableDebug = enableDebug;
@@ -139,7 +142,7 @@ public class UBXSerialConnection extends AbstractSerialConnection<UBXSerialReade
 	}
 
 	public void setOutputDir(String outDir) {
-		if(prod!=null){
+		if (prod != null) {
 			prod.setOutputDir(outDir);
 		} else {
 			this.outputDir = outDir;

@@ -19,9 +19,8 @@
  */
 
 package org.gogpsproject;
-import gnu.io.CommPort;
-import gnu.io.CommPortIdentifier;
-import gnu.io.PortInUseException;
+
+import com.fazecast.jSerialComm.*;
 
 import java.io.DataOutputStream;
 import java.io.FileNotFoundException;
@@ -40,57 +39,49 @@ import org.gogpsproject.producer.parser.IonoGps;
 import org.gogpsproject.producer.parser.ublox.UBXSerialConnection;
 
 @SuppressWarnings("restriction")
-public class TestUBX implements StreamEventListener{
+public class TestUBX implements StreamEventListener {
 
 	public static int speed = 9600;
 	private static UBXSerialConnection ubxSerialConn;
-    private String fileNameOutLog = null;
-    private FileOutputStream fosOutLog = null;
-    private DataOutputStream outLog = null;//new XMLEncoder(os);
+	private String fileNameOutLog = null;
+	private FileOutputStream fosOutLog = null;
+	private DataOutputStream outLog = null;// new XMLEncoder(os);
 
-
-    public TestUBX(){
-    	this.fileNameOutLog = "./data/aphemeris.dat";
-		if(fileNameOutLog!=null){
-    		try {
-				fosOutLog = new FileOutputStream(fileNameOutLog,true);
+	public TestUBX() {
+		this.fileNameOutLog = "./data/aphemeris.dat";
+		if (fileNameOutLog != null) {
+			try {
+				fosOutLog = new FileOutputStream(fileNameOutLog, true);
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			}
-    		outLog = new DataOutputStream(fosOutLog);
-    	}
-    }
+			outLog = new DataOutputStream(fosOutLog);
+		}
+	}
+
 	/**
 	 * @param args
 	 */
 
 	@SuppressWarnings("unchecked")
-	public static HashSet<CommPortIdentifier> getAvailableSerialPorts() {
-		HashSet<CommPortIdentifier> h = new HashSet<CommPortIdentifier>();
-		Enumeration<CommPortIdentifier> thePorts = CommPortIdentifier.getPortIdentifiers();
-		while (thePorts.hasMoreElements()) {
-			CommPortIdentifier com = (CommPortIdentifier) thePorts.nextElement();
-			switch (com.getPortType()) {
-			case CommPortIdentifier.PORT_SERIAL:
-				try {
-					CommPort thePort = com.open("CommUtil", 50);
-					thePort.close();
-					h.add(com);
-				} catch (PortInUseException e) {
-					System.out.println("Port, " + com.getName()
-							+ ", is in use.");
-				} catch (Exception e) {
-					System.err.println("Failed to open port " + com.getName());
-					e.printStackTrace();
-				}
-			}
+	public static HashSet<String> getAvailableSerialPorts() {
+		
+		HashSet<String> h = new HashSet<String>();
+		SerialPort[] ports = SerialPort.getCommPorts();
+		
+		for (int i = 0; i < ports.length; ++i) {
+			if( ports[i].isOpen())
+				ports[i].closePort();
+			
+			h.add(ports[i].getSystemPortName());
 		}
+		
 		return h;
 	}
 
 	public static void main(String[] args) {
-		
-		//force dot as decimal separator
+
+		// force dot as decimal separator
 		Locale.setDefault(new Locale("en", "US"));
 
 		Vector<String> ports = UBXSerialConnection.getPortList(false);
@@ -102,22 +93,21 @@ public class TestUBX implements StreamEventListener{
 		}
 		String port = null;
 		for (int i = 0; i < ports.size(); ++i) {
-			System.out.println("    " + Integer.toString(i + 1) + ":  "+ ports.elementAt(i));
-			if(args.length>0 && args[0].equalsIgnoreCase(ports.elementAt(i))){
+			System.out.println("    " + Integer.toString(i + 1) + ":  " + ports.elementAt(i));
+			if (args.length > 0 && args[0].equalsIgnoreCase(ports.elementAt(i))) {
 				port = ports.elementAt(i);
 			}
 		}
-		if(args.length>2){
+		if (args.length > 2) {
 			speed = Integer.parseInt(args[1]);
 		}
-
 
 		ubxSerialConn = new UBXSerialConnection(port, speed);
 		try {
 			ubxSerialConn.init();
 //			ObservationsBuffer rover = new ObservationsBuffer();
 //			rover.setStreamSource(ubxSerialConn);
-	//
+			//
 //			try {
 //				rover.init();
 //			} catch (Exception e) {
@@ -129,9 +119,6 @@ public class TestUBX implements StreamEventListener{
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
-
-
 
 		System.out.println("end");
 		// // TODO Auto-generated method stub
@@ -145,24 +132,30 @@ public class TestUBX implements StreamEventListener{
 
 	}
 
-	/* (non-Javadoc)
-	 * @see org.gogpsproject.StreamEventListener#addEphemeris(org.gogpsproject.EphGps)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.gogpsproject.StreamEventListener#addEphemeris(org.gogpsproject.EphGps)
 	 */
 	@Override
 	public void addEphemeris(EphGps eph) {
-		System.out.println("EPH "+eph);
-		if(outLog!=null){
-        	try {
-        		eph.write(outLog);
-        		outLog.flush();
+		System.out.println("EPH " + eph);
+		if (outLog != null) {
+			try {
+				eph.write(outLog);
+				outLog.flush();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-        }
+		}
 	}
 
-	/* (non-Javadoc)
-	 * @see org.gogpsproject.StreamEventListener#addIonospheric(org.gogpsproject.IonoGps)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.gogpsproject.StreamEventListener#addIonospheric(org.gogpsproject.IonoGps)
 	 */
 	@Override
 	public void addIonospheric(IonoGps iono) {
@@ -170,8 +163,11 @@ public class TestUBX implements StreamEventListener{
 
 	}
 
-	/* (non-Javadoc)
-	 * @see org.gogpsproject.StreamEventListener#addObservations(org.gogpsproject.Observations)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.gogpsproject.StreamEventListener#addObservations(org.gogpsproject.
+	 * Observations)
 	 */
 	@Override
 	public void addObservations(Observations o) {
@@ -179,8 +175,12 @@ public class TestUBX implements StreamEventListener{
 
 	}
 
-	/* (non-Javadoc)
-	 * @see org.gogpsproject.StreamEventListener#setDefinedPosition(org.gogpsproject.Coordinates)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.gogpsproject.StreamEventListener#setDefinedPosition(org.gogpsproject.
+	 * Coordinates)
 	 */
 	@Override
 	public void setDefinedPosition(Coordinates definedPosition) {
@@ -188,7 +188,9 @@ public class TestUBX implements StreamEventListener{
 
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.gogpsproject.StreamEventListener#streamClosed()
 	 */
 	@Override
@@ -196,15 +198,17 @@ public class TestUBX implements StreamEventListener{
 		// TODO Auto-generated method stub
 
 	}
+
 	@Override
 	public Observations getCurrentObservations() {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
 	@Override
 	public void pointToNextObservations() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 }

@@ -123,12 +123,15 @@ public class UBXMessageType {
 	public final static int RXM_EPH = 89;
 	public final static int RXM_POSREQ = 90;
 	public final static int RXM_PMREQ = 98;
+	public final static int RXM_RAWX = 99;
+	public final static int RXM_MEASX = 100;
 
 	public final static int TIM_TM = 90;
 	public final static int TIM_TM2 = 91;
 	public final static int TIM_TP = 92;
 	public final static int TIM_SVIN = 93;
 
+	
 	public final static int UPD_DOWNL = 94;
 	public final static int UPD_UPLOAD = 95;
 	public final static int UPD_EXEC = 96;
@@ -221,6 +224,12 @@ public class UBXMessageType {
 				switch (msgtype) {
 					case RXM_RAW:
 						setIdOut(0x10);
+						return 0;
+					case RXM_RAWX:
+						setIdOut(0x15);
+						return 0;
+					case RXM_MEASX:
+						setIdOut(0x14);
 						return 0;
 					case RXM_SVSI:
 						setIdOut(0x20);

@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Vector;
@@ -55,7 +56,7 @@ public class UBXSerialReader implements Runnable,StreamEventProducer {
   protected String COMPort;
   private int measRate = 1;
   protected boolean sysTimeLogEnabled = false;
-  protected List<String> requestedNmeaMsgs = null;
+  protected List<String> requestedNmeaMsgs;
   protected String dateFile;
   protected String outputDir = "./test";
   protected int msgAidEphRate = 0; //seconds
@@ -158,6 +159,11 @@ public class UBXSerialReader implements Runnable,StreamEventProducer {
 		out.write(msgcfg.getByte());
 		out.flush();
 
+		System.out.println(date1+" - "+COMPort+" - RXM-MEASX messages enabled");
+		msgcfg = new UBXMsgConfiguration(UBXMessageType.CLASS_RXM, UBXMessageType.RXM_MEASX, true);
+		out.write(msgcfg.getByte());
+		out.flush();
+		
 		if (this.debugModeEnabled) {
 			System.out.println(date1+" - "+COMPort+" - !!! DEBUG MODE !!!");
 		}

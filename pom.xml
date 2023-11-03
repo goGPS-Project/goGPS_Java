@@ -34,13 +34,11 @@
 			<artifactId>argparse4j</artifactId>
 			<version>0.4.1</version>
 		</dependency>
-		<dependency>
-			<groupId>org.rxtx</groupId>
-			<artifactId>rxtx</artifactId>
-			<version>2.2pre1</version>
-			<scope>system</scope>
-			<systemPath>${basedir}/libs/RXTX/RXTXcomm.jar</systemPath>
-		</dependency>
+        <dependency>
+          <groupId>com.fazecast</groupId>
+          <artifactId>jSerialComm</artifactId>
+          <version>[2.0.0,3.0.0)</version>
+        </dependency>		
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>

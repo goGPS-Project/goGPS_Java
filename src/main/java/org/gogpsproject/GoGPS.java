@@ -659,6 +659,11 @@ public class GoGPS implements Runnable, StreamEventProducer{
     return this;
   }
 
+  public GoGPS runKalmanFilterCodePhaseStandalone(double stopAtDopThreshold) {
+	 KF_SA_code_phase.run(this, stopAtDopThreshold);
+     return this;
+  }
+  
   public boolean isRunning() {
     return runThread != null && runThread.isAlive();
   }

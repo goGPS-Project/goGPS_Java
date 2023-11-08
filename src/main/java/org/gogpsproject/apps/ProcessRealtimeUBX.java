@@ -63,8 +63,9 @@ public class ProcessRealtimeUBX {
 			 * ROVER & NAVIGATION u-blox
 			 */
 			UBXSerialConnection ubxSerialConn = new UBXSerialConnection(comPort, 115200);
-			ubxSerialConn.init();
 			ubxSerialConn.enableDebug(false);
+			ubxSerialConn.enableEphemeris(1);
+			ubxSerialConn.init();
 
 			Date date = new Date();
 			SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd_HHmmss");
@@ -72,6 +73,8 @@ public class ProcessRealtimeUBX {
 
 			ObservationsBuffer roverIn = new ObservationsBuffer(ubxSerialConn, "./out/" + date1 + ".dat");
 			NavigationProducer navigationIn = roverIn;
+			roverIn.setDebug(false);
+//			roverIn.setTimeoutNextObsWait(60*1000);
 			roverIn.init();
 
 			// wait for some data to buffer
@@ -82,14 +85,17 @@ public class ProcessRealtimeUBX {
 			KmlProducer kml = new KmlProducer(outPath, 2.5, 0);
 
 			GoGPS goGPS = new GoGPS(navigationIn, roverIn).setDynamicModel(dynamicModel)
-					.addPositionConsumerListener(kml)
+					.addPositionConsumerListener(kml);
+			
+			goGPS.setDebug(true)
 
 					// run (never exit in live-tracking)
-					// .runCodeStandalone();
-					// .runKalmanFilterCodePhaseStandalone();
+//					 .runCodeStandalone(0);
+//					 .runKalmanFilterCodePhaseStandalone(0);
 
 					// run in background
-					.runThreadMode(GoGPS.RunMode.KALMAN_FILTER_CODE_PHASE_STANDALONE)
+			  .runThreadMode(GoGPS.RunMode.CODE_STANDALONE)
+//					.runThreadMode(GoGPS.RunMode.KALMAN_FILTER_CODE_PHASE_STANDALONE)
 
 					// wait for 2 minutes
 					.runFor(120);

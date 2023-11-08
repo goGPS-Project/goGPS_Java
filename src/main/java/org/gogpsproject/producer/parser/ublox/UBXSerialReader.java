@@ -259,11 +259,11 @@ public class UBXSerialReader implements Runnable,StreamEventProducer {
 									
 									if(streamEventListeners!=null && o!=null){
 										for(StreamEventListener sel:streamEventListeners){
-											Observations co = sel.getCurrentObservations();
-										    sel.pointToNextObservations();
+											Observations oc = (Observations) ((Observations)o).clone();
+//											sel.addObservations(oc);
 
 										    if (this.sysTimeLogEnabled) {
-										    	dateGps = sdf1.format(new Date(co.getRefTime().getMsec()));
+										    	dateGps = sdf1.format(new Date(oc.getRefTime().getMsec()));
 										    	psSystime.println(dateGps +"       "+dateSys);
 										    }
 										}

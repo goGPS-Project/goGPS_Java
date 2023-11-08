@@ -32,6 +32,7 @@ public class UBXMessageType {
 	public final static int CLASS_TIM = 8;
 	public final static int CLASS_NMEA = 9;
 	public final static int CLASS_PUBX = 10;
+	public final static int CLASS_TRK = 11;
 
 	public final static int ACK_ACK = 11;
 	public final static int ACK_NAK = 12;
@@ -126,6 +127,8 @@ public class UBXMessageType {
 	public final static int RXM_RAWX = 99;
 	public final static int RXM_MEASX = 100;
 
+	public final static int TRK_MEAS = 101;
+	
 	public final static int TIM_TM = 90;
 	public final static int TIM_TM2 = 91;
 	public final static int TIM_TP = 92;
@@ -251,6 +254,15 @@ public class UBXMessageType {
 						return 0;
 				}
 
+			case CLASS_TRK:
+				setClassOut(0x03);
+				switch (msgtype) {
+					case TRK_MEAS:
+						setIdOut(0x10);
+						return 0;
+				}	
+				
+				
 			case CLASS_INF:
 				setClassOut(0x04);
 				switch (msgtype) {
@@ -578,6 +590,13 @@ public class UBXMessageType {
 					return 0;
 				}
 
+			} else if (mclass.equals("TRK")) {
+				setClassOut(CLASS_TRK);
+				if (msgtype.equals("MEAS")) {
+					setIdOut(TRK_MEAS);
+					return 0;
+				}	
+				
 			} else if (mclass.equals("INF")) {
 				setClassOut(CLASS_INF);
 				if (msgtype.equals("ERROR")) {

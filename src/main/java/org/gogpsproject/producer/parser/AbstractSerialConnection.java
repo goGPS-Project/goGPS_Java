@@ -52,8 +52,8 @@ public abstract class AbstractSerialConnection<T extends StreamEventProducer>
 			outputStream = serialPort.getOutputStream();
 			
 //			serialPort.setComPortTimeouts(SerialPort.TIMEOUT_NONBLOCKING, 1000, 0);
-//			serialPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 1000, 0);
-			serialPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_SEMI_BLOCKING, 1000, 0);
+//			serialPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 0, 0);
+			serialPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_SEMI_BLOCKING, 0, 0);
 		}
 	}
 

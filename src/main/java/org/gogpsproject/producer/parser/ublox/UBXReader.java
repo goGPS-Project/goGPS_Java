@@ -41,7 +41,7 @@ import org.gogpsproject.producer.parser.IonoGps;
  * @author Lorenzo Patocchi cryms.com, Eugenio Realini
  */
 public class UBXReader implements StreamEventProducer {
-	InputStream in0, in;
+	InputStream in;
 	ReceiverPosition pos;
 
 	private Vector<StreamEventListener> streamEventListeners = new Vector<StreamEventListener>();
@@ -66,12 +66,12 @@ public class UBXReader implements StreamEventProducer {
 	}
 
 	public UBXReader(InputStream is, StreamEventListener eventListener) {
-		this.in0 = is;
+		this.in = is;
 		addStreamEventListener(eventListener);
 	}
 
 	public UBXReader(InputStream is, Boolean[] multiConstellation, StreamEventListener eventListener) {
-		this.in0 = is;
+		this.in = is;
 		this.multiConstellation = multiConstellation;
 		addStreamEventListener(eventListener);
 	}
@@ -88,43 +88,45 @@ public class UBXReader implements StreamEventProducer {
 		CK_B = CK_B & 0xFF;
 	}
 
-	void validateCheckSum() throws UBXException, IOException {
+	InputStream validateCheckSum() throws UBXException, IOException {
 		List<Integer> msg = new ArrayList<>();
-		msg.add(new Integer(uBloxPrefix1));
-		msg.add(in0.read()); // uBloxPrefix2
-		msg.add(in0.read()); // Class
-		msg.add(in0.read()); // Uid
+		msg.add(uBloxPrefix1);
+		msg.add(in.read()); // uBloxPrefix2
+		msg.add(in.read()); // Class
+		msg.add(in.read()); // Uid
+		
 		// read non parsed message length
 		int[] length = new int[2];
-		length[1] = in0.read();
-		length[0] = in0.read();
+		length[1] = in.read();
+		length[0] = in.read();
 
 		int len = length[0] << 8 | length[1];
 		if (len < 7 || len > 10000) // no idea what the maximum length should be
-			throw new UBXException("Wrong length");
+			throw new UBXException("Wrong length: " + len);
 
 		msg.add(length[1]);
 		msg.add(length[0]);
 		for (int i = 0; i < len; i++)
-			msg.add(in0.read());
+			msg.add(in.read());
 
 		computeCheckSum(msg);
 
-		int c1 = in0.read();
-		int c2 = in0.read();
+		int c1 = in.read();
+		int c2 = in.read();
 		if (CK_A != c1 || CK_B != c2) {
 			throw new UBXException("Wrong message checksum");
 		}
+		
 		bytes = new byte[len - 1];
 		for (int i = 1; i < len; i++) {
 			bytes[i - 1] = (byte) (int) msg.get(i);
 		}
-		in = new ByteArrayInputStream(bytes);
+		return new ByteArrayInputStream(bytes);
 	}
 
 	public Object readMessage() throws IOException, UBXException {
 
-		validateCheckSum();
+//		InputStream in = validateCheckSum();
 
 		int usynch2 = in.read();
 		if (usynch2 == 0x62) { // Preamble
@@ -176,7 +178,8 @@ public class UBXReader implements StreamEventProducer {
 					Observations o = decodegnss.decode(null);
 
 					if (o!=null && this.debugModeEnabled) {
-						System.out.println("Decoded observations");
+						System.out.println("Decoded observations:");
+						//System.out.println(o);
 					}
 					if(streamEventListeners!=null && o!=null){
 						for(StreamEventListener sel:streamEventListeners){

@@ -159,8 +159,8 @@ public class UBXSerialReader implements Runnable,StreamEventProducer {
 		out.write(msgcfg.getByte());
 		out.flush();
 
-		System.out.println(date1+" - "+COMPort+" - RXM-MEASX messages enabled");
-		msgcfg = new UBXMsgConfiguration(UBXMessageType.CLASS_RXM, UBXMessageType.RXM_MEASX, true);
+		System.out.println(date1+" - "+COMPort+" - TRK-MEASX messages enabled");
+		msgcfg = new UBXMsgConfiguration(UBXMessageType.CLASS_TRK, UBXMessageType.TRK_MEAS, true);
 		out.write(msgcfg.getByte());
 		out.flush();
 		

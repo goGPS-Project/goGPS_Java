@@ -83,8 +83,10 @@ public class DecodeAIDEPH {
 
 		//System.out.println("AID-EPH "+len);
 
-		byte bytes[] = new byte[4];
-		in.read(bytes, 0, bytes.length);
+		byte bytes[] = new byte[4];  
+		int rb = in.read(bytes, 0, bytes.length); // 0
+		len -= rb;
+		
 		long svid=0;
 		for(int i=3;i>=0;i--){
 			svid=svid<<8;
@@ -94,9 +96,11 @@ public class DecodeAIDEPH {
 		//System.out.print("svid "+svid);
 		baos.write(bytes);
 
-		int how =0;
-		bytes = new byte[4];
-		in.read(bytes, 0, bytes.length);
+		int how = 0;
+		bytes = new byte[4]; // 4
+		rb= in.read(bytes, 0, bytes.length);
+		len -= bytes.length;
+		
 		boolean bits[] = new boolean[bytes.length*8];
 		for (int j = 3; j >= 0; j--) {
 			boolean[] temp1 = Bits.intToBits(Bits.getUInt(bytes[j]), 8);
@@ -123,7 +127,9 @@ public class DecodeAIDEPH {
 
 		int sf1d[] = new int[8];
 		bytes = new byte[sf1d.length*4];
-		in.read(bytes, 0, bytes.length);
+		rb= in.read(bytes, 0, bytes.length);  // 8
+		len -= rb;
+		
 		bits = new boolean[bytes.length*8];
 		for(int b=0;b<sf1d.length;b++){
 			for (int j = 3; j >= 0; j--) {
@@ -169,7 +175,9 @@ public class DecodeAIDEPH {
 //		System.out.println();
 		int sf2d[] = new int[8];
 		bytes = new byte[sf2d.length*4];
-		in.read(bytes, 0, bytes.length);
+		rb= in.read(bytes, 0, bytes.length); // 40
+		len -= rb;
+		
 		//System.out.println(Bits.toHexString(bytes, bytes.length));
 		for(int b=0;b<sf2d.length;b++){
 			for (int j = 3; j >= 0; j--) {
@@ -212,7 +220,9 @@ public class DecodeAIDEPH {
 
 		int sf3d[] = new int[8];
 		bytes = new byte[sf3d.length*4];
-		in.read(bytes, 0, bytes.length);
+	    rb = in.read(bytes, 0, bytes.length);  // 72
+		len -= rb;
+		
 		//System.out.println(Bits.toHexString(bytes, bytes.length));
 		for(int b=0;b<sf3d.length;b++){
 			for (int j = 3; j >= 0; j--) {

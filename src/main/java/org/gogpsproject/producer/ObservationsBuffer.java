@@ -232,20 +232,23 @@ public class ObservationsBuffer
      */
     @Override
     public Observations getCurrentObservations() {
-    	long begin=System.currentTimeMillis();
+    	long begin = System.currentTimeMillis();
 
-    	while(waitForData && (timeOrderedObs.size()==0 || obsCursor>=timeOrderedObs.size()) && (timeoutNextObsWait==-1|| System.currentTimeMillis()-begin<timeoutNextObsWait)){
+    	while( waitForData && 
+    			(timeOrderedObs.size()==0 || obsCursor>=timeOrderedObs.size()) && 
+    			  (timeoutNextObsWait==-1|| System.currentTimeMillis() - begin < timeoutNextObsWait)){
 			//System.out.print("r");
 			try {
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {}
+			
 		}
 
     	if(timeOrderedObs.size()>0 && obsCursor<timeOrderedObs.size()){
     		return timeOrderedObs.get(obsCursor);
-    	}else{
-    		return null;
     	}
+    	else
+    		return null;
     }
     
     

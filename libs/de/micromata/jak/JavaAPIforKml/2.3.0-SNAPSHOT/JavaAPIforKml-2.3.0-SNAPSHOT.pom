@@ -1,0 +1,9 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+    <groupId>de.micromata.jak</groupId>
+    <artifactId>JavaAPIforKml</artifactId>
+    <version>2.3.0-SNAPSHOT</version>
+	<name>a Java API for Kml</name>
+	<description>This is JavaAPIforKMml, Micromata's library for use with applications that want to parse, generate and operate on KML. It is an implementation of the OGC KML 2.2 standard. It is written entirely in Java and makes heavy use of JAXB.</description>
+</project>

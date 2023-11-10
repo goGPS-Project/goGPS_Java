@@ -9,11 +9,19 @@
     <url>http://www.gogps-project.org</url>
 
     <properties>
-        <JavaAPIforKml-systemPath>${basedir}/libs/JAK/JavaAPIforKml.jar</JavaAPIforKml-systemPath>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javaVersion>1.8</javaVersion>
         <documentationURL />
     </properties>
+
+    <repositories>
+        <repository>
+            <id>local-jars</id>
+            <name>local-repo</name>
+            <!--url>file://${project.basedir}/libs</url-->
+            <url>file://${basedir}/libs</url>
+        </repository>
+    </repositories>
 
     <dependencies>
         <dependency>
@@ -88,6 +96,7 @@
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.9.0</version>
                 <configuration>
                     <source>${javaVersion}</source>
                     <target>${javaVersion}</target>
@@ -109,11 +118,4 @@
             </plugin>
         </plugins>
     </build>
-    <repositories>
-        <repository>
-            <id>local-jars</id>
-            <name>local-repo</name>
-            <url>file://${project.basedir}/libs</url>
-        </repository>
-    </repositories>
 </project>

@@ -242,7 +242,7 @@ public class Observations implements Streamable {
 		String out= " GPS Time:"+getRefTime().getGpsTime()+" "+sdfHeader.format(new Date(getRefTime().getMsec()))+" evt:"+eventFlag+lineBreak;
 		for(int i=0;i<getNumSat();i++){
 			ObservationSet os = getSatByIdx(i);
-			out+="satType:"+ os.getSatType() +"  satID:"+os.getSatID()+"\tC:"+fd(os.getCodeC(0))
+			out+="satType:"+ os.getSatType() +"  satID:"+ (int)os.getSatID()+"\tC:"+fd(os.getCodeC(0))
 				+" cP:"+fd(os.getCodeP(0))
 				+" Ph:"+fd(os.getPhaseCycles(0))
 				+" Dp:"+fd(os.getDoppler(0))

@@ -267,11 +267,12 @@ public class DecodeAIDEPH {
 		// TODO Ref Time Time Ref
 		eph.setRefTime(new Time(System.currentTimeMillis()));
 
-		if(eph.getIodc() == IODE2 && eph.getIodc() == IODE3){
-			eph.setIode(IODE3);
+		if( (IODE2 == IODE3) && (eph.getIodc() & 0xFF) == IODE2){
+			eph.setIode(IODE2);
 			return eph;
 		}
-		System.out.println("IODC("+eph.getIodc()+"), IODE2("+IODE2+"), IODE3("+IODE3+") not matching for SVID "+svid);
+		
+		System.out.println("IODC("+(eph.getIodc() & 0xFF) +"), IODE2("+IODE2+"), IODE3("+IODE3+") not matching for SVID "+svid);
 
 		return null;
 	}

@@ -22,18 +22,20 @@ package org.gogpsproject.producer.parser.nvs;
 
 import org.gogpsproject.producer.parser.AbstractSerialConnection;
 
-import gnu.io.SerialPort;
+import com.fazecast.jSerialComm.*;
 
-public class NVSSerialConnection  extends AbstractSerialConnection<NVSSerialReader> {
+public class NVSSerialConnection extends AbstractSerialConnection<NVSSerialReader> {
 
-	//private StreamEventListener streamEventListener;
+	// private StreamEventListener streamEventListener;
 
 	public NVSSerialConnection(String portName, int speed) {
 		this.portName = portName;
 		this.speed = speed;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.gogpsproject.StreamResource#init()
 	 */
 	@Override
@@ -41,57 +43,56 @@ public class NVSSerialConnection  extends AbstractSerialConnection<NVSSerialRead
 
 //		boolean conn = false;
 //		try {
-		  super.init();
+		super.init();
 
-        boolean reply;
-        
-        //try with NMEA
+		boolean reply;
 
-				prod = new NVSSerialReader(inputStream,outputStream,portName,outputDir);
-				prod.enableDebugMode(this.enableDebug);
-				reply = prod.setBinrProtocol();
+		// try with NMEA
 
-				Thread.sleep(100);
-				serialPort.setSerialPortParams(speed, SerialPort.DATABITS_8,
-						SerialPort.STOPBITS_1, SerialPort.PARITY_ODD);
-				
-				if (!reply) {
-					//try with BINR
-					inputStream = serialPort.getInputStream();
-					outputStream = serialPort.getOutputStream();
+		prod = new NVSSerialReader(inputStream, outputStream, portName, outputDir);
+		prod.enableDebugMode(this.enableDebug);
+		reply = prod.setBinrProtocol();
 
-					prod = new NVSSerialReader(inputStream,outputStream,portName,outputDir);
-					prod.enableDebugMode(this.enableDebug);
-					reply = prod.setBinrProtocol();
-				}
-				
-				connected = true;
-				System.out.println("Connection on " + portName + " established");
-				
-				//nvsReader.setStreamEventListener(streamEventListener);
-				prod.setRate(this.setMeasurementRate);
-				prod.enableSysTimeLog(this.enableTimetag);
-				prod.enableDebugMode(this.enableDebug);
-				prod.start();
+		Thread.sleep(100);
+		serialPort.setComPortParameters(speed, 8, SerialPort.ONE_STOP_BIT, SerialPort.ODD_PARITY);
+
+		if (!reply) {
+			// try with BINR
+			inputStream = serialPort.getInputStream();
+			outputStream = serialPort.getOutputStream();
+
+			prod = new NVSSerialReader(inputStream, outputStream, portName, outputDir);
+			prod.enableDebugMode(this.enableDebug);
+			reply = prod.setBinrProtocol();
+		}
+
+		connected = true;
+		System.out.println("Connection on " + portName + " established");
+
+		// nvsReader.setStreamEventListener(streamEventListener);
+		prod.setRate(this.setMeasurementRate);
+		prod.enableSysTimeLog(this.enableTimetag);
+		prod.enableDebugMode(this.enableDebug);
+		prod.start();
 	}
 
-
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.gogpsproject.StreamResource#release(boolean, long)
 	 */
 	@Override
-	public void release(boolean waitForThread, long timeoutMs)
-			throws InterruptedException {
+	public void release(boolean waitForThread, long timeoutMs) throws InterruptedException {
 
-		if(prod!=null){
+		if (prod != null) {
 			prod.stop(waitForThread, timeoutMs);
 		}
-		
+
 		super.release();
 	}
 
 	public NVSSerialConnection setMeasurementRate(int measRate) {
-		if(prod!=null){
+		if (prod != null) {
 			prod.setRate(measRate);
 		} else {
 			this.setMeasurementRate = measRate;
@@ -100,29 +101,29 @@ public class NVSSerialConnection  extends AbstractSerialConnection<NVSSerialRead
 	}
 
 	public NVSSerialConnection enableTimetag(Boolean enableTim) {
-		if(prod!=null){
+		if (prod != null) {
 			prod.enableSysTimeLog(enableTim);
 		} else {
 			this.enableTimetag = enableTim;
 		}
-    return this;
+		return this;
 	}
-	
+
 	public NVSSerialConnection enableDebug(Boolean enableDebug) {
-		if(prod!=null){
+		if (prod != null) {
 			prod.enableDebugMode(enableDebug);
 		} else {
 			this.enableDebug = enableDebug;
 		}
-    return this;
+		return this;
 	}
-	
+
 	public NVSSerialConnection setOutputDir(String outDir) {
-		if(prod!=null){
+		if (prod != null) {
 			prod.setOutputDir(outDir);
 		} else {
 			this.outputDir = outDir;
 		}
-    return this;
+		return this;
 	}
 }

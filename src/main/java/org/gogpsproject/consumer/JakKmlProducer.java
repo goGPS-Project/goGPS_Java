@@ -30,9 +30,9 @@ import java.util.Map;
 import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
+import jakarta.xml.bind.Marshaller;
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamWriter;
 
@@ -45,6 +45,7 @@ import de.micromata.opengis.kml.v_2_2_0.AltitudeMode;
 import de.micromata.opengis.kml.v_2_2_0.BalloonStyle;
 import de.micromata.opengis.kml.v_2_2_0.ColorMode;
 import de.micromata.opengis.kml.v_2_2_0.Data;
+import de.micromata.opengis.kml.v_2_2_0.Document;
 import de.micromata.opengis.kml.v_2_2_0.ExtendedData;
 import de.micromata.opengis.kml.v_2_2_0.Folder;
 import de.micromata.opengis.kml.v_2_2_0.Icon;
@@ -65,339 +66,305 @@ import txw2.output.IndentingXMLStreamWriter;
  * Produces KML file
  * </p>
  *
- * @author Emanuele Ziglioli 
+ * @author Emanuele Ziglioli
  */
 
 public class JakKmlProducer implements PositionConsumer {
 
-  public static final String ATOMNS = "http://www.w3.org/2005/Atom";
-  public static final String KMLNS = "http://www.opengis.net/kml/2.2";
-  public static final String GXNS = "http://www.google.com/kml/ext/2.2"; 
-  public static final String XALNS = "urn:oasis:names:tc:ciq:xsdschema:xAL:2.0";
-  
-  private DecimalFormat cf = new DecimalFormat("#.00000");
+	public static final String ATOMNS = "http://www.w3.org/2005/Atom";
+	public static final String KMLNS = "http://www.opengis.net/kml/2.2";
+	public static final String GXNS = "http://www.google.com/kml/ext/2.2";
+	public static final String XALNS = "urn:oasis:names:tc:ciq:xsdschema:xAL:2.0";
 
-  private SimpleDateFormat timeKML = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+	private DecimalFormat cf = new DecimalFormat("#.00000");
 
-  private String filename = null;
-  private double goodDopThreshold = 3.0;
-  private double goodEResThreshold = 10.0;
-  private String goodColorLine = "00ff00";
-  private String goodOpacity = "ff";
-  private int goodLinePixelWidth = 3;
-  private String worstColorLine = "0000ff";
-  private String worstOpacity = "ff";
-  private int worstLinePixelWidth = 3;
-  private boolean debug=false;
+	private SimpleDateFormat timeKML = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 
-  private final static TimeZone TZ = TimeZone.getTimeZone("GMT");
+	private String filename = null;
+	private double goodDopThreshold = 3.0;
+	private double goodEResThreshold = 10.0;
+	private String goodColorLine = "00ff00";
+	private String goodOpacity = "ff";
+	private int goodLinePixelWidth = 3;
+	private String worstColorLine = "0000ff";
+	private String worstOpacity = "ff";
+	private int worstLinePixelWidth = 3;
+	private boolean debug = false;
 
-  private transient JAXBContext jc = null;
-  private transient Marshaller m = null;
-  XMLStreamWriter xmlOut;
-  Track track = null;
-  Placemark trackPlacemark = null;
-  static final String GREEN = "FF00FF55";
-  static final String RED   = "ff6775fd";
+	private final static TimeZone TZ = TimeZone.getTimeZone("GMT");
 
-  SimpleDateFormat sdf = Observations.getGMTdf();
-  int last = 0;
+	private transient JAXBContext jc = null;
+	private transient Marshaller m = null;
+	XMLStreamWriter xmlOut;
+	Track track = null;
+	Placemark trackPlacemark = null;
+	static final String GREEN = "FF00FF55";
+	static final String RED = "ff6775fd";
 
-  public AltitudeMode altitudeMode = AltitudeMode.CLAMP_TO_GROUND;
+	SimpleDateFormat sdf = Observations.getGMTdf();
+	int last = 0;
 
-	public JakKmlProducer(String filename, double goodDopTreshold) throws IOException{
+	public AltitudeMode altitudeMode = AltitudeMode.CLAMP_TO_GROUND;
 
-	  m = createMarshaller();
-	  this.filename = filename;
+	public JakKmlProducer(String filename, double goodDopTreshold) throws IOException {
+
+		m = createMarshaller();
+		this.filename = filename;
 		this.goodDopThreshold = goodDopTreshold;
 		timeKML.setTimeZone(TZ);
 	}
 
-  private JAXBContext getJaxbContext() throws JAXBException {
-    if (this.jc == null) {
-      this.jc = JAXBContext.newInstance(new Class[] { Kml.class });
-    }
-    return this.jc;
-  }
+	private JAXBContext getJaxbContext() throws JAXBException {
+		if (this.jc == null) {
+			this.jc = JAXBContext.newInstance(new Class[] { Kml.class, 
+					Placemark.class,
+					Schema.class,
+					Folder.class
+					});
+		}
+		return this.jc;
+	}
 
-  /** Improves performance by caching contexts which are expensive to create. */
-  private final static Map<String, JAXBContext> contexts = new ConcurrentHashMap<String, JAXBContext>();
+	/** Improves performance by caching contexts which are expensive to create. */
+	private final static Map<String, JAXBContext> contexts = new ConcurrentHashMap<String, JAXBContext>();
 
-  public static synchronized JAXBContext getContext(String contextPath,
-      ClassLoader classLoader) throws JAXBException {
-  // Contexts are thread-safe so reuse those.
-  JAXBContext result = contexts.get(contextPath);
+	public static synchronized JAXBContext getContext(String contextPath, ClassLoader classLoader)
+			throws JAXBException {
+		// Contexts are thread-safe so reuse those.
+		JAXBContext result = contexts.get(contextPath);
 
-  if (result == null) {
-      result = (classLoader == null) ? JAXBContext
-              .newInstance(contextPath) : JAXBContext.newInstance(
-              contextPath, classLoader);
-      contexts.put(contextPath, result);
-  }
+		if (result == null) {
+			result = (classLoader == null) ? JAXBContext.newInstance(contextPath)
+					: JAXBContext.newInstance(contextPath, classLoader);
+			contexts.put(contextPath, result);
+		}
 
-  return result;
-}
-  
-  private Marshaller createMarshaller() {
-    // contexPath = de.micromata.opengis.kml.v_2_2_0
-    
-    if (this.m == null) {
-      try {
-        this.m = getJaxbContext().createMarshaller();
-        m.setProperty( Marshaller.JAXB_FORMATTED_OUTPUT, true );
-        m.setProperty( Marshaller.JAXB_FRAGMENT, true );
-      } catch (JAXBException e) {
-        throw new RuntimeException(e);
-      }
-    }
-    return this.m;
-  }
+		return result;
+	}
 
-	/* (non-Javadoc)
+	private Marshaller createMarshaller() {
+		// contexPath = de.micromata.opengis.kml.v_2_2_0
+
+		if (this.m == null) {
+			try {
+				this.m = getJaxbContext().createMarshaller();
+				m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+				m.setProperty(Marshaller.JAXB_FRAGMENT, true);
+			} catch (JAXBException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		return this.m;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.gogpsproject.producer.PositionConsumer#startOfTrack()
 	 */
 	public XMLStreamWriter startOfTrack() {
 		try {
-		    FileOutputStream fout = new FileOutputStream(filename);
+			FileOutputStream fout = new FileOutputStream(filename);
 
-		    XMLOutputFactory f = XMLOutputFactory.newInstance();
-		    f.setProperty("escapeCharacters", false);
-		    f.setProperty(XMLOutputFactory.IS_REPAIRING_NAMESPACES, true);
-		    XMLStreamWriter xmlOut1 = f.createXMLStreamWriter( fout, "utf-8" );
-        xmlOut = new IndentingXMLStreamWriter( xmlOut1 );
-        xmlOut.writeStartDocument("UTF-8", "1.0");
-        xmlOut.writeStartElement("kml");
-        xmlOut.writeDefaultNamespace( KMLNS );
-        xmlOut.writeNamespace("atom", ATOMNS );
-        xmlOut.writeNamespace("gx", GXNS );
-        xmlOut.writeNamespace("xal", XALNS );
-            
-        xmlOut.writeStartElement("Document");
-        
-        Icon icon = new Icon().withHref("http://maps.google.com/mapfiles/kml/shapes/shaded_dot.png");
-        IconStyle validIconStyle = new IconStyle()
-                                .withIcon( icon )
-                                .withScale(.25)
-                                .withColor(GREEN);
-        IconStyle invalidIconStyle = new IconStyle()
-                                .withIcon( icon )
-                                .withScale(.25)
-                                .withColor(RED);
-        
-        Icon trackIcon = new Icon().withHref("http://earth.google.com/images/kml-icons/track-directional/track-0.png");
-        IconStyle trackIconStyle = new IconStyle()
-            .withIcon( trackIcon )
-            .withScale(.5)
-            .withColor(GREEN);
-        
-        LabelStyle labelStyle = new LabelStyle().withScale(0.7);
-        LabelStyle idLabelStyle = new LabelStyle()
-                                .withColor("00000000")
-                                .withColorMode( ColorMode.NORMAL )
-                                .withScale(1);
-        LineStyle validLineStyle   = new LineStyle().withColor(GREEN);
-        LineStyle invalidLineStyle = new LineStyle().withColor(RED);
+			XMLOutputFactory f = XMLOutputFactory.newInstance();
+			f.setProperty("escapeCharacters", false);
+			f.setProperty(XMLOutputFactory.IS_REPAIRING_NAMESPACES, true);
+			XMLStreamWriter xmlOut1 = f.createXMLStreamWriter(fout, "utf-8");
+			xmlOut = new IndentingXMLStreamWriter(xmlOut1);
+			xmlOut.writeStartDocument("UTF-8", "1.0");
+			xmlOut.writeStartElement("kml");
+			xmlOut.writeDefaultNamespace(KMLNS);
+			xmlOut.writeNamespace("atom", ATOMNS);
+			xmlOut.writeNamespace("gx", GXNS);
+			xmlOut.writeNamespace("xal", XALNS);
 
-        LineStyle lineStyle_t = new LineStyle().withColor(GREEN).withWidth(1d);
-        
-        Schema schema = new Schema().withId("schema1")
-                        .withSimpleField(Arrays.asList(
-                            new SimpleField().withName("index").withType("uint"),
-                            new SimpleField().withName("coord").withType("string"),
-                            new SimpleField().withName("hDop").withType("float"),
-                            new SimpleField().withName("eRes").withType("float"),
-                            new SimpleField().withName("RTC Time").withType("string"),
-                            new SimpleField().withName("FIX Time").withType("string"),
-                            new SimpleField().withName("inUse").withType("string"),
-                            new SimpleField().withName("sats").withType("string")
-        ));
-        m.marshal(schema, xmlOut);
+			xmlOut.writeStartElement("Document");
+
+			Icon icon = new Icon().withHref("http://maps.google.com/mapfiles/kml/shapes/shaded_dot.png");
+			IconStyle validIconStyle = new IconStyle().withIcon(icon).withScale(.25).withColor(GREEN);
+			IconStyle invalidIconStyle = new IconStyle().withIcon(icon).withScale(.25).withColor(RED);
+
+			Icon trackIcon = new Icon()
+					.withHref("http://earth.google.com/images/kml-icons/track-directional/track-0.png");
+			IconStyle trackIconStyle = new IconStyle().withIcon(trackIcon).withScale(.5).withColor(GREEN);
+
+			LabelStyle labelStyle = new LabelStyle().withScale(0.7);
+			LabelStyle idLabelStyle = new LabelStyle().withColor("00000000").withColorMode(ColorMode.NORMAL)
+					.withScale(1);
+			LineStyle validLineStyle = new LineStyle().withColor(GREEN);
+			LineStyle invalidLineStyle = new LineStyle().withColor(RED);
+
+			LineStyle lineStyle_t = new LineStyle().withColor(GREEN).withWidth(1d);
+
+			Schema schema = new Schema().withId("schema1")
+					.withSimpleField(Arrays.asList(new SimpleField().withName("index").withType("uint"),
+							new SimpleField().withName("coord").withType("string"),
+							new SimpleField().withName("hDop").withType("float"),
+							new SimpleField().withName("eRes").withType("float"),
+							new SimpleField().withName("RTC Time").withType("string"),
+							new SimpleField().withName("FIX Time").withType("string"),
+							new SimpleField().withName("inUse").withType("string"),
+							new SimpleField().withName("sats").withType("string")));
+			m.marshal(schema, xmlOut);
 
 //      Style baloonStyle = new Style().withId("baloonStyle");
-        String text = "\r\n<![CDATA[\r\n"
-            + "<b>Point $[index]</b><br/><br/>"
-            + "<b>$[coord]</b><br/><br/>"
-            + "<b>RTC Time:</b> $[RTC Time]<br/>\r\n"
-            + "<b>FIX TIme:</b> $[FIX Time]<br/>\r\n"
-            + "<b>hDop:</b> $[hDop]<br/>\r\n"
-            + "<b>eRes:</b> $[eRes]<br/>\r\n"
-            + "<b>Sats:</b> $[inUse]<br/>\r\n"
-            + "<table>\r\n" 
-            + "<tr align=right><th>satId</th><th>Code</th><th>Doppler</th><th>SNR</th><th>el</th><th>eRes</th><th>inUse</th></tr>"
-            + "$[sats]<br/>\r\n" 
-            + "</table>\r\n" 
-            + "]]>\r\n";
-        BalloonStyle balloonStyle = new BalloonStyle().withText(text);
-        
-        Folder sf = new Folder().withName("Styles");
-        sf.setVisibility(false);
-        
-        sf.createAndAddStyle().withId("Valid")
-          .withIconStyle( validIconStyle )
-          .withLabelStyle(labelStyle)
-          .withLabelStyle(idLabelStyle)
-          .withLineStyle(validLineStyle)
-          .withBalloonStyle(balloonStyle);
+			String text = "\r\n<![CDATA[\r\n" + "<b>Point $[index]</b><br/><br/>" + "<b>$[coord]</b><br/><br/>"
+					+ "<b>RTC Time:</b> $[RTC Time]<br/>\r\n" + "<b>FIX TIme:</b> $[FIX Time]<br/>\r\n"
+					+ "<b>hDop:</b> $[hDop]<br/>\r\n" + "<b>eRes:</b> $[eRes]<br/>\r\n"
+					+ "<b>Sats:</b> $[inUse]<br/>\r\n" + "<table>\r\n"
+					+ "<tr align=right><th>satId</th><th>Code</th><th>Doppler</th><th>SNR</th><th>el</th><th>eRes</th><th>inUse</th></tr>"
+					+ "$[sats]<br/>\r\n" + "</table>\r\n" + "]]>\r\n";
+			BalloonStyle balloonStyle = new BalloonStyle().withText(text);
 
-        sf.createAndAddStyle().withId("Invalid")
-          .withIconStyle( invalidIconStyle )
-          .withLabelStyle( labelStyle )
-          .withLabelStyle( idLabelStyle )
-          .withLineStyle( invalidLineStyle )
-          .withBalloonStyle( balloonStyle );
-        
-        sf.createAndAddStyle().withId("track")
-          .withLineStyle( lineStyle_t )
-          .withIconStyle( trackIconStyle )
-          .withLabelStyle( labelStyle )
-          .withLabelStyle( idLabelStyle );
-        
-        m.marshal(sf, xmlOut);
-        
-        xmlOut.writeStartElement("Folder");
-        xmlOut.writeStartElement( "name");
-        xmlOut.writeCharacters("Points");
-        xmlOut.writeEndElement();  // name
-        
-        xmlOut.flush();
-        
-        track = new Track().withAltitudeMode(altitudeMode);
-        trackPlacemark = new Placemark()
-            .withName( "Track" )
-            .withStyleUrl("#track")
-            .withGeometry(track);
+			Folder sf = new Folder().withName("Styles");
+			sf.setVisibility(false);
 
-        return xmlOut;
+			sf.createAndAddStyle().withId("Valid").withIconStyle(validIconStyle).withLabelStyle(labelStyle)
+					.withLabelStyle(idLabelStyle).withLineStyle(validLineStyle).withBalloonStyle(balloonStyle);
+
+			sf.createAndAddStyle().withId("Invalid").withIconStyle(invalidIconStyle).withLabelStyle(labelStyle)
+					.withLabelStyle(idLabelStyle).withLineStyle(invalidLineStyle).withBalloonStyle(balloonStyle);
+
+			sf.createAndAddStyle().withId("track").withLineStyle(lineStyle_t).withIconStyle(trackIconStyle)
+					.withLabelStyle(labelStyle).withLabelStyle(idLabelStyle);
+
+			m.marshal(sf, xmlOut);
+
+			xmlOut.writeStartElement("Folder");
+			xmlOut.writeStartElement("name");
+			xmlOut.writeCharacters("Points");
+			xmlOut.writeEndElement(); // name
+
+			xmlOut.flush();
+
+			track = new Track().withAltitudeMode(altitudeMode);
+			trackPlacemark = new Placemark().withName("Track").withStyleUrl("#track").withGeometry(track);
+
+			return xmlOut;
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return null;
 	}
 
-	/* (non-Javadoc)
-   * @see org.gogpsproject.producer.PositionConsumer#addCoordinate(org.gogpsproject.Coordinates)
-   */
-  @Override
-  public void addCoordinate( RoverPosition c ) {
-  	if(debug) System.out.println("Lon:"+cf.format(c.getGeodeticLongitude()) + " " // geod.get(0)
-  			+"Lat:"+ cf.format(c.getGeodeticLatitude()) + " " // geod.get(1)
-  			+"H:"+ cf.format(c.getGeodeticHeight()) + "\t" // geod.get(2)
-  			+"P:"+ c.getpDop()+" "
-  			+"H:"+ c.gethDop()+" "
-  			+"V:"+ c.getvDop()+" ");//geod.get(2)
-  
-      if( c.status != Status.Valid )
-        return;
-      
-      String t = timeKML.format(new Date(c.getRefTime().getMsec()));
-      String name = c.obs.index + ": " + sdf.format(new Date(c.getRefTime().getMsec()));
-  
-      TimeStamp ts = new TimeStamp();
-      ts.setWhen(t);
-      
-      String coordStr = String.format ("%8.5f, %8.5f, %8.5f",
-                      c.getGeodeticLatitude(), c.getGeodeticLongitude(), c.getGeodeticHeight() );
-      String sats = "<![CDATA[";
-      for( int i=0; i<c.obs.getNumSat(); i++ ){
-        ObservationSet os = c.obs.getSatByIdx(i);
-          sats += String.format( "<tr align=right>" + 
-            "<td>" + os.getSatID() + "</td>" 
-           +"<td>"+ (long)(os.getCodeC(0)) + "</td>"
-           +"<td>"+(long)(os.getDoppler(0)) + "</td>"
-           +"<td>%3.1f</td>"
-           +"<td>%3.1f</td>"
-           +"<td>%4.1f</td>"
-           +"<td>%c</td>"
-           +"</tr>", 
-          Float.isNaN(os.getSignalStrength(0))?0:os.getSignalStrength(0),
-          os.el,
-          os.eRes,
-          os.inUse()?'Y':'N');
-      }
-      sats+="]]>";
-      ExtendedData ed = new ExtendedData();
-      ed.setData(Arrays.asList(
-          new Data( Long.toString(c.obs.index) ).withName("index"),
-          new Data( coordStr ).withName("coord"),
-          new Data( sdf.format(new Date(c.sampleTime.getMsec()))).withName("RTC Time"),
-          new Data( sdf.format(new Date(c.getRefTime().getMsec()))).withName("FIX Time"),
-          new Data( String.format("%4.1f", c.gethDop() )).withName("hDop"),
-          new Data( String.format("%4.1f", c.eRes )).withName("eRes"),
-          new Data( c.satsInUse + "/" + c.obs.getNumSat()).withName("inUse"),
-          new Data( sats ).withName("sats")
-      ));
-      
-      Placemark p = new Placemark()
-          .withName(name)
-          .withTimePrimitive(ts)
-          .withExtendedData(ed)
-          .withStyleUrl( ( c.getpDop()<goodDopThreshold && c.eRes<goodEResThreshold )? 
-              "#Valid" : "#Invalid");
-      
-      Point pt = p.createAndSetPoint();
-      pt.getCoordinates().add( new Coordinate(c.getGeodeticLongitude(), c.getGeodeticLatitude(), c.getGeodeticHeight()));
-      pt.withAltitudeMode(altitudeMode);
-  
-      if( c.getpDop()<goodDopThreshold ){
-        track.addToWhen( t );
-        track.addToCoord( cf.format( c.getGeodeticLongitude() ) + " " + cf.format(c.getGeodeticLatitude()) + " " + cf.format(c.getGeodeticHeight()) );
-      }
-      
-      try {
-        m.marshal( p, xmlOut );
-      } catch (JAXBException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      }
-  }
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.gogpsproject.producer.PositionConsumer#addCoordinate(org.gogpsproject.
+	 * Coordinates)
+	 */
+	@Override
+	public void addCoordinate(RoverPosition c) {
+		if (debug)
+			System.out.println("Lon:" + cf.format(c.getGeodeticLongitude()) + " " // geod.get(0)
+					+ "Lat:" + cf.format(c.getGeodeticLatitude()) + " " // geod.get(1)
+					+ "H:" + cf.format(c.getGeodeticHeight()) + "\t" // geod.get(2)
+					+ "P:" + c.getpDop() + " " + "H:" + c.gethDop() + " " + "V:" + c.getvDop() + " ");// geod.get(2)
 
-  /* (non-Javadoc)
+		if (c.status != Status.Valid)
+			return;
+
+		String t = timeKML.format(new Date(c.getRefTime().getMsec()));
+		String name = c.obs.index + ": " + sdf.format(new Date(c.getRefTime().getMsec()));
+
+		TimeStamp ts = new TimeStamp();
+		ts.setWhen(t);
+
+		String coordStr = String.format("%8.5f, %8.5f, %8.5f", c.getGeodeticLatitude(), c.getGeodeticLongitude(),
+				c.getGeodeticHeight());
+		String sats = "<![CDATA[";
+		for (int i = 0; i < c.obs.getNumSat(); i++) {
+			ObservationSet os = c.obs.getSatByIdx(i);
+			sats += String.format(
+					"<tr align=right>" + "<td>" + os.getSatID() + "</td>" + "<td>" + (long) (os.getCodeC(0)) + "</td>"
+							+ "<td>" + (long) (os.getDoppler(0)) + "</td>" + "<td>%3.1f</td>" + "<td>%3.1f</td>"
+							+ "<td>%4.1f</td>" + "<td>%c</td>" + "</tr>",
+					Float.isNaN(os.getSignalStrength(0)) ? 0 : os.getSignalStrength(0), os.el, os.eRes,
+					os.inUse() ? 'Y' : 'N');
+		}
+		sats += "]]>";
+		ExtendedData ed = new ExtendedData();
+		ed.setData(Arrays.asList(new Data(Long.toString(c.obs.index)).withName("index"),
+				new Data(coordStr).withName("coord"),
+				new Data(sdf.format(new Date(c.sampleTime.getMsec()))).withName("RTC Time"),
+				new Data(sdf.format(new Date(c.getRefTime().getMsec()))).withName("FIX Time"),
+				new Data(String.format("%4.1f", c.gethDop())).withName("hDop"),
+				new Data(String.format("%4.1f", c.eRes)).withName("eRes"),
+				new Data(c.satsInUse + "/" + c.obs.getNumSat()).withName("inUse"), new Data(sats).withName("sats")));
+
+		Placemark p = new Placemark().withName(name).withTimePrimitive(ts).withExtendedData(ed)
+				.withStyleUrl((c.getpDop() < goodDopThreshold && c.eRes < goodEResThreshold) ? "#Valid" : "#Invalid");
+
+		Point pt = p.createAndSetPoint();
+		pt.getCoordinates()
+				.add(new Coordinate(c.getGeodeticLongitude(), c.getGeodeticLatitude(), c.getGeodeticHeight()));
+		pt.withAltitudeMode(altitudeMode);
+
+		if (c.getpDop() < goodDopThreshold) {
+			track.addToWhen(t);
+			track.addToCoord(cf.format(c.getGeodeticLongitude()) + " " + cf.format(c.getGeodeticLatitude()) + " "
+					+ cf.format(c.getGeodeticHeight()));
+		}
+
+		try {
+			m.marshal(p, xmlOut);
+		} catch (JAXBException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.gogpsproject.producer.PositionConsumer#endOfTrack()
 	 */
 	public void endOfTrack() {
-			try {
-        xmlOut.writeEndElement(); // dataPointFolder
-        m.marshal(trackPlacemark, xmlOut);
-        xmlOut.writeEndElement(); // Document
-        xmlOut.writeEndElement(); // kml
+		try {
+			xmlOut.writeEndElement(); // dataPointFolder
+			m.marshal(trackPlacemark, xmlOut);
+			xmlOut.writeEndElement(); // Document
+			xmlOut.writeEndElement(); // kml
 
-				String circle = null;
+			String circle = null;
 //				if(positions.size()>0){
 //					ReceiverPosition last = positions.get(positions.size()-1);
 //					circle = generateCircle(last.getGeodeticLatitude(), last.getGeodeticLongitude(), last.getGeodeticHeight(), 90, last.getpDop());
 //				}
 //				out.write("</coordinates></LineString></Placemark></Folder>"+(timeline==null?"":timeline+"</Folder>")+(circle!=null?circle:"")+"</Document>\n");
-				// Close FileWriter
+			// Close FileWriter
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				xmlOut.flush();
+				xmlOut.close();
 			} catch (Exception e) {
+				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			finally{
-        try {
-          xmlOut.flush();
-          xmlOut.close();
-        } catch (Exception e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
-        }
-			}
+		}
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.gogpsproject.producer.PositionConsumer#event(int)
 	 */
 	@Override
 	public void event(int event) {
-	  switch( event ){
-	  case EVENT_START_OF_TRACK: 
-	    startOfTrack(); 
-	    break;
-	  case EVENT_END_OF_TRACK:			
-	    endOfTrack();
-	    break;
+		switch (event) {
+		case EVENT_START_OF_TRACK:
+			startOfTrack();
+			break;
+		case EVENT_END_OF_TRACK:
+			endOfTrack();
+			break;
 		}
 	}
 
-	private String reverse(String string){
+	private String reverse(String string) {
 		return new StringBuffer(string).reverse().toString();
 	}
 
@@ -500,27 +467,27 @@ public class JakKmlProducer implements PositionConsumer {
 	}
 
 	public static class Coordinate extends de.micromata.opengis.kml.v_2_2_0.Coordinate {
-	  private DecimalFormat df = new DecimalFormat("#.00000");
+		private DecimalFormat df = new DecimalFormat("#.00000");
 
-	  public Coordinate(final double longitude, final double latitude) {
-	    super( longitude, latitude );
-	 }
+		public Coordinate(final double longitude, final double latitude) {
+			super(longitude, latitude);
+		}
 
-	  public Coordinate(double lon, double lat, double alt ) {
-	    super( lon, lat, alt );
-    }
+		public Coordinate(double lon, double lat, double alt) {
+			super(lon, lat, alt);
+		}
 
-    @Override
-	  public String toString() {
-	      StringBuilder sb = new StringBuilder();
-	      sb.append( df.format(longitude));
-	      sb.append(",");
-	      sb.append( df.format(latitude));
-	      if (altitude!= 0.0D) {
-	          sb.append(",");
-	          sb.append(df.format(altitude));
-	      }
-	      return sb.toString();
-	  }
+		@Override
+		public String toString() {
+			StringBuilder sb = new StringBuilder();
+			sb.append(df.format(longitude));
+			sb.append(",");
+			sb.append(df.format(latitude));
+			if (altitude != 0.0D) {
+				sb.append(",");
+				sb.append(df.format(altitude));
+			}
+			return sb.toString();
+		}
 	}
 }

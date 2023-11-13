@@ -83,10 +83,10 @@ public class DecodeRXMMEASX {
 			throw new UBXException("Zero-length RXM-MEASX message");
 		}
 
-		System.out.println("Length : " + len);
+//		System.out.println("Length : " + len);
 
 		int ver = in.read();
-		System.out.println("ver:  " + ver );
+//		System.out.println("ver:  " + ver );
 		
 		for (int i = 0; i < 3; i++) { // reserved1
 			in.read(); 
@@ -106,7 +106,7 @@ public class DecodeRXMMEASX {
 			}
 		}
 		int gpsTow = UnsignedOperation.toInt(Bits.tobytes(bits));
-		System.out.println("gpsTow:  " + gpsTow );
+//		System.out.println("gpsTow:  " + gpsTow );
 
 		data = new int[4]; // gloTow (U4)
 		for (int i = 0; i < 4; i++) {
@@ -122,7 +122,7 @@ public class DecodeRXMMEASX {
 			}
 		}
 		int gloTow = UnsignedOperation.toInt(Bits.tobytes(bits));
-		System.out.println("gloTow:  " + gloTow );
+//		System.out.println("gloTow:  " + gloTow );
 		
 		data = new int[4]; // bdsTOW (U4)
 		for (int i = 0; i < 4; i++) {
@@ -138,7 +138,7 @@ public class DecodeRXMMEASX {
 			}
 		}
 		int bdsTOW = UnsignedOperation.toInt(Bits.tobytes(bits));
-		System.out.println("bdsTOW:  " + bdsTOW );
+//		System.out.println("bdsTOW:  " + bdsTOW );
 		
 		for (int i = 0; i < 4; i++) { // reserved2
 			in.read(); 
@@ -158,7 +158,7 @@ public class DecodeRXMMEASX {
 			}
 		}
 		int qzssTOW = UnsignedOperation.toInt(Bits.tobytes(bits));
-		System.out.println("qzssTOW:  " + qzssTOW );
+//		System.out.println("qzssTOW:  " + qzssTOW );
 
 		data = new int[2]; // gpsTOWacc (U2)
 		for (int i = 0; i < 2; i++) {
@@ -175,7 +175,7 @@ public class DecodeRXMMEASX {
 		}
 		float gpsTOWacc = UnsignedOperation.toShort(Bits.tobytes(bits));
 		gpsTOWacc *= Math.pow(2, -4);
-		System.out.println("gpsTOWacc:  " + gpsTOWacc );
+//		System.out.println("gpsTOWacc:  " + gpsTOWacc );
 		
 		data = new int[2]; // gloTOWacc (U2)
 		for (int i = 0; i < 2; i++) {
@@ -192,7 +192,7 @@ public class DecodeRXMMEASX {
 		}
 		float gloTOWacc = UnsignedOperation.toShort(Bits.tobytes(bits));
 		gloTOWacc *= Math.pow(2, -4);
-		System.out.println("gloTOWacc:  " + gloTOWacc );
+//		System.out.println("gloTOWacc:  " + gloTOWacc );
 
 		data = new int[2]; // bdsTOWacc (U2)
 		for (int i = 0; i < 2; i++) {
@@ -209,7 +209,7 @@ public class DecodeRXMMEASX {
 		}
 		float bdsTOWacc = UnsignedOperation.toShort(Bits.tobytes(bits));
 		bdsTOWacc *= Math.pow(2, -4);
-		System.out.println("bdsTOWacc:  " + bdsTOWacc );
+//		System.out.println("bdsTOWacc:  " + bdsTOWacc );
 
 		data = new int[2]; // qzssTOWacc (U2)
 		for (int i = 0; i < 2; i++) {
@@ -226,7 +226,7 @@ public class DecodeRXMMEASX {
 		}
 		float qzssTOWacc = UnsignedOperation.toShort(Bits.tobytes(bits));
 		qzssTOWacc *= Math.pow(2, -4);
-		System.out.println("qzssTOWacc:  " + qzssTOWacc );
+//		System.out.println("qzssTOWacc:  " + qzssTOWacc );
 		
 		for (int i = 0; i < 2; i++) { // reserved3
 			in.read(); 
@@ -240,10 +240,10 @@ public class DecodeRXMMEASX {
 			indice++;
 		}		
 		int numSV = (int)Bits.bitsToUInt(bits);
-		System.out.println("numSV :  " + numSV );
+//		System.out.println("numSV :  " + numSV );
 		
 		int flags = in.read();
-		System.out.println("flags :  " + Integer.toString(flags,2) );
+//		System.out.println("flags :  " + Integer.toString(flags,2) );
 
 		for (int i = 0; i < 8; i++) { // reserved4
 			in.read(); 
@@ -257,16 +257,16 @@ public class DecodeRXMMEASX {
 		for (int k = 0; k < numSV; k++) {
 
 			int gnssId = in.read();
-			System.out.println("gnssId:  " + gnssId );
+//			System.out.println("gnssId:  " + gnssId );
 
 			int svId = in.read();
-			System.out.println("svId:  " + svId );
+//			System.out.println("svId:  " + svId );
 
 			int cNo = in.read();
-			System.out.println("cNo:  " + cNo );
+//			System.out.println("cNo:  " + cNo );
 
 			int mpathIndic = in.read();
-			System.out.println("mpathIndic:  " + mpathIndic );
+//			System.out.println("mpathIndic:  " + mpathIndic );
 			
 			data = new int[4]; // dopplerMS [m/s] (I4)
 			for (int i = 0; i < 4; i++) {
@@ -283,7 +283,7 @@ public class DecodeRXMMEASX {
 			}
 			float dopplerMS = (float)UnsignedOperation.toInt(Bits.tobytes(bits));
 			dopplerMS *= 0.04;
-			System.out.println("dopplerMS:  " + dopplerMS );
+//			System.out.println("dopplerMS:  " + dopplerMS );
 
 			data = new int[4]; // dopplerHz (I4)
 			for (int i = 0; i < 4; i++) {
@@ -300,7 +300,7 @@ public class DecodeRXMMEASX {
 			}
 			float dopplerHz = (float)UnsignedOperation.toInt(Bits.tobytes(bits));
 			dopplerHz *= 0.2;
-			System.out.println("dopplerHz:  " + dopplerHz );
+//			System.out.println("dopplerHz:  " + dopplerHz );
 
 			data = new int[2]; // wholeChips [0..1022] (U2)
 			for (int i = 0; i < 2; i++) {
@@ -316,7 +316,7 @@ public class DecodeRXMMEASX {
 				}
 			}
 			int wholeChips = (int)Bits.bitsTwoComplement(bits);
-			System.out.println("wholeChips :  " + wholeChips );
+//			System.out.println("wholeChips :  " + wholeChips );
 
 			data = new int[2]; // fracChips [0..1023] (U2)
 			for (int i = 0; i < 2; i++) {
@@ -332,7 +332,7 @@ public class DecodeRXMMEASX {
 				}
 			}
 			int fracChips = (int)Bits.bitsTwoComplement(bits);
-			System.out.println("fracChips :  " + fracChips );
+//			System.out.println("fracChips :  " + fracChips );
 
 			data = new int[4]; // codePhase [ms] (U4)
 			for (int i = 0; i < 4; i++) {
@@ -349,7 +349,7 @@ public class DecodeRXMMEASX {
 			}
 			float codePhase = UnsignedOperation.toInt(Bits.tobytes(bits));
 			codePhase *= Math.pow(2,-21);
-			System.out.println("codePhase:  " + codePhase );
+//			System.out.println("codePhase:  " + codePhase );
 		
 			bits = new boolean[8]; // intCodePhase [ms] (U1)
 			indice = 0;
@@ -359,7 +359,7 @@ public class DecodeRXMMEASX {
 				indice++;
 			}		
 			int intCodePhase = (int)Bits.bitsToUInt(bits);
-			System.out.println("intCodePhase :  " + intCodePhase );
+//			System.out.println("intCodePhase :  " + intCodePhase );
 
 			bits = new boolean[8]; // pseuRangeRMSErr [0..63] (U1)
 			indice = 0;
@@ -369,7 +369,7 @@ public class DecodeRXMMEASX {
 				indice++;
 			}		
 			int pseuRangeRMSErr = (int)Bits.bitsToUInt(bits);
-			System.out.println("pseuRangeRMSErr :  " + pseuRangeRMSErr );
+//			System.out.println("pseuRangeRMSErr :  " + pseuRangeRMSErr );
 
 			for (int i = 0; i < 2; i++) { //reserved5
 				in.read();
@@ -379,7 +379,7 @@ public class DecodeRXMMEASX {
 
 			// TODO Check conversion with constellations other than GPS
 			double pseudoRange = (intCodePhase + codePhase)/ 1000.0 * Constants.SPEED_OF_LIGHT;
-		  System.out.println("Range " + pseudoRange );
+//          System.out.println("Range " + pseudoRange );
 					
 //			System.out.print("SV" + k +"\tPhase: " + carrierPhase + "  ");
 			double carrierPhase = 0;

@@ -174,7 +174,7 @@ public class LS_SA_code extends Core {
     
     RoverPosition coord = null;
     try {
-      Observations obsR = roverIn.getNextObservations();
+      Observations obsR = roverIn.getCurrentObservations();
       while( obsR!=null && !Thread.interrupted() ) { // buffStreamObs.ready()
 //        if(debug) System.out.println("OK ");
 
@@ -187,6 +187,7 @@ public class LS_SA_code extends Core {
             if (! (rover.isValidXYZ() && rover.isValidClockError())) {
             	
             	 double el = -100;
+            	 rover.setXYZ(0, 0, 0);            	 
             	 if( roverIn.getDefinedPosition() != null && roverIn.getDefinedPosition().isValidXYZ()) {
             		 roverIn.getDefinedPosition().cloneInto(rover);
             		 el = 5;

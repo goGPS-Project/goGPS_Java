@@ -25,8 +25,7 @@ import java.util.*;
 
 import org.gogpsproject.GoGPS;
 import org.gogpsproject.GoGPS.DynamicModel;
-import org.gogpsproject.consumer.KmlProducer;
-import org.gogpsproject.positioning.Coordinates;
+import org.gogpsproject.consumer.JakKmlProducer;
 import org.gogpsproject.producer.NavigationProducer;
 import org.gogpsproject.producer.ObservationsBuffer;
 import org.gogpsproject.producer.parser.rtcm3.RTCM3Client;
@@ -39,63 +38,67 @@ import org.gogpsproject.producer.parser.ublox.UBXSerialConnection;
  */
 public class ProcessRealtimeUBX {
 
-
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
 		DynamicModel dynamicModel = GoGPS.DynamicModel.CONST_SPEED;
-		try{
-			//force dot as decimal separator
+		try {
+			// force dot as decimal separator
 			Locale.setDefault(new Locale("en", "US"));
-			
+
 			// Get current time
 			long start = System.currentTimeMillis();
 
 			// Realtime
-			if(args.length<1){
+			if (args.length < 1) {
 				System.out.println("ProcessRealtimeUBX <com_port>");
 				return;
 			}
-			
+
 			String comPort = args[0];
 
 			/******************************************
 			 * ROVER & NAVIGATION u-blox
 			 */
 			UBXSerialConnection ubxSerialConn = new UBXSerialConnection(comPort, 115200);
-			ubxSerialConn.init();
 			ubxSerialConn.enableDebug(false);
-			
+			ubxSerialConn.enableEphemeris(1);
+			ubxSerialConn.init();
+
 			Date date = new Date();
 			SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd_HHmmss");
 			String date1 = sdf1.format(date);
 
-			ObservationsBuffer roverIn = new ObservationsBuffer(ubxSerialConn,"./out/" + date1 + ".dat");
+			ObservationsBuffer roverIn = new ObservationsBuffer(ubxSerialConn, "./out/" + date1 + ".dat");
 			NavigationProducer navigationIn = roverIn;
+			roverIn.setDebug(false);
+//			roverIn.setTimeoutNextObsWait(60*1000);
 			roverIn.init();
 
 			// wait for some data to buffer
 			Thread.sleep(2000);
 
-	     // set Output
-      String outPath = "./out/" + date1 + ".kml";
-      KmlProducer kml = new KmlProducer(outPath, 2.5, 0);
+			// set Output
+			String outPath = "./out/" + date1 + ".kml";
+			JakKmlProducer kml = new JakKmlProducer(outPath, 0);
 
-			GoGPS goGPS = new GoGPS( navigationIn, roverIn )
-			                 .setDynamicModel(dynamicModel)
-			                 .addPositionConsumerListener(kml)
-
-                        // run (never exit in live-tracking)
-                        // .runCodeStandalone();
-                        // .runKalmanFilterCodePhaseStandalone();
-
-			                  // run in background
-			                 .runThreadMode( GoGPS.RunMode.KALMAN_FILTER_CODE_PHASE_STANDALONE )
-
-			                  // wait for 2 minutes
-			                 .runFor(120);
+			GoGPS goGPS = new GoGPS(navigationIn, roverIn).setDynamicModel(dynamicModel)
+					.addPositionConsumerListener(kml);
 			
+			goGPS.setDebug(true)
+
+					// run (never exit in live-tracking)
+//					 .runCodeStandalone(0);
+//					 .runKalmanFilterCodePhaseStandalone(0);
+
+					// run in background
+			  .runThreadMode(GoGPS.RunMode.CODE_STANDALONE)
+//					.runThreadMode(GoGPS.RunMode.KALMAN_FILTER_CODE_PHASE_STANDALONE)
+
+					// wait for 2 minutes
+					.runFor(120);
+
 			System.out.println();
 			System.out.println();
 
@@ -104,26 +107,26 @@ public class ProcessRealtimeUBX {
 			/******************************************
 			 * END
 			 */
-			try{
+			try {
 				System.out.println("Stop Rover");
-				roverIn.release(true,10000);
-			}catch(InterruptedException ie){
+				roverIn.release(true, 10000);
+			} catch (InterruptedException ie) {
 				ie.printStackTrace();
 			}
-			try{
+			try {
 				System.out.println("Stop Navigation");
-				navigationIn.release(true,10000);
-			}catch(InterruptedException ie){
+				navigationIn.release(true, 10000);
+			} catch (InterruptedException ie) {
 				ie.printStackTrace();
 			}
-			try{
+			try {
 				System.out.println("Stop UBX");
-				ubxSerialConn.release(true,10000);
-			}catch(InterruptedException ie){
+				ubxSerialConn.release(true, 10000);
+			} catch (InterruptedException ie) {
 				ie.printStackTrace();
 			}
 
-		}catch(Exception e){
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}

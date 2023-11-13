@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Vector;
@@ -55,7 +56,7 @@ public class UBXSerialReader implements Runnable,StreamEventProducer {
   protected String COMPort;
   private int measRate = 1;
   protected boolean sysTimeLogEnabled = false;
-  protected List<String> requestedNmeaMsgs = null;
+  protected List<String> requestedNmeaMsgs;
   protected String dateFile;
   protected String outputDir = "./test";
   protected int msgAidEphRate = 0; //seconds
@@ -154,10 +155,20 @@ public class UBXSerialReader implements Runnable,StreamEventProducer {
 		}
 
 		System.out.println(date1+" - "+COMPort+" - RXM-RAW messages enabled");
-		UBXMsgConfiguration msgcfg = new UBXMsgConfiguration(UBXMessageType.CLASS_RXM, UBXMessageType.RXM_RAW, true);
+		UBXMsgConfiguration msgcfg = new UBXMsgConfiguration(UBXMessageType.CLASS_NAV, UBXMessageType.NAV_SOL, true);
 		out.write(msgcfg.getByte());
 		out.flush();
 
+		System.out.println(date1+" - "+COMPort+" - NAV-SOL messages enabled");
+		msgcfg = new UBXMsgConfiguration(UBXMessageType.CLASS_RXM, UBXMessageType.RXM_RAW, true);
+		out.write(msgcfg.getByte());
+		out.flush();
+		
+		System.out.println(date1+" - "+COMPort+" - TRK-MEAS messages enabled");
+		msgcfg = new UBXMsgConfiguration(UBXMessageType.CLASS_TRK, UBXMessageType.TRK_MEAS, true);
+		out.write(msgcfg.getByte());
+		out.flush();
+		
 		if (this.debugModeEnabled) {
 			System.out.println(date1+" - "+COMPort+" - !!! DEBUG MODE !!!");
 		}
@@ -253,11 +264,11 @@ public class UBXSerialReader implements Runnable,StreamEventProducer {
 									
 									if(streamEventListeners!=null && o!=null){
 										for(StreamEventListener sel:streamEventListeners){
-											Observations co = sel.getCurrentObservations();
-										    sel.pointToNextObservations();
+											Observations oc = (Observations) ((Observations)o).clone();
+//											sel.addObservations(oc);
 
 										    if (this.sysTimeLogEnabled) {
-										    	dateGps = sdf1.format(new Date(co.getRefTime().getMsec()));
+										    	dateGps = sdf1.format(new Date(oc.getRefTime().getMsec()));
 										    	psSystime.println(dateGps +"       "+dateSys);
 										    }
 										}

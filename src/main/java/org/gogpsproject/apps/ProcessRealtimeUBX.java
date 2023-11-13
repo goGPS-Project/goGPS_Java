@@ -25,8 +25,7 @@ import java.util.*;
 
 import org.gogpsproject.GoGPS;
 import org.gogpsproject.GoGPS.DynamicModel;
-import org.gogpsproject.consumer.KmlProducer;
-import org.gogpsproject.positioning.Coordinates;
+import org.gogpsproject.consumer.JakKmlProducer;
 import org.gogpsproject.producer.NavigationProducer;
 import org.gogpsproject.producer.ObservationsBuffer;
 import org.gogpsproject.producer.parser.rtcm3.RTCM3Client;
@@ -82,7 +81,7 @@ public class ProcessRealtimeUBX {
 
 			// set Output
 			String outPath = "./out/" + date1 + ".kml";
-			KmlProducer kml = new KmlProducer(outPath, 2.5, 0);
+			JakKmlProducer kml = new JakKmlProducer(outPath, 0);
 
 			GoGPS goGPS = new GoGPS(navigationIn, roverIn).setDynamicModel(dynamicModel)
 					.addPositionConsumerListener(kml);

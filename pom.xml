@@ -10,7 +10,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <javaVersion>1.8</javaVersion>
+        <javaSourceVersion>21</javaSourceVersion>
+        <javaTargetVersion>8</javaTargetVersion>
         <documentationURL />
     </properties>
 
@@ -79,6 +80,13 @@
             <version>2.3.0-SNAPSHOT</version>
             <scope>compile</scope> 
         </dependency>
+
+        <dependency>
+            <groupId>uk.ziglio</groupId>
+            <artifactId>construct</artifactId>
+            <version>2.1.0-SNAPSHOT</version>
+            <scope>compile</scope> 
+        </dependency>
  
     </dependencies>
     <build>
@@ -100,8 +108,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.9.0</version>
                 <configuration>
-                    <source>${javaVersion}</source>
-                    <target>${javaVersion}</target>
+                    <source>${javaSourceVersion}</source>
+                    <target>${javaTargetVersion}</target>
                     <encoding>ISO-8859-1</encoding>
                 </configuration>
             </plugin>

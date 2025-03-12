@@ -19,9 +19,6 @@
  */
 
 package org.gogpsproject;
-import gnu.io.CommPort;
-import gnu.io.CommPortIdentifier;
-import gnu.io.PortInUseException;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

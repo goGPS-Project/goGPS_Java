@@ -194,8 +194,13 @@ public class NVSFileReader extends EphemerisSystem implements ObservationsProduc
 	/* (non-Javadoc)
 	 * @see org.gogpsproject.NavigationProducer#getIono(long)
 	 */
-	@Override
+//	@Override
 	public IonoGps getIono(long unixTime, char satType) {
+		return iono;
+	}
+	
+	@Override
+	public IonoGps getIono(long unixTime) {
 		return iono;
 	}
 	
@@ -231,6 +236,7 @@ public class NVSFileReader extends EphemerisSystem implements ObservationsProduc
 			this.streamEventListeners.remove(streamEventListener);
 		this.reader.removeStreamEventListener(streamEventListener);
 	}
+
 }	
 
 

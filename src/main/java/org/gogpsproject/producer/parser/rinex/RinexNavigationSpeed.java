@@ -24,7 +24,7 @@ public class RinexNavigationSpeed extends RinexNavigation  {
     int maxBack = 3;
     while(eph==null && (maxBack--)>0){
   
-      RinexNavigationParser rnp = getRNPByTimestamp(requestedTime);
+      RinexNavigationParser rnp = getRNPByTimestamp(requestedTime, satType);
       if(rnp!=null){
         obs.rinexFileName = rnp.getFileName();
         
@@ -36,7 +36,7 @@ public class RinexNavigationSpeed extends RinexNavigation  {
                 
           if (eph != null) {
              // cache this rnp in case we've backed off the time
-             put( obs.getRefTime().getMsec(), rnp);
+             put( obs.getRefTime().getMsec(), rnp, satType);
 
     //        char satType = eph.getSatType();
             SatellitePosition sp = rnp.computePositionSpeedGps(obs, satID, satType, eph, receiverClockError);
